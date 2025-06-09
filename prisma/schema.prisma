@@ -1,0 +1,553 @@
+// This is your Prisma schema file with SAFE deletion strategies
+// No cascading deletes - uses Restrict or SetNull instead
+// Includes soft delete fields for data recovery
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Core User Management with Soft Delete
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  username      String?   @unique
+  displayName   String?
+  avatarUrl     String?
+  role          String    @default("reader") // admin, moderator, premium_reader, reader
+  isActive      Boolean   @default(true)
+  emailVerified Boolean   @default(false)
+  lastLoginAt   DateTime?
+  
+  // Soft delete fields
+  isDeleted     Boolean   @default(false)
+  deletedAt     DateTime?
+  deletedBy     String?   // ID of user who deleted this record
+  deletionReason String?  // Optional reason for deletion
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations - using Restrict to prevent accidental deletion
+  novels        Novel[]
+  chapterViews  ChapterView[]
+  comments      Comment[]
+  ratings       Rating[]
+  reviews       Review[]
+  bookmarks     UserBookmark[]
+  readingProgress UserReadingProgress[]
+  readingLists  ReadingList[]
+  notifications Notification[]
+  documentImports DocumentImport[]
+  uploadedMedia   MediaFile[]
+  
+  // Audit trail
+  auditLogs     AuditLog[]
+  deletionLogs  DeletionLog[]
+  
+  @@index([isDeleted])
+  @@index([email])
+}
+
+// Content Management with Soft Delete
+model Novel {
+  id               String    @id @default(uuid())
+  title            String
+  slug             String    @unique
+  description      String?
+  coverColor       String    @default("#3B82F6")
+  authorId         String
+  status           String    @default("ongoing") // ongoing, completed, hiatus, dropped, archived
+  isPublished      Boolean   @default(false)
+  isPremium        Boolean   @default(false)
+  totalViews       BigInt    @default(0)
+  averageRating    Decimal   @default(0) @db.Decimal(3, 2)
+  ratingCount      Int       @default(0)
+  wordCount        Int       @default(0)
+  estimatedReadTime Int      @default(0) // minutes
+  seoTitle         String?
+  seoDescription   String?
+  seoKeywords      String?
+  publishedAt      DateTime?
+  completedAt      DateTime?
+  
+  // Soft delete fields
+  isDeleted     Boolean   @default(false)
+  deletedAt     DateTime?
+  deletedBy     String?
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations - IMPORTANT: Using Restrict instead of Cascade
+  author           User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  chapters         Chapter[]
+  genres           NovelGenre[]
+  tags             NovelTag[]
+  ratings          Rating[]
+  reviews          Review[]
+  readingProgress  UserReadingProgress[]
+  readingListItems ReadingListItem[]
+  documentImports  DocumentImport[]
+
+  @@index([status, isPublished, isDeleted])
+  @@index([authorId])
+  @@index([isDeleted])
+}
+
+model Chapter {
+  id                String    @id @default(uuid())
+  novelId           String
+  title             String
+  slug              String
+  content           String    @db.Text
+  chapterNumber     Decimal   @db.Decimal(10, 2) // Supports 1, 1.5, 0, 2.1, etc.
+  displayOrder      Decimal   @db.Decimal(10, 2) // For custom sorting
+  wordCount         Int       @default(0)
+  estimatedReadTime Int       @default(0) // minutes
+  status            String    @default("draft") // draft, premium, free
+  isPublished       Boolean   @default(false)
+  isPremium         Boolean   @default(false)
+  views             BigInt    @default(0)
+  hasImages         Boolean   @default(false)
+  imageCount        Int       @default(0)
+  publishedAt       DateTime?
+  scheduledAt       DateTime?
+  seoTitle          String?
+  seoDescription    String?
+  importedFrom      String?   // original DOCX filename if imported
+  importedAt        DateTime?
+  
+  // Soft delete fields
+  isDeleted     Boolean   @default(false)
+  deletedAt     DateTime?
+  deletedBy     String?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations - Using Restrict to prevent novel deletion if chapters exist
+  novel            Novel     @relation(fields: [novelId], references: [id], onDelete: Restrict)
+  chapterViews     ChapterView[] 
+  comments         Comment[]
+  bookmarks        UserBookmark[]
+  readingProgress  UserReadingProgress[]
+  chapterMedia     ChapterMedia[]
+  chapterContent   ChapterContent[]
+
+  @@unique([novelId, chapterNumber])
+  @@unique([novelId, slug])
+  @@index([novelId, displayOrder])
+  @@index([status, isPublished, isDeleted])
+  @@index([isDeleted])
+}
+
+// Content Organization
+model Genre {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  color       String    @default("#6B7280")
+  iconUrl     String?
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  novels      NovelGenre[]
+}
+
+model NovelGenre {
+  novelId String
+  genreId String
+
+  // Using Restrict to prevent genre deletion if novels are using it
+  novel Novel @relation(fields: [novelId], references: [id], onDelete: Restrict)
+  genre Genre @relation(fields: [genreId], references: [id], onDelete: Restrict)
+
+  @@id([novelId, genreId])
+}
+
+model Tag {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  type       String   // theme, warning, demographic
+  color      String   @default("#9CA3AF")
+  isActive   Boolean  @default(true)
+  usageCount Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  // Relations
+  novels     NovelTag[]
+}
+
+model NovelTag {
+  novelId String
+  tagId   String
+
+  // Using Restrict to prevent tag deletion if novels are using it
+  novel Novel @relation(fields: [novelId], references: [id], onDelete: Restrict)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Restrict)
+
+  @@id([novelId, tagId])
+}
+
+// User Engagement - Safe deletion with SetNull
+model ChapterView {
+  id                   String    @id @default(uuid())
+  chapterId            String?   // Nullable in case chapter is deleted
+  userId               String?
+  sessionId            String?   // for anonymous tracking
+  ipAddress            String?
+  userAgent            String?   @db.Text
+  readingTime          Int       @default(0) // seconds
+  completionPercentage Int       @default(0)
+  viewedAt             DateTime  @default(now())
+
+  // Relations - SetNull preserves view history even if content is deleted
+  chapter Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([chapterId, userId])
+  @@index([chapterId, sessionId])
+}
+
+model Comment {
+  id               String    @id @default(uuid())
+  chapterId        String
+  userId           String
+  parentId         String?   // for threading
+  content          String    @db.Text
+  isEdited         Boolean   @default(false)
+  isModerated      Boolean   @default(false)
+  moderatedBy      String?
+  moderatedAt      DateTime?
+  moderationReason String?
+  likeCount        Int       @default(0)
+  replyCount       Int       @default(0)
+  isReported       Boolean   @default(false)
+  reportCount      Int       @default(0)
+  
+  // Soft delete for comments
+  isDeleted        Boolean   @default(false)
+  deletedAt        DateTime?
+  deletedBy        String?
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations - Restrict to prevent chapter deletion if comments exist
+  chapter  Chapter   @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies  Comment[] @relation("CommentReplies")
+
+  @@index([chapterId, createdAt, isDeleted])
+  @@index([userId])
+  @@index([isDeleted])
+}
+
+// Social Features - Safe deletion
+model Rating {
+  id        String   @id @default(uuid())
+  novelId   String
+  userId    String
+  rating    Int      // 1-5
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations - Restrict deletion
+  novel  Novel @relation(fields: [novelId], references: [id], onDelete: Restrict)
+  user   User  @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([novelId, userId])
+  @@index([novelId])
+  @@index([userId])
+}
+
+model Review {
+  id             String    @id @default(uuid())
+  novelId        String
+  userId         String
+  title          String?
+  content        String    @db.Text
+  hasSpoilers    Boolean   @default(false)
+  isRecommended  Boolean   @default(true)
+  helpfulCount   Int       @default(0)
+  unhelpfulCount Int       @default(0)
+  isModerated    Boolean   @default(false)
+  moderatedBy    String?
+  moderatedAt    DateTime?
+  
+  // Soft delete
+  isDeleted      Boolean   @default(false)
+  deletedAt      DateTime?
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations - Restrict deletion
+  novel Novel @relation(fields: [novelId], references: [id], onDelete: Restrict)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([novelId, userId])
+  @@index([novelId, isDeleted])
+  @@index([userId])
+}
+
+// Reading Progress & Bookmarks - Safe deletion
+model UserReadingProgress {
+  id                 String   @id @default(uuid())
+  userId             String
+  novelId            String
+  chapterId          String?  // Nullable in case chapter is deleted
+  progressPercentage Int      @default(0) // 0-100
+  scrollPosition     Int      @default(0)
+  readingTime        Int      @default(0) // total time in seconds
+  lastReadAt         DateTime @default(now())
+
+  // Relations - SetNull for chapter allows progress to persist
+  user    User    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  novel   Novel   @relation(fields: [novelId], references: [id], onDelete: Restrict)
+  chapter Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, novelId])
+  @@index([userId])
+  @@index([novelId])
+}
+
+model UserBookmark {
+  id         String   @id @default(uuid())
+  userId     String
+  chapterId  String
+  position   Int      @default(0) // character position or paragraph
+  note       String?
+  isPrivate  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  // Relations - Restrict to preserve bookmarks
+  user    User    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+
+  @@index([userId, chapterId])
+}
+
+model ReadingList {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  isDefault   Boolean  @default(false)
+  novelCount  Int      @default(0)
+  
+  // Soft delete
+  isDeleted   Boolean  @default(false)
+  deletedAt   DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user  User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items ReadingListItem[]
+
+  @@index([userId, isDeleted])
+}
+
+model ReadingListItem {
+  id       String   @id @default(uuid())
+  listId   String
+  novelId  String
+  addedAt  DateTime @default(now())
+
+  // Relations - Both use Restrict
+  list  ReadingList @relation(fields: [listId], references: [id], onDelete: Restrict)
+  novel Novel       @relation(fields: [novelId], references: [id], onDelete: Restrict)
+
+  @@unique([listId, novelId])
+  @@index([listId])
+  @@index([novelId])
+}
+
+// Document Import & Media Management - Safe deletion
+model MediaFile {
+  id           String    @id @default(uuid())
+  filename     String
+  originalName String
+  mimeType     String
+  fileSize     BigInt
+  width        Int?      // for images
+  height       Int?      // for images
+  url          String
+  cdnUrl       String?
+  thumbnailUrl String?
+  altText      String?
+  caption      String?
+  metadata     Json?     @default("{}") // EXIF data, compression info, etc.
+  uploadedBy   String?
+  usageCount   Int       @default(0)
+  lastUsedAt   DateTime?
+  isOptimized  Boolean   @default(false)
+  optimizedAt  DateTime?
+  
+  // Soft delete
+  isDeleted    Boolean   @default(false)
+  deletedAt    DateTime?
+  
+  createdAt    DateTime  @default(now())
+
+  // Relations
+  uploader     User?          @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+  chapterMedia ChapterMedia[]
+
+  @@index([mimeType, isDeleted])
+  @@index([uploadedBy])
+  @@index([usageCount])
+}
+
+model ChapterMedia {
+  id          String   @id @default(uuid())
+  chapterId   String
+  mediaId     String
+  position    Int      // order within chapter
+  displayType String   @default("inline") // inline, gallery, background, etc.
+  styling     Json?    @default("{}") // size, alignment, border, etc.
+  caption     String?
+  createdAt   DateTime @default(now())
+
+  // Relations - Restrict to prevent deletion if media is in use
+  chapter Chapter   @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+  media   MediaFile @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+
+  @@unique([chapterId, mediaId, position])
+  @@index([chapterId])
+  @@index([mediaId])
+}
+
+model DocumentImport {
+  id                   String    @id @default(uuid())
+  filename             String
+  originalSize         BigInt
+  mimeType             String
+  novelId              String?
+  uploadedBy           String
+  status               String    @default("pending") // pending, processing, completed, failed
+  progress             Int       @default(0) // percentage
+  chaptersCreated      Int       @default(0)
+  imagesExtracted      Int       @default(0)
+  errorMessage         String?
+  processingStarted    DateTime?
+  processingCompleted  DateTime?
+  extractedContent     Json?     // structured content from DOCX
+  importSettings       Json?     @default("{}") // import configuration
+  createdAt            DateTime  @default(now())
+
+  // Relations
+  novel    Novel? @relation(fields: [novelId], references: [id], onDelete: SetNull)
+  uploader User   @relation(fields: [uploadedBy], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@index([uploadedBy])
+  @@index([novelId])
+}
+
+model ChapterContent {
+  id          String   @id @default(uuid())
+  chapterId   String
+  contentType String   // text, image, system_ui, interactive
+  content     String   @db.Text
+  position    Int
+  styling     Json?    @default("{}")
+  metadata    Json?    @default("{}")
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+
+  @@index([chapterId, position])
+}
+
+// Notifications - Safe deletion
+model Notification {
+  id         String    @id @default(uuid())
+  userId     String
+  type       String    // milestone, achievement, comment, follow, release
+  title      String
+  message    String    @db.Text
+  data       Json?     @default("{}") // additional data for the notification
+  isRead     Boolean   @default(false)
+  isArchived Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  readAt     DateTime?
+
+  // Relations - Restrict deletion
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, isRead, createdAt])
+}
+
+// Audit and Safety Tables
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String   // create, update, delete, restore
+  modelName   String   // User, Novel, Chapter, etc.
+  recordId    String   // ID of the affected record
+  oldData     Json?    // Previous state
+  newData     Json?    // New state
+  ipAddress   String?
+  userAgent   String?
+  timestamp   DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([modelName, recordId])
+  @@index([userId])
+  @@index([timestamp])
+}
+
+model DeletionLog {
+  id            String   @id @default(uuid())
+  userId        String?
+  modelName     String   // What was deleted
+  recordId      String   // ID of deleted record
+  recordData    Json     // Full record data at time of deletion
+  reason        String?  // Why it was deleted
+  restorable    Boolean  @default(true) // Can it be restored?
+  expiresAt     DateTime // When the data will be permanently deleted
+  deletedAt     DateTime @default(now())
+  restoredAt    DateTime?
+  restoredBy    String?
+
+  // Relations
+  deletedBy User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([modelName, recordId])
+  @@index([expiresAt])
+  @@index([restorable])
+}
+
+// Backup tracking
+model BackupLog {
+  id           String   @id @default(uuid())
+  filename     String
+  size         BigInt
+  tables       Json     // List of tables and record counts
+  location     String   // local, s3, neon-branch
+  status       String   // completed, failed, in-progress
+  startedAt    DateTime
+  completedAt  DateTime?
+  error        String?
+  createdAt    DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}

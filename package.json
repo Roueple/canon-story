@@ -6,22 +6,43 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate",
+    "backup": "ts-node src/scripts/backup-neon.ts backup",
+    "backup:no-branch": "ts-node src/scripts/backup-neon.ts backup --no-branch",
+    "backup:with-deleted": "ts-node src/scripts/backup-neon.ts backup --include-deleted",
+    "restore:check": "ts-node src/scripts/backup-neon.ts restore",
+    "restore:branch": "ts-node src/scripts/backup-neon.ts restore-branch"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.21.0",
+    "@clerk/themes": "^2.2.49",
+    "@prisma/client": "^6.9.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.513.0",
+    "next": "15.3.3",
+    "prisma": "^6.9.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.3"
+    "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20.19.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }

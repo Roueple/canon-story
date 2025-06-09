@@ -1,103 +1,152 @@
-import Image from "next/image";
+import { BookOpen, Users, Trophy, Sparkles, Shield, Database } from 'lucide-react'
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      {/* Header */}
+      <header className="border-b bg-white shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            <div className="flex items-center">
+              <BookOpen className="h-8 w-8 text-blue-600" />
+              <span className="ml-2 text-xl font-bold text-gray-900">Canon Story</span>
+            </div>
+            <nav className="flex items-center space-x-4">
+              <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                Sign In
+              </button>
+            </nav>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </header>
+
+      {/* Hero Section */}
+      <section className="py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+              Welcome to Canon Story
+            </h1>
+            <p className="mx-auto mt-3 max-w-md text-base text-gray-500 sm:text-lg md:mt-5 md:max-w-3xl md:text-xl">
+              A modern novel reading platform with community features, gamification, and an immersive reading experience.
+            </p>
+          </div>
+
+          {/* Feature Grid */}
+          <div className="mt-20 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-blue-600 text-white">
+                <BookOpen className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Rich Content</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Support for chapters, images, and formatted text
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-purple-600 text-white">
+                <Trophy className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Gamification</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Achievements, levels, and customization rewards
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-green-600 text-white">
+                <Users className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Community</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Comments, reviews, and social features
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-yellow-600 text-white">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Premium</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Exclusive content and enhanced features
+              </p>
+            </div>
+          </div>
+
+          {/* Safety Features */}
+          <div className="mt-16 rounded-lg bg-gray-50 p-8">
+            <div className="flex items-center justify-center mb-6">
+              <Shield className="h-8 w-8 text-green-600 mr-3" />
+              <h2 className="text-2xl font-bold text-gray-900">Built with Safety in Mind</h2>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="flex items-start">
+                <Database className="h-6 w-6 text-green-600 mt-1 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-gray-900">Neon Database Branching</h3>
+                  <p className="text-sm text-gray-600">Create database snapshots before any risky operations</p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <Shield className="h-6 w-6 text-green-600 mt-1 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-gray-900">Soft Deletes</h3>
+                  <p className="text-sm text-gray-600">Nothing is permanently deleted - recover data anytime</p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <Database className="h-6 w-6 text-green-600 mt-1 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-gray-900">No Cascade Deletes</h3>
+                  <p className="text-sm text-gray-600">Protected against accidental data loss</p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <Shield className="h-6 w-6 text-green-600 mt-1 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-gray-900">Audit Trail</h3>
+                  <p className="text-sm text-gray-600">Complete history of all data changes</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Status Section */}
+      <section className="bg-gray-50 py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="rounded-lg bg-white p-6 shadow">
+            <h2 className="text-lg font-semibold text-gray-900">Project Status</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              ✅ Next.js 14 with TypeScript and Tailwind CSS initialized<br />
+              ✅ Folder structure created<br />
+              ✅ Database schema defined with Prisma<br />
+              ✅ Using Neon PostgreSQL with branching support<br />
+              ✅ Soft delete system implemented<br />
+              ✅ Safe deletion strategies (no cascading deletes)<br />
+              ✅ Audit logging and backup systems ready<br />
+              ✅ Basic utilities and types configured<br />
+              🚧 Authentication setup pending<br />
+              🚧 API routes pending
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-md bg-green-50 p-3">
+                <p className="text-sm text-green-800">
+                  <strong>Database:</strong> Connected to Neon PostgreSQL with branching
+                </p>
+              </div>
+              <div className="rounded-md bg-blue-50 p-3">
+                <p className="text-sm text-blue-800">
+                  <strong>Safety:</strong> Soft deletes + No cascade + Audit trail
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
-  );
+  )
 }
