@@ -1,24 +1,36 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextRequest } from 'next/server';
+﻿import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-// Define the routes that should be protected.
-// Any route not listed here will be public by default.
+// Define the routes that should be protected
 const isProtectedRoute = createRouteMatcher([
-  '/dashboard(.*)',
+  '/admin(.*)',
+  '/profile(.*)',
   '/settings(.*)',
-  // Add any other routes you want to protect here
 ]);
 
-export default clerkMiddleware((auth, req: NextRequest) => {
-  // By using the matcher, you are telling Clerk to protect these routes.
-  // No need to call auth().protect() here. Clerk does it automatically.
+// Define admin-only routes
+const isAdminRoute = createRouteMatcher([
+  '/admin(.*)',
+]);
+
+export default clerkMiddleware(async (auth, req: NextRequest) => {
+  // Protect routes that require authentication
   if (isProtectedRoute(req)) {
-    // This call gets the user's auth state and automatically
-    // redirects to the sign-in page if they are not authenticated.
-    auth();
+    await auth.protect();
+  }
+
+  // For admin routes, check if user has admin role
+  if (isAdminRoute(req)) {
+    const { sessionClaims } = await auth();
+    const userRole = sessionClaims?.metadata?.role;
+
+    if (userRole !== 'admin') {
+      // Redirect non-admins to home
+      return NextResponse.redirect(new URL('/', req.url));
+    }
   }
 });
 
 export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
 };

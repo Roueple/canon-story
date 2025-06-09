@@ -1,26 +1,80 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #2563EB;
+  --secondary: #6B7280;
+  --accent: #3B82F6;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --border: #E5E7EB;
+  --muted: #F3F4F6;
+  --card: #FFFFFF;
+  --cardForeground: #1F2937;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-card-foreground: var(--cardForeground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* Theme-specific styles */
+.dark {
+  color-scheme: dark;
+}
+
+.reading {
+  color-scheme: light;
+}
+
+/* Utility classes for theme colors */
+.bg-background { background-color: var(--background); }
+.bg-foreground { background-color: var(--foreground); }
+.bg-primary { background-color: var(--primary); }
+.bg-secondary { background-color: var(--secondary); }
+.bg-accent { background-color: var(--accent); }
+.bg-success { background-color: var(--success); }
+.bg-warning { background-color: var(--warning); }
+.bg-error { background-color: var(--error); }
+.bg-muted { background-color: var(--muted); }
+.bg-card { background-color: var(--card); }
+
+.text-background { color: var(--background); }
+.text-foreground { color: var(--foreground); }
+.text-primary { color: var(--primary); }
+.text-secondary { color: var(--secondary); }
+.text-accent { color: var(--accent); }
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-error { color: var(--error); }
+.text-muted { color: var(--muted); }
+.text-card-foreground { color: var(--cardForeground); }
+
+.border-border { border-color: var(--border); }
+.border-primary { border-color: var(--primary); }
+.border-secondary { border-color: var(--secondary); }
+.border-accent { border-color: var(--accent); }
+.border-success { border-color: var(--success); }
+.border-warning { border-color: var(--warning); }
+.border-error { border-color: var(--error); }

@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.21.0",
-    "@clerk/themes": "latest",
+    "@clerk/themes": "^2.2.49",
     "@prisma/client": "latest",
     "clsx": "latest",
     "date-fns": "latest",
@@ -23,6 +23,7 @@
     "next": "^15.3.3",
     "react": "latest",
     "react-dom": "latest",
+    "svix": "^1.67.0",
     "tailwind-merge": "latest"
   },
   "devDependencies": {
