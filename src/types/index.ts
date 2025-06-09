@@ -108,8 +108,8 @@ export interface AuditLog {
   action: AuditAction
   modelName: string
   recordId: string
-  oldData?: any | null
-  newData?: any | null
+  oldData?: unknown | null
+  newData?: unknown | null
   ipAddress?: string | null
   userAgent?: string | null
   timestamp: Date
@@ -121,7 +121,7 @@ export interface DeletionLog {
   userId?: string | null
   modelName: string
   recordId: string
-  recordData: any
+  recordData: unknown
   reason?: string | null
   restorable: boolean
   expiresAt: Date

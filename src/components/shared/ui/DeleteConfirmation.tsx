@@ -32,7 +32,7 @@ export function DeleteConfirmation({
     setIsDeleting(true)
     try {
       await onConfirm()
-    } catch (err) {
+    } catch {
       setError('Delete failed. Please try again.')
       setIsDeleting(false)
     }
@@ -63,7 +63,7 @@ export function DeleteConfirmation({
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Type "{confirmText}" to confirm deletion
+            {`Type "${confirmText}" to confirm deletion`}
           </label>
           <input
             type="text"

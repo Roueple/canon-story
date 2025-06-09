@@ -4,7 +4,6 @@
 import { PrismaClient } from '@prisma/client'
 import fs from 'fs/promises'
 import path from 'path'
-import { execSync } from 'child_process'
 
 const prisma = new PrismaClient()
 

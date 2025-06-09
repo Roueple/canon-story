@@ -1,0 +1,22 @@
+// tsconfig.scripts.json
+{
+  "compilerOptions": {
+    // Tells TS to be compatible with Node's ESM-first approach
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    // Allows importing JSON files, which Prisma sometimes needs
+    "resolveJsonModule": true,
+    // Standard for ts-node
+    "esModuleInterop": true,
+    // Specify the target JS version
+    "target": "ES2022",
+    // Your path aliases need to be here too if your scripts use them
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  // Tells ts-node to use the ESM loader
+  "ts-node": {
+    "esm": true
+  }
+}
