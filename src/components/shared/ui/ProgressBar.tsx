@@ -38,9 +38,10 @@ export function ProgressBar({
             'h-full transition-all duration-300 ease-out',
             variants[variant]
           )}
-          style={{ width: {percentage}% }}
+          // --- THIS IS THE CORRECTED LINE ---
+          style={{ width: `${percentage}%` }}
         />
       </div>
     </div>
-  )
+  );
 }

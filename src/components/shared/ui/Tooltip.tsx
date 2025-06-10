@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
+import { createPortal } from 'react-dom'
 
 interface TooltipProps {
   content: ReactNode
@@ -20,6 +21,11 @@ export function Tooltip({
   const [coords, setCoords] = useState({ top: 0, left: 0 })
   const triggerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!isVisible || !triggerRef.current || !tooltipRef.current) return
@@ -30,22 +36,26 @@ export function Tooltip({
     let top = 0
     let left = 0
 
+    // Add scroll position to calculate absolute coordinates
+    const scrollX = window.scrollX
+    const scrollY = window.scrollY
+
     switch (position) {
       case 'top':
-        top = trigger.top - tooltip.height - 8
-        left = trigger.left + (trigger.width - tooltip.width) / 2
+        top = trigger.top + scrollY - tooltip.height - 8
+        left = trigger.left + scrollX + (trigger.width - tooltip.width) / 2
         break
       case 'bottom':
-        top = trigger.bottom + 8
-        left = trigger.left + (trigger.width - tooltip.width) / 2
+        top = trigger.bottom + scrollY + 8
+        left = trigger.left + scrollX + (trigger.width - tooltip.width) / 2
         break
       case 'left':
-        top = trigger.top + (trigger.height - tooltip.height) / 2
-        left = trigger.left - tooltip.width - 8
+        top = trigger.top + scrollY + (trigger.height - tooltip.height) / 2
+        left = trigger.left + scrollX - tooltip.width - 8
         break
       case 'right':
-        top = trigger.top + (trigger.height - tooltip.height) / 2
-        left = trigger.right + 8
+        top = trigger.top + scrollY + (trigger.height - tooltip.height) / 2
+        left = trigger.right + scrollX + 8
         break
     }
 
@@ -62,22 +72,26 @@ export function Tooltip({
       >
         {children}
       </div>
-      {isVisible && (
+      {isMounted && isVisible && createPortal(
         <div
           ref={tooltipRef}
           className={cn(
             'fixed z-50 px-2 py-1 text-sm rounded-md',
             'bg-gray-900 text-white',
             'pointer-events-none',
+            'transition-opacity duration-200',
+            isVisible ? 'opacity-100' : 'opacity-0', // Added for smooth fade
             className
           )}
+          // --- THESE ARE THE CORRECTED LINES ---
           style={{
-            top: {coords.top}px,
-            left: {coords.left}px,
+            top: `${coords.top}px`,
+            left: `${coords.left}px`,
           }}
         >
           {content}
-        </div>
+        </div>,
+        document.body // Render the tooltip in the body
       )}
     </>
   )

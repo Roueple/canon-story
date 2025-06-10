@@ -30,7 +30,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     // Set CSS variables
     Object.entries(themeColors).forEach(([key, value]) => {
-      root.style.setProperty(--, value)
+      root.style.setProperty(`--${key}`, value)
     })
     
     // Set theme class
