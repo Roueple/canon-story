@@ -1,4 +1,81 @@
-// src/app/(public)/page.tsx
+// fix-homepage.js
+// Fixes the homepage routing and navigation issues
+// Run with: node fix-homepage.js
+
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+async function createFile(filePath, content) {
+  try {
+    const fullPath = path.join(process.cwd(), filePath);
+    const dir = path.dirname(fullPath);
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(fullPath, content.trim(), 'utf-8');
+    console.log(`✅ Created: ${filePath}`);
+  } catch (error) {
+    console.error(`❌ Error creating ${filePath}:`, error.message);
+  }
+}
+
+async function deleteFile(filePath) {
+  try {
+    const fullPath = path.join(process.cwd(), filePath);
+    await fs.unlink(fullPath);
+    console.log(`🗑️  Deleted: ${filePath}`);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error(`❌ Error deleting ${filePath}:`, error.message);
+    }
+  }
+}
+
+// Move the main page to public group
+const newHomepage = `// src/app/page.tsx
+// This file redirects to the public homepage
+import { redirect } from 'next/navigation'
+
+export default function Page() {
+  redirect('/')
+}`;
+
+// Updated root layout without providers (they should be in the root layout)
+const rootLayout = `import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import { ThemeProvider } from '@/providers/theme-provider'
+import { ClerkProvider } from '@/providers/clerk-provider'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'Canon Story - Modern Novel Reading Platform',
+  description: 'A comprehensive novel reading platform with community features and gamification',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider>
+          <ClerkProvider>
+            {children}
+          </ClerkProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+}`;
+
+// Enhanced public homepage with working navigation
+const publicHomepage = `// src/app/(public)/page.tsx
 import { prisma } from '@/lib/db'
 import { BookOpen, TrendingUp, Clock, Star, Shield, ArrowRight, Users, FileText } from 'lucide-react'
 import Link from 'next/link'
@@ -171,7 +248,7 @@ export default async function HomePage() {
               {featuredNovels.map((novel) => (
                 <Link
                   key={novel.id}
-                  href={`/novels/${novel.id}`}
+                  href={\`/novels/\${novel.id}\`}
                   className="bg-gray-50 dark:bg-gray-900 rounded-lg shadow hover:shadow-lg transition-shadow p-6"
                 >
                   <div
@@ -243,4 +320,33 @@ export default async function HomePage() {
       </section>
     </div>
   )
+}`;
+
+async function main() {
+  console.log('🔧 Fixing Homepage and Navigation Issues');
+  console.log('======================================\n');
+
+  const files = [
+    { path: 'src/app/layout.tsx', content: rootLayout },
+    { path: 'src/app/(public)/page.tsx', content: publicHomepage }
+  ];
+
+  // First, let's delete the old homepage
+  await deleteFile('src/app/page.tsx');
+
+  // Create the new files
+  for (const file of files) {
+    await createFile(file.path, file.content);
+  }
+
+  console.log('\n✅ Homepage fixed!');
+  console.log('\n📝 Next steps:');
+  console.log('1. Make sure your .env file has Clerk keys:');
+  console.log('   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...');
+  console.log('   CLERK_SECRET_KEY=sk_test_...');
+  console.log('2. Restart your dev server (Ctrl+C then npm run dev)');
+  console.log('3. Visit http://localhost:3000');
+  console.log('4. You should now see the new homepage with navigation!');
 }
+
+main().catch(console.error);

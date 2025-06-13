@@ -1,4 +1,4 @@
-﻿// Theme definitions for Canon Story
+// Theme definitions for Canon Story
 export const themes = {
   light: {
     name: 'Light',

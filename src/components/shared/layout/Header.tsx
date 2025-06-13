@@ -1,7 +1,7 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
-import { UserButton, useUser, SignInButton } from '@clerk/nextjs'
+import { UserButton, useUser, SignInButton, SignedIn, SignedOut } from '@clerk/nextjs'
 import { BookOpen, Menu, Moon, Sun, BookOpenCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useTheme } from '@/providers/theme-provider'
@@ -88,7 +88,7 @@ export function Header() {
             {/* User Menu */}
             {isLoaded && (
               <>
-                {user ? (
+                <SignedIn>
                   <UserButton 
                     afterSignOutUrl="/"
                     appearance={{
@@ -97,11 +97,12 @@ export function Header() {
                       }
                     }}
                   />
-                ) : (
+                </SignedIn>
+                <SignedOut>
                   <SignInButton mode="modal">
                     <Button size="sm">Sign In</Button>
                   </SignInButton>
-                )}
+                </SignedOut>
               </>
             )}
 
