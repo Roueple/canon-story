@@ -1,7 +1,7 @@
 // src/app/(admin)/admin/novels/page.tsx
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
-import { Plus, Edit, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { Plus, Edit, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/shared/ui'
 import { formatDate, formatNumber } from '@/lib/utils'
 
@@ -42,24 +42,12 @@ export default async function AdminNovelsPage() {
         <table className="w-full">
           <thead className="bg-gray-900">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Novel
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Chapters
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Views
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Created
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Novel</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Chapters</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Views</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Created</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
@@ -67,17 +55,17 @@ export default async function AdminNovelsPage() {
               <tr key={novel.id} className="hover:bg-gray-750">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div
-                      className="h-10 w-10 rounded-lg mr-3"
-                      style={{ backgroundColor: novel.coverColor }}
-                    />
+                    {novel.coverImageUrl ? (
+                      <img src={novel.coverImageUrl} alt={novel.title} className="h-10 w-10 rounded-lg mr-3 object-cover" />
+                    ) : (
+                      <div
+                        className="h-10 w-10 rounded-lg mr-3"
+                        style={{ backgroundColor: novel.coverColor }}
+                      />
+                    )}
                     <div>
-                      <div className="text-sm font-medium text-white">
-                        {novel.title}
-                      </div>
-                      <div className="text-sm text-gray-400">
-                        by {novel.author.displayName || novel.author.username}
-                      </div>
+                      <div className="text-sm font-medium text-white">{novel.title}</div>
+                      <div className="text-sm text-gray-400">by {novel.author.displayName || novel.author.username}</div>
                     </div>
                   </div>
                 </td>
@@ -92,32 +80,22 @@ export default async function AdminNovelsPage() {
                       {novel.status}
                     </span>
                     {novel.isPublished ? (
-                      <Eye className="h-4 w-4 text-green-400" />
+                      <Eye className="h-4 w-4 text-green-400" title="Published" />
                     ) : (
-                      <EyeOff className="h-4 w-4 text-gray-500" />
+                      <EyeOff className="h-4 w-4 text-gray-500" title="Draft" />
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {novel._count.chapters}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {formatNumber(novel.totalViews)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                  {formatDate(novel.createdAt)}
-                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{novel._count.chapters}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{formatNumber(novel.totalViews)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{formatDate(novel.createdAt)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex justify-end gap-2">
                     <Link href={`/admin/novels/${novel.id}`}>
-                      <Button size="sm" variant="ghost">
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <Button size="sm" variant="ghost"><Edit className="h-4 w-4" /></Button>
                     </Link>
                     <Link href={`/admin/novels/${novel.id}/chapters`}>
-                      <Button size="sm" variant="ghost">
-                        Chapters
-                      </Button>
+                      <Button size="sm" variant="ghost">Chapters</Button>
                     </Link>
                   </div>
                 </td>
@@ -125,11 +103,8 @@ export default async function AdminNovelsPage() {
             ))}
           </tbody>
         </table>
-
         {novels.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-400">No novels yet. Create your first novel!</p>
-          </div>
+          <div className="text-center py-12"><p className="text-gray-400">No novels yet. Create your first novel!</p></div>
         )}
       </div>
     </div>

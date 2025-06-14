@@ -13,6 +13,8 @@ interface NovelFormProps {
     description?: string
     coverColor: string
     status: string
+    isPublished?: boolean
+    coverImageUrl?: string
   }
 }
 
@@ -24,14 +26,7 @@ const statusOptions = [
 ]
 
 const colorOptions = [
-  '#3B82F6', // blue
-  '#8B5CF6', // purple
-  '#10B981', // green
-  '#F59E0B', // yellow
-  '#EF4444', // red
-  '#EC4899', // pink
-  '#6366F1', // indigo
-  '#14B8A6', // teal
+  '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#6366F1', '#14B8A6',
 ]
 
 export function NovelForm({ onSubmit, isLoading, error, initialData }: NovelFormProps) {
@@ -39,7 +34,9 @@ export function NovelForm({ onSubmit, isLoading, error, initialData }: NovelForm
     title: initialData?.title || '',
     description: initialData?.description || '',
     coverColor: initialData?.coverColor || '#3B82F6',
-    status: initialData?.status || 'ongoing'
+    status: initialData?.status || 'ongoing',
+    isPublished: initialData?.isPublished || false,
+    coverImageUrl: initialData?.coverImageUrl || '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,7 +80,22 @@ export function NovelForm({ onSubmit, isLoading, error, initialData }: NovelForm
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
-          Cover Color
+          Cover Image URL
+        </label>
+        <Input
+          value={formData.coverImageUrl}
+          onChange={(e) => setFormData({ ...formData, coverImageUrl: e.target.value })}
+          placeholder="https://example.com/image.png"
+          className="bg-gray-700 border-gray-600 text-white"
+        />
+        <p className="mt-1 text-xs text-gray-400">
+          Paste a URL to an image. The cover color will be used if this is empty.
+        </p>
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Cover Color (Fallback)
         </label>
         <div className="flex gap-2">
           {colorOptions.map((color) => (
@@ -117,6 +129,19 @@ export function NovelForm({ onSubmit, isLoading, error, initialData }: NovelForm
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          id="isPublished"
+          checked={formData.isPublished}
+          onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
+          className="h-4 w-4 rounded text-primary bg-gray-700 border-gray-600 focus:ring-primary"
+        />
+        <label htmlFor="isPublished" className="text-sm text-gray-300">
+          Publish this novel
+        </label>
       </div>
 
       <div className="flex justify-end gap-3">

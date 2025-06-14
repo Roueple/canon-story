@@ -70,7 +70,9 @@ export function EditNovelForm({ novel, genres }: EditNovelFormProps) {
           title: novel.title,
           description: novel.description || '',
           coverColor: novel.coverColor,
-          status: novel.status
+          status: novel.status,
+          isPublished: novel.isPublished,
+          coverImageUrl: novel.coverImageUrl || ''
         }}
       />
 

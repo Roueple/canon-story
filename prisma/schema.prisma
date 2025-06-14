@@ -60,6 +60,7 @@ model Novel {
   slug             String    @unique
   description      String?
   coverColor       String    @default("#3B82F6")
+  coverImageUrl  String?
   authorId         String
   status           String    @default("ongoing") // ongoing, completed, hiatus, dropped, archived
   isPublished      Boolean   @default(false)
