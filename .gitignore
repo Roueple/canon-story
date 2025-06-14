@@ -70,6 +70,7 @@ temp/
 # Upload directories
 uploads/
 public/uploads/
+script-archive/
 
 # Shell scripts (optional, remove if you want to track them)
 *.sh
