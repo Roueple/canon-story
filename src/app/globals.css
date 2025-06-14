@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 :root {
   --background: #ffffff;
@@ -78,3 +78,37 @@ body {
 .border-success { border-color: var(--success); }
 .border-warning { border-color: var(--warning); }
 .border-error { border-color: var(--error); }
+
+/* CRITICAL: Force white text in admin area contenteditable */
+.bg-gray-900 [contenteditable],
+.bg-gray-900 [contenteditable] * {
+  color: #F3F4F6 !important;
+}
+
+/* Ensure placeholder text is visible */
+[contenteditable]:empty:before {
+  content: attr(placeholder);
+  color: #9CA3AF !important;
+  pointer-events: none;
+  display: block;
+}
+
+/* Admin area specific styles */
+.bg-gray-900 {
+  color: #F3F4F6;
+}
+
+.bg-gray-900 .prose {
+  color: #F3F4F6;
+}
+
+/* Fix for content editable in dark mode */
+[contenteditable] {
+  -webkit-text-fill-color: #F3F4F6;
+}
+
+/* Selection colors in editor */
+::selection {
+  background-color: #3B82F6;
+  color: #FFFFFF;
+}

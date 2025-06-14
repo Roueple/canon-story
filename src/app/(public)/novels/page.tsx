@@ -34,22 +34,26 @@ export default async function NovelsPage() {
   const novels = await getPublishedNovels()
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-foreground">Browse All Novels</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-3xl font-bold mb-8 text-foreground">Browse All Novels</h1>
       {novels.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {novels.map((novel) => (
             <Link
               key={novel.id}
               href={`/novels/${novel.id}`}
               className="group bg-card border border-border rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col"
             >
-              <div
-                className="h-3 w-full"
-                style={{ backgroundColor: novel.coverColor || '#3B82F6' }}
-              />
-              <div className="p-6 flex-grow flex flex-col">
-                <h2 className="text-xl font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors">
+              {novel.coverImageUrl ? (
+                <img src={novel.coverImageUrl} alt={novel.title} className="h-48 w-full object-cover" />
+              ) : (
+                <div
+                  className="h-48 w-full"
+                  style={{ backgroundColor: novel.coverColor || '#3B82F6' }}
+                />
+              )}
+              <div className="p-4 flex-grow flex flex-col">
+                <h2 className="text-lg font-semibold text-card-foreground mb-1 group-hover:text-primary transition-colors truncate">
                   {novel.title}
                 </h2>
                 <p className="text-sm text-secondary mb-3">
@@ -59,11 +63,11 @@ export default async function NovelsPage() {
                   {novel.description || 'No description available.'}
                 </p>
                 <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-sm text-secondary">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <BookOpen className="h-4 w-4" />
-                    <span>{novel._count.chapters} Chapters</span>
+                    <span>{novel._count.chapters} Chs</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <Star className="h-4 w-4 text-yellow-500" />
                     <span>{novel.averageRating.toFixed(1)}</span>
                   </div>
@@ -73,7 +77,7 @@ export default async function NovelsPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 bg-card border border-border rounded-lg">
+        <div className="text-center py-16 bg-card border border-border rounded-lg">
           <h2 className="text-xl font-semibold text-foreground">No Novels Found</h2>
           <p className="text-secondary mt-2">
             There are no published novels available at the moment. Please check back later!
