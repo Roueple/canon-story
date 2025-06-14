@@ -5,66 +5,52 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api/utils'
 import { chapterService } from '@/services/chapterService'
 import { prisma } from '@/lib/db'
 
-// GET /api/admin/chapters/[id] - Get chapter details
-export const GET = createAdminRoute(async (req: NextRequest, user: any) => {
+// CORRECTED: Handler signature updated to use context
+export const GET = createAdminRoute(async (req, { params }) => {
   try {
-    const url = new URL(req.url)
-    const id = url.pathname.split('/').pop()
-    
+    const { id } = params;
     if (!id) {
-      return errorResponse('Chapter ID required', 400)
+      return errorResponse('Chapter ID is required', 400);
     }
-
-    const chapter = await chapterService.findById(id, true) // Include deleted
-
+    const chapter = await chapterService.findById(id, true);
     if (!chapter) {
-      return errorResponse('Chapter not found', 404)
+      return errorResponse('Chapter not found', 404);
     }
-
-    return successResponse(chapter)
+    return successResponse(chapter);
   } catch (error) {
-    return handleApiError(error)
+    return handleApiError(error);
   }
-})
+});
 
-// PUT /api/admin/chapters/[id] - Update chapter
-export const PUT = createAdminRoute(async (req: NextRequest, user: any) => {
+// CORRECTED: Handler signature updated to use context
+export const PUT = createAdminRoute(async (req, { params }) => {
   try {
-    const url = new URL(req.url)
-    const id = url.pathname.split('/').pop()
-    
+    const { id } = params;
     if (!id) {
-      return errorResponse('Chapter ID required', 400)
+      return errorResponse('Chapter ID is required', 400);
     }
-
-    const body = await req.json()
-    const chapter = await chapterService.update(id, body)
-
-    // Update novel's updatedAt timestamp
+    const body = await req.json();
+    const chapter = await chapterService.update(id, body);
     await prisma.novel.update({
       where: { id: chapter.novelId },
       data: { updatedAt: new Date() }
-    })
-    
-    return successResponse(chapter)
+    });
+    return successResponse(chapter);
   } catch (error) {
-    return handleApiError(error)
+    return handleApiError(error);
   }
-})
+});
 
-// DELETE /api/admin/chapters/[id] - Soft delete chapter
-export const DELETE = createAdminRoute(async (req: NextRequest, user: any) => {
+// CORRECTED: Handler signature updated to use context
+export const DELETE = createAdminRoute(async (req, { user, params }) => {
   try {
-    const url = new URL(req.url)
-    const id = url.pathname.split('/').pop()
-    
+    const { id } = params;
     if (!id) {
-      return errorResponse('Chapter ID required', 400)
+      return errorResponse('Chapter ID is required', 400);
     }
-
-    await chapterService.softDelete(id, user.id)
-    return successResponse({ message: 'Chapter deleted successfully' })
+    await chapterService.softDelete(id, user.id);
+    return successResponse({ message: 'Chapter deleted successfully' });
   } catch (error) {
-    return handleApiError(error)
+    return handleApiError(error);
   }
-})
+});

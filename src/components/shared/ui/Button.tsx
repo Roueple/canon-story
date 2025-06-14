@@ -1,4 +1,7 @@
-﻿import { type ReactNode, type ButtonHTMLAttributes } from 'react'
+// src/components/shared/ui/Button.tsx
+'use client'
+
+import { type ReactNode, type ButtonHTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 
@@ -21,17 +24,15 @@ export function Button({
   const variants = {
     primary: 'bg-primary text-white hover:bg-primary/90',
     secondary: 'bg-secondary text-white hover:bg-secondary/90',
-    outline: 'border border-border bg-transparent hover:bg-muted',
-    ghost: 'bg-transparent hover:bg-muted',
+    outline: 'border border-gray-600 bg-transparent hover:bg-gray-700 text-gray-300 hover:text-white',
+    ghost: 'bg-transparent hover:bg-gray-700 text-gray-300 hover:text-white',
     danger: 'bg-error text-white hover:bg-error/90',
   }
-
   const sizes = {
     sm: 'px-3 py-1.5 text-sm',
     md: 'px-4 py-2',
     lg: 'px-6 py-3 text-lg',
   }
-
   return (
     <button
       className={cn(
