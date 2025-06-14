@@ -73,3 +73,5 @@ public/uploads/
 
 # Shell scripts (optional, remove if you want to track them)
 *.sh
+# clerk configuration (can include secrets)
+/.clerk/
