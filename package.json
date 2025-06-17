@@ -25,7 +25,9 @@
     "react": "latest",
     "react-dom": "latest",
     "svix": "^1.67.0",
-    "tailwind-merge": "latest"
+    "tailwind-merge": "latest",
+    "cloudinary": "^2.2.0",
+    "react-dropzone": "^14.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.8",
