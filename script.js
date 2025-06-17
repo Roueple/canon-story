@@ -1,3 +1,20 @@
+import fs from 'fs/promises';
+import path from 'path';
+
+// Helper function to create or overwrite a file
+async function createFile(filePath, content) {
+    try {
+        const fullPath = path.join(process.cwd(), filePath);
+        const dir = path.dirname(fullPath);
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(fullPath, content.trim(), 'utf-8');
+        console.log(`✅ Updated: ${filePath}`);
+    } catch (error) {
+        console.error(`❌ Error updating ${filePath}:`, error.message);
+    }
+}
+
+const novelFormContent = `
 // src/components/admin/forms/NovelForm.tsx
 'use client'
 
@@ -140,11 +157,11 @@ export function NovelForm({ onSubmit, isLoading, error, initialData }: NovelForm
                 key={color}
                 type="button"
                 onClick={() => setFormData({ ...formData, coverColor: color })}
-                className={`w-10 h-10 rounded-lg border-2 ${
+                className={\`w-10 h-10 rounded-lg border-2 \${
                   formData.coverColor === color
                     ? 'border-white ring-2 ring-offset-2 ring-offset-gray-800 ring-white'
                     : 'border-transparent'
-                }`}
+                }\`}
                 style={{ backgroundColor: color }}
               />
             ))}
@@ -203,3 +220,23 @@ export function NovelForm({ onSubmit, isLoading, error, initialData }: NovelForm
     </>
   )
 }
+`;
+
+async function main() {
+    console.log('🚀 Enhancing image upload capabilities...');
+    console.log('================================================\n');
+
+    console.log('ℹ️  The chapter editor already supports direct image uploads via the "Insert Image" button in its toolbar. No changes are needed there.');
+    console.log('🎨 Updating the Novel Form to use the Media Library for cover images...');
+
+    await createFile('src/components/admin/forms/NovelForm.tsx', novelFormContent);
+
+    console.log('\n✅ Script finished successfully!');
+    console.log('\nNext steps:');
+    console.log('1. If your development server is running, please restart it to apply the changes.');
+    console.log('   -> Press Ctrl+C in your terminal, then run: npm run dev');
+    console.log('2. Go to "/admin/novels/create" or edit an existing novel.');
+    console.log('3. You should now see a "Select from Library" button to choose a cover image.');
+}
+
+main().catch(console.error);
