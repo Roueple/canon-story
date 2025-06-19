@@ -18,16 +18,17 @@
     "@clerk/themes": "^2.2.49",
     "@prisma/client": "latest",
     "@radix-ui/react-slot": "^1.2.3",
+    "cloudinary": "^2.2.0",
     "clsx": "latest",
     "date-fns": "latest",
     "lucide-react": "latest",
+    "mammoth": "^1.9.1",
     "next": "^15.3.3",
     "react": "latest",
     "react-dom": "latest",
+    "react-dropzone": "^14.2.3",
     "svix": "^1.67.0",
-    "tailwind-merge": "latest",
-    "cloudinary": "^2.2.0",
-    "react-dropzone": "^14.2.3"
+    "tailwind-merge": "latest"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.8",
