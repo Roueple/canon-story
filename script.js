@@ -1,242 +1,83 @@
+#!/usr/bin/env node
+// fix-slugify-error.js
+// Fixes the slugify function error by adding the export to utils.ts
+
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Helper function to create or overwrite a file
-async function createFile(filePath, content) {
-    try {
-        const fullPath = path.join(process.cwd(), filePath);
-        const dir = path.dirname(fullPath);
-        await fs.mkdir(dir, { recursive: true });
-        await fs.writeFile(fullPath, content.trim(), 'utf-8');
-        console.log(`✅ Updated: ${filePath}`);
-    } catch (error) {
-        console.error(`❌ Error updating ${filePath}:`, error.message);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+async function fixSlugifyError() {
+  console.log('🔧 Fixing slugify function error...\n');
+
+  // Fix 1: Add slugify export to utils.ts
+  const utilsPath = path.join(process.cwd(), 'src/lib/utils.ts');
+  
+  try {
+    let utilsContent = await fs.readFile(utilsPath, 'utf-8');
+    
+    // Check if slugify is already exported
+    if (!utilsContent.includes('export function slugify') && !utilsContent.includes('export { generateSlug as slugify }')) {
+      // Add slugify as an alias to generateSlug
+      const exportLine = '\n// Alias for backward compatibility\nexport const slugify = generateSlug;\n';
+      
+      // Find a good place to add it (after generateSlug function)
+      const generateSlugEndIndex = utilsContent.indexOf('}\n\n// Format a number');
+      
+      if (generateSlugEndIndex !== -1) {
+        utilsContent = 
+          utilsContent.slice(0, generateSlugEndIndex + 1) + 
+          exportLine + 
+          utilsContent.slice(generateSlugEndIndex + 1);
+      } else {
+        // If we can't find the exact spot, add it at the end
+        utilsContent += exportLine;
+      }
+      
+      await fs.writeFile(utilsPath, utilsContent);
+      console.log('✅ Added slugify export to utils.ts');
+    } else {
+      console.log('ℹ️  slugify is already exported in utils.ts');
     }
-}
-
-const novelFormContent = `
-// src/components/admin/forms/NovelForm.tsx
-'use client'
-
-import { useState } from 'react'
-import Image from 'next/image'
-import { Button, Input } from '@/components/shared/ui'
-import { MediaModal } from '@/components/admin/media/MediaModal'
-import { ImageIcon, X } from 'lucide-react'
-
-interface NovelFormProps {
-  onSubmit: (data: any) => Promise<void>
-  isLoading: boolean
-  error?: string
-  initialData?: {
-    title: string
-    description?: string
-    coverColor: string
-    status: string
-    isPublished?: boolean
-    coverImageUrl?: string
-  }
-}
-
-const statusOptions = [
-  { value: 'ongoing', label: 'Ongoing' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'hiatus', label: 'Hiatus' },
-  { value: 'dropped', label: 'Dropped' }
-]
-
-const colorOptions = [
-  '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#6366F1', '#14B8A6',
-]
-
-export function NovelForm({ onSubmit, isLoading, error, initialData }: NovelFormProps) {
-  const [isMediaModalOpen, setMediaModalOpen] = useState(false)
-  const [formData, setFormData] = useState({
-    title: initialData?.title || '',
-    description: initialData?.description || '',
-    coverColor: initialData?.coverColor || '#3B82F6',
-    status: initialData?.status || 'ongoing',
-    isPublished: initialData?.isPublished || false,
-    coverImageUrl: initialData?.coverImageUrl || '',
-  })
-
-  const handleImageSelect = (media: { url: string }) => {
-    setFormData({ ...formData, coverImageUrl: media.url })
-    setMediaModalOpen(false)
+    
+  } catch (error) {
+    console.error('❌ Error updating utils.ts:', error.message);
+    return false;
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    await onSubmit(formData)
+  // Verify the services are using it correctly
+  console.log('\n📋 Checking service files...');
+  
+  const servicesToCheck = [
+    'src/services/novelService.ts',
+    'src/services/chapterService.ts'
+  ];
+  
+  for (const servicePath of servicesToCheck) {
+    try {
+      const fullPath = path.join(process.cwd(), servicePath);
+      const content = await fs.readFile(fullPath, 'utf-8');
+      
+      if (content.includes('import { slugify }') || content.includes('import { generateSlug, slugify }')) {
+        console.log(`✅ ${servicePath} - imports slugify correctly`);
+      } else if (content.includes('import { generateSlug }')) {
+        console.log(`⚠️  ${servicePath} - uses generateSlug instead of slugify`);
+      }
+    } catch (error) {
+      console.log(`⚠️  ${servicePath} - file not found`);
+    }
   }
 
-  return (
-    <>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
-          <div className="bg-red-900/20 border border-red-500 text-red-400 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Title *
-          </label>
-          <Input
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Enter novel title"
-            required
-            className="bg-gray-700 border-gray-600 text-white"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Description
-          </label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Enter novel description"
-            rows={4}
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Cover Image
-          </label>
-          <div className="mt-2 flex items-center gap-4">
-            <div className="w-24 h-36 bg-gray-700 rounded-md flex items-center justify-center relative overflow-hidden border border-gray-600">
-              {formData.coverImageUrl ? (
-                <Image
-                  src={formData.coverImageUrl}
-                  alt="Cover preview"
-                  layout="fill"
-                  objectFit="cover"
-                  className="bg-gray-800"
-                />
-              ) : (
-                <ImageIcon className="h-8 w-8 text-gray-500" />
-              )}
-            </div>
-            <div className="flex-grow">
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => setMediaModalOpen(true)}>
-                  {formData.coverImageUrl ? 'Change Image' : 'Select from Library'}
-                </Button>
-                {formData.coverImageUrl && (
-                  <Button type="button" variant="danger" size="sm" onClick={() => setFormData({ ...formData, coverImageUrl: '' })}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <p className="mt-2 text-xs text-gray-400">
-                Or paste a URL below. The cover color will be used if this is empty.
-              </p>
-              <Input
-                value={formData.coverImageUrl || ''}
-                onChange={(e) => setFormData({ ...formData, coverImageUrl: e.target.value })}
-                placeholder="https://example.com/image.png"
-                className="bg-gray-700 border-gray-600 text-white mt-2"
-              />
-            </div>
-          </div>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Cover Color (Fallback)
-          </label>
-          <div className="flex gap-2 flex-wrap">
-            {colorOptions.map((color) => (
-              <button
-                key={color}
-                type="button"
-                onClick={() => setFormData({ ...formData, coverColor: color })}
-                className={\`w-10 h-10 rounded-lg border-2 \${
-                  formData.coverColor === color
-                    ? 'border-white ring-2 ring-offset-2 ring-offset-gray-800 ring-white'
-                    : 'border-transparent'
-                }\`}
-                style={{ backgroundColor: color }}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Status
-          </label>
-          <select
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            {statusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            id="isPublished"
-            checked={formData.isPublished}
-            onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
-            className="h-4 w-4 rounded text-primary bg-gray-700 border-gray-600 focus:ring-primary"
-          />
-          <label htmlFor="isPublished" className="text-sm text-gray-300">
-            Publish this novel
-          </label>
-        </div>
-
-        <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => window.history.back()}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" isLoading={isLoading}>
-            {initialData ? 'Update Novel' : 'Create Novel'}
-          </Button>
-        </div>
-      </form>
-      <MediaModal
-        isOpen={isMediaModalOpen}
-        onClose={() => setMediaModalOpen(false)}
-        onSelect={handleImageSelect}
-      />
-    </>
-  )
-}
-`;
-
-async function main() {
-    console.log('🚀 Enhancing image upload capabilities...');
-    console.log('================================================\n');
-
-    console.log('ℹ️  The chapter editor already supports direct image uploads via the "Insert Image" button in its toolbar. No changes are needed there.');
-    console.log('🎨 Updating the Novel Form to use the Media Library for cover images...');
-
-    await createFile('src/components/admin/forms/NovelForm.tsx', novelFormContent);
-
-    console.log('\n✅ Script finished successfully!');
-    console.log('\nNext steps:');
-    console.log('1. If your development server is running, please restart it to apply the changes.');
-    console.log('   -> Press Ctrl+C in your terminal, then run: npm run dev');
-    console.log('2. Go to "/admin/novels/create" or edit an existing novel.');
-    console.log('3. You should now see a "Select from Library" button to choose a cover image.');
+  console.log('\n✨ Fix completed!');
+  console.log('\n📝 Next steps:');
+  console.log('1. Restart your development server (Ctrl+C then npm run dev)');
+  console.log('2. Try creating a novel again - the error should be resolved');
+  console.log('\nNote: Both "slugify" and "generateSlug" will now work for backward compatibility.');
+  
+  return true;
 }
 
-main().catch(console.error);
+// Run the fix
+fixSlugifyError().catch(console.error);

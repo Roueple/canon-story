@@ -119,3 +119,5 @@ export function formatChapterNumber(chapterNumber: number | string): string {
   // Otherwise, show up to 2 decimal places
   return num.toFixed(2).replace(/\.?0+$/, '')
 }
+// Alias for backward compatibility
+export const slugify = generateSlug;
