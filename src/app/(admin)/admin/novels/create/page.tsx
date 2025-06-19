@@ -30,7 +30,8 @@ export default function CreateNovelPage() {
       }
 
       const result = await response.json()
-      router.push(`/admin/novels/${result.data.id}`)
+      // FIX: Redirect to /admin/novels instead of the novel detail page
+      router.push('/admin/novels')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -40,7 +41,10 @@ export default function CreateNovelPage() {
 
   return (
     <div>
-      <Link href="/admin/novels" className="inline-flex items-center text-gray-400 hover:text-white mb-6">
+      <Link 
+        href="/admin/novels" 
+        className="inline-flex items-center text-gray-400 hover:text-white mb-6"
+      >
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Novels
       </Link>

@@ -28,7 +28,7 @@ export const GET = createAdminRoute(async (req: NextRequest) => {
 })
 
 // POST /api/admin/novels - Create new novel
-export const POST = createAdminRoute(async (req: NextRequest, user: any) => {
+export const POST = createAdminRoute(async (req: NextRequest, { user }) => {
   try {
     const body = await req.json()
     

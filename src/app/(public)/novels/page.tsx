@@ -1,41 +1,35 @@
 // src/app/(public)/novels/page.tsx
-import Link from 'next/link'
 import { prisma } from '@/lib/db'
+import Link from 'next/link'
 import { BookOpen, Star } from 'lucide-react'
-import { formatNumber } from '@/lib/utils'
 
 async function getPublishedNovels() {
-  try {
-    const novels = await prisma.novel.findMany({
-      where: {
-        isPublished: true,
-        isDeleted: false
+  return await prisma.novel.findMany({
+    where: {
+      isPublished: true,
+      isDeleted: false,
+    },
+    include: {
+      author: {
+        select: { displayName: true, username: true }
       },
-      include: {
-        author: {
-          select: { displayName: true, username: true }
-        },
-        _count: {
-          select: { chapters: { where: { isPublished: true, isDeleted: false } } }
-        }
-      },
-      orderBy: {
-        updatedAt: 'desc'
+      _count: {
+        select: { chapters: true }
       }
-    });
-    return novels;
-  } catch (error) {
-    console.error("Failed to fetch novels:", error);
-    return [];
-  }
+    },
+    orderBy: {
+      updatedAt: 'desc'
+    }
+  })
 }
 
 export default async function NovelsPage() {
   const novels = await getPublishedNovels()
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold mb-8 text-foreground">Browse All Novels</h1>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">All Novels</h1>
+      
       {novels.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {novels.map((novel) => (
@@ -44,14 +38,23 @@ export default async function NovelsPage() {
               href={`/novels/${novel.id}`}
               className="group bg-card border border-border rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col"
             >
-              {novel.coverImageUrl ? (
-                <img src={novel.coverImageUrl} alt={novel.title} className="h-48 w-full object-cover" />
-              ) : (
-                <div
-                  className="h-48 w-full"
-                  style={{ backgroundColor: novel.coverColor || '#3B82F6' }}
-                />
-              )}
+              {/* Cover Image - Aspect ratio preserved */}
+              <div className="relative w-full aspect-[2/3] bg-gray-200 dark:bg-gray-800">
+                {novel.coverImageUrl ? (
+                  <img 
+                    src={novel.coverImageUrl} 
+                    alt={novel.title} 
+                    className="absolute inset-0 w-full h-full object-contain"
+                  />
+                ) : (
+                  <div
+                    className="absolute inset-0 w-full h-full"
+                    style={{ backgroundColor: novel.coverColor || '#3B82F6' }}
+                  />
+                )}
+              </div>
+              
+              {/* Novel Info */}
               <div className="p-4 flex-grow flex flex-col">
                 <h2 className="text-lg font-semibold text-card-foreground mb-1 group-hover:text-primary transition-colors truncate">
                   {novel.title}
@@ -69,7 +72,7 @@ export default async function NovelsPage() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Star className="h-4 w-4 text-yellow-500" />
-                    <span>{novel.averageRating.toFixed(1)}</span>
+                    <span>{Number(novel.averageRating).toFixed(1)}</span>
                   </div>
                 </div>
               </div>

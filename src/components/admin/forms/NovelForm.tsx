@@ -112,13 +112,13 @@ export function NovelForm({ onSubmit, isLoading, error, initialData }: NovelForm
                   {formData.coverImageUrl ? 'Change Image' : 'Select from Library'}
                 </Button>
                 {formData.coverImageUrl && (
-                  <Button type="button" variant="danger" size="sm" onClick={() => setFormData({ ...formData, coverImageUrl: '' })}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setFormData({ ...formData, coverImageUrl: '' })}>
                     <X className="h-4 w-4" />
                   </Button>
                 )}
               </div>
               <p className="mt-2 text-xs text-gray-400">
-                Or paste a URL below. The cover color will be used if this is empty.
+                Or paste a URL below. The cover color will be used if no image is provided.
               </p>
               <Input
                 value={formData.coverImageUrl || ''}

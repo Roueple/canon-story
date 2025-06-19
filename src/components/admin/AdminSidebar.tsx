@@ -11,7 +11,8 @@ import {
   BarChart3,
   DollarSign,
   FileText,
-  Home
+  Home,
+  Globe
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -36,24 +37,35 @@ export function AdminSidebar({ role }: AdminSidebarProps) {
   return (
     <aside className="w-64 min-h-screen bg-gray-800 border-r border-gray-700">
       <nav className="p-4 space-y-1">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-gray-700 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.name}
-            </Link>
-          )
-        })}
+        {/* Go to Homepage Button */}
+        <Link
+          href="/"
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-gray-300 hover:text-white hover:bg-gray-700 mb-4 border border-gray-600"
+        >
+          <Globe className="h-5 w-5" />
+          <span>Go to Homepage</span>
+        </Link>
+
+        <div className="border-t border-gray-700 pt-4">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-gray-700 text-white'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.name}
+              </Link>
+            )
+          })}
+        </div>
       </nav>
     </aside>
   )

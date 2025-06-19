@@ -1,0 +1,33 @@
+
+DOCX Test File Instructions
+===========================
+
+Since we need actual DOCX files for testing, please create test documents with the following content:
+
+1. Simple Test Document (test-simple.docx):
+   - Title: "Test Novel Import"
+   - Chapter 1: The Beginning
+     * Include some bold and italic text
+     * Add 2-3 paragraphs
+   - Chapter 2: The Journey
+     * Different content
+     * Include a list (bullet points)
+   - Chapter 3: The Conclusion
+     * Final chapter content
+     * Include special characters
+
+2. Document with Images (test-with-images.docx):
+   - Chapter 1: Visual Content
+     * Include 1-2 images
+     * Add captions for images
+   - Chapter 2: Mixed Media
+     * Text and images combined
+     * Different image sizes
+
+3. Complex Document (test-complex.docx):
+   - Multiple chapters (5+)
+   - Various formatting (headings, lists, tables)
+   - Images throughout
+   - Different chapter numbering (Chapter 0, Chapter 1.5, etc.)
+
+Save these files in: E:\Coding\canon-story\test-documents
