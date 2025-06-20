@@ -16,7 +16,8 @@
   "dependencies": {
     "@clerk/nextjs": "^6.21.0",
     "@clerk/themes": "^2.2.49",
-    "@prisma/client": "latest",
+    "@hello-pangea/dnd": "^18.0.1",
+    "@prisma/client": "^6.10.1",
     "@radix-ui/react-slot": "^1.2.3",
     "cloudinary": "^2.2.0",
     "clsx": "latest",
@@ -40,7 +41,7 @@
     "eslint": "latest",
     "eslint-config-next": "latest",
     "postcss": "latest",
-    "prisma": "latest",
+    "prisma": "^6.10.1",
     "tailwindcss": "latest",
     "ts-node": "latest",
     "typescript": "latest"

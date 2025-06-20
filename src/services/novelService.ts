@@ -1,6 +1,7 @@
 // src/services/novelService.ts
 import { prisma } from '@/lib/db'
 import { slugify } from '@/lib/utils'
+import { Prisma } from '@prisma/client'; // Ensure this is imported if you use Prisma.Decimal explicitly
 
 export const novelService = {
   async findAll(options: {
@@ -79,11 +80,10 @@ export const novelService = {
       prisma.novel.count({ where })
     ])
 
-    // Convert Decimal to number for serialization
     const serializedNovels = novels.map(novel => ({
       ...novel,
       averageRating: Number(novel.averageRating),
-      totalViews: Number(novel.totalViews)
+      totalViews: Number(novel.totalViews) 
     }))
 
     return { novels: serializedNovels, total }
@@ -114,12 +114,12 @@ export const novelService = {
             tag: true
           }
         },
-        chapters: {
+        chapters: { 
           where: {
             isDeleted: false
           },
           orderBy: {
-            chapterNumber: 'asc'
+            displayOrder: 'asc', 
           }
         },
         _count: {
@@ -134,13 +134,19 @@ export const novelService = {
       }
     })
 
-    if (!novel) return null
+    if (!novel) return null;
 
-    // Convert Decimal to number for serialization
+    const chaptersWithConvertedNumbers = novel.chapters.map(chapter => ({
+      ...chapter,
+      chapterNumber: Number(chapter.chapterNumber), 
+      displayOrder: Number(chapter.displayOrder)   
+    }));
+
     return {
       ...novel,
+      chapters: chaptersWithConvertedNumbers, 
       averageRating: Number(novel.averageRating),
-      totalViews: Number(novel.totalViews)
+      totalViews: Number(novel.totalViews) 
     }
   },
 
@@ -175,7 +181,7 @@ export const novelService = {
             isPublished: true
           },
           orderBy: {
-            chapterNumber: 'asc'
+            displayOrder: 'asc',
           }
         }
       }
@@ -183,14 +189,14 @@ export const novelService = {
 
     if (!novel) return null
 
-    // Convert Decimal to number
     return {
       ...novel,
       averageRating: Number(novel.averageRating),
-      totalViews: Number(novel.totalViews),
+      totalViews: Number(novel.totalViews), 
       chapters: novel.chapters.map(chapter => ({
         ...chapter,
-        chapterNumber: Number(chapter.chapterNumber)
+        chapterNumber: Number(chapter.chapterNumber),
+        displayOrder: Number(chapter.displayOrder)
       }))
     }
   },
@@ -231,7 +237,7 @@ export const novelService = {
               tag: {
                 connectOrCreate: {
                   where: { name },
-                  create: { name, slug: slugify(name) }
+                  create: { name, type: 'theme' } // FIXED: Removed slug
                 }
               }
             }))
@@ -271,11 +277,9 @@ export const novelService = {
       ...data
     }
 
-    // Remove genre and tag fields from main update
     delete updateData.genreIds
     delete updateData.tagNames
 
-    // If title changed, generate new slug
     if (data.title) {
       const currentNovel = await prisma.novel.findUnique({
         where: { id }
@@ -287,7 +291,6 @@ export const novelService = {
     }
 
     const novel = await prisma.$transaction(async (tx) => {
-      // Update genres if provided
       if (data.genreIds !== undefined) {
         await tx.novelGenre.deleteMany({
           where: { novelId: id }
@@ -303,7 +306,6 @@ export const novelService = {
         }
       }
 
-      // Update tags if provided
       if (data.tagNames !== undefined) {
         await tx.novelTag.deleteMany({
           where: { novelId: id }
@@ -313,7 +315,7 @@ export const novelService = {
           for (const name of data.tagNames) {
             const tag = await tx.tag.upsert({
               where: { name },
-              create: { name, slug: slugify(name) },
+              create: { name, type: 'theme' }, // FIXED: Removed slug
               update: {}
             })
             
@@ -327,7 +329,6 @@ export const novelService = {
         }
       }
 
-      // Update novel
       return await tx.novel.update({
         where: { id },
         data: updateData,

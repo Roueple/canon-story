@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { prisma } from '@/lib/db'
 import { EditChapterForm } from '@/components/admin/forms/EditChapterForm'
+import { Prisma } from '@prisma/client' // Import Prisma
 
 async function getChapter(id: string) {
   const chapter = await prisma.chapter.findFirst({
@@ -16,15 +17,37 @@ async function getChapter(id: string) {
   })
 
   if (!chapter) notFound()
-  return chapter
+
+  // Convert Decimal fields to numbers
+  return {
+    ...chapter,
+    chapterNumber: Number(chapter.chapterNumber),
+    displayOrder: Number(chapter.displayOrder),
+    // Ensure other Decimal fields are also converted if they exist and are passed
+    // For example, if 'views' was Decimal (it's BigInt, handled by API utils, but as an example):
+    // views: Number(chapter.views) 
+  }
 }
+
+// Define a type for the processed chapter to be passed to the client component
+type ProcessedChapter = Omit<Prisma.ChapterGetPayload<{
+  include: {
+    novel: {
+      select: { id: true, title: true }
+    }
+  }
+}>, 'chapterNumber' | 'displayOrder'> & {
+  chapterNumber: number;
+  displayOrder: number;
+};
+
 
 export default async function EditChapterPage({ 
   params 
 }: { 
   params: { id: string, chapterId: string } 
 }) {
-  const chapter = await getChapter(params.chapterId)
+  const chapter = await getChapter(params.chapterId) as ProcessedChapter; // Cast to the processed type
 
   return (
     <div>
