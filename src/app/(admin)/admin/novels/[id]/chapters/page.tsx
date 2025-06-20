@@ -1,54 +1,87 @@
 // src/app/(admin)/admin/novels/[id]/chapters/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react' // Ensure useState is here
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
-// import { useEffect } from 'react' // This would be redundant if combined above
+import { notFound, useParams } from 'next/navigation' // Import useParams
 import { Plus, Edit, Eye, EyeOff, ArrowLeft, ArrowUpDown, BookOpen, Upload } from 'lucide-react'
 import { Button, Modal } from '@/components/shared/ui'
 import { formatDate, formatChapterNumber } from '@/lib/utils'
 import { ImportModal } from '@/components/admin/import/ImportModal';
 
-export default function ChaptersPage({ params }: { params: { id: string } }) {
+// Remove params from props:
+// export default function ChaptersPage({ params }: { params: { id: string } }) {
+export default function ChaptersPage() {
+  const routeParams = useParams<{ id: string }>() // Use the hook to get route parameters
+  const novelIdFromParams = routeParams.id // Store the id in a variable
+
   const [novel, setNovel] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  // const [showImporter, setShowImporter] = useState(false) // Removed by script
   const [showImportModal, setShowImportModal] = useState(false);
 
-
-  useEffect(() => {
-    fetchNovel()
-  }, [params.id])
-
-  const fetchNovel = async () => {
+  // Renamed fetchNovel to fetchNovelData and made it accept novelId
+  const fetchNovelData = async (currentNovelId: string) => {
+    if (!currentNovelId) {
+      console.error("Novel ID is missing, cannot fetch data.");
+      setIsLoading(false);
+      setNovel(null);
+      return;
+    }
+    setIsLoading(true);
     try {
-      const response = await fetch(`/api/admin/novels/${params.id}`)
-      if (!response.ok) throw new Error('Failed to fetch novel')
+      const response = await fetch(`/api/admin/novels/${currentNovelId}`)
+      if (!response.ok) {
+        // If novel not found by API (e.g., 404), set novel to null
+        if (response.status === 404) {
+          setNovel(null);
+        }
+        throw new Error(`Failed to fetch novel (status: ${response.status})`)
+      }
       const data = await response.json()
       setNovel(data.data)
     } catch (error) {
       console.error('Error fetching novel:', error)
+      setNovel(null); // Ensure novel is null on error
     } finally {
       setIsLoading(false)
     }
   }
 
-  // const handleImportComplete = () => { // Removed by script
-  //   setShowImporter(false)
-  //   fetchNovel() 
-  // }
+  useEffect(() => {
+    if (novelIdFromParams) {
+      fetchNovelData(novelIdFromParams)
+    } else {
+      // Handle the case where novelIdFromParams might be initially undefined
+      setIsLoading(false); 
+    }
+  }, [novelIdFromParams]) // Depend on novelIdFromParams
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-white">Loading...</div>
+      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]"> {/* Adjusted min-height */}
+        <div className="text-white text-lg flex items-center">
+          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Loading novel details...
+        </div>
       </div>
     )
   }
 
+  // If novelId is not found in params or fetching resulted in novel being null
+  if (!novelIdFromParams || !novel) {
+    notFound(); // This will render the nearest not-found.tsx page
+  }
+  
+  // novel is guaranteed to be non-null here due to the check above
+  // but TypeScript might not infer it if notFound() doesn't throw an error that TS understands.
+  // We can add an explicit check or trust notFound() behavior. For safety:
   if (!novel) {
-    notFound()
+      // This case should ideally be caught by the isLoading or the previous !novel check.
+      // If notFound() is correctly configured, this might be redundant.
+      return <div className="text-red-500">Error: Novel data could not be loaded.</div>;
   }
 
   return (
@@ -68,7 +101,7 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
               <Upload className="h-4 w-4" />
               Import Chapters
           </Button>
-          <Link href={`/admin/novels/${novel.id}/chapters/create`}>
+          <Link href={`/admin/novels/${novelIdFromParams}/chapters/create`}>
             <Button variant="primary" className="gap-2">
               <Plus className="h-4 w-4" />
               Add Chapter
@@ -147,7 +180,7 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
                     {formatDate(chapter.updatedAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link href={`/admin/novels/${novel.id}/chapters/${chapter.id}/edit`}>
+                    <Link href={`/admin/novels/${novelIdFromParams}/chapters/${chapter.id}/edit`}>
                       <Button size="sm" variant="ghost">
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -163,7 +196,6 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
             <h3 className="text-lg font-medium text-white mb-2">No chapters yet</h3>
             <p className="text-gray-400 mb-6">Get started by adding your first chapter</p>
             <div className="flex gap-3 justify-center">
-              {/* This button's onClick was already correct in your provided file */}
               <Button
                 onClick={() => setShowImportModal(true)} 
                 variant="outline"
@@ -172,7 +204,7 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
                 <Upload className="h-4 w-4" />
                 Import Chapters 
               </Button>
-              <Link href={`/admin/novels/${novel.id}/chapters/create`}>
+              <Link href={`/admin/novels/${novelIdFromParams}/chapters/create`}>
                 <Button variant="primary" className="gap-2">
                   <Plus className="h-4 w-4" />
                   Create Chapter
@@ -182,16 +214,15 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
           </div>
         )}
       </div>
-{/* Old importer modal block removed by script */} 
 
-      {/* New Import Modal */}
-      {showImportModal && novel && (
+      {/* New Import Modal: Ensure novelIdFromParams is used and checked */}
+      {showImportModal && novelIdFromParams && (
           <ImportModal
             isOpen={showImportModal}
             onClose={() => setShowImportModal(false)}
-            novelId={novel.id}
+            novelId={novelIdFromParams} // Use novelIdFromParams
             onImportComplete={() => {
-              fetchNovel(); // Refresh chapters
+              if (novelIdFromParams) fetchNovelData(novelIdFromParams); // Refresh chapters
               setShowImportModal(false);
             }}
           />
