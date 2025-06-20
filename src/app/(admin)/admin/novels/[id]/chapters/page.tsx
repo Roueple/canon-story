@@ -1,19 +1,21 @@
 // src/app/(admin)/admin/novels/[id]/chapters/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react' // Ensure useState is here
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { useEffect } from 'react'
+// import { useEffect } from 'react' // This would be redundant if combined above
 import { Plus, Edit, Eye, EyeOff, ArrowLeft, ArrowUpDown, BookOpen, Upload } from 'lucide-react'
 import { Button, Modal } from '@/components/shared/ui'
 import { formatDate, formatChapterNumber } from '@/lib/utils'
-import { DocumentImporter } from '@/components/admin/import/DocumentImporter'
+import { ImportModal } from '@/components/admin/import/ImportModal';
 
 export default function ChaptersPage({ params }: { params: { id: string } }) {
   const [novel, setNovel] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [showImporter, setShowImporter] = useState(false)
+  // const [showImporter, setShowImporter] = useState(false) // Removed by script
+  const [showImportModal, setShowImportModal] = useState(false);
+
 
   useEffect(() => {
     fetchNovel()
@@ -32,10 +34,10 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
     }
   }
 
-  const handleImportComplete = () => {
-    setShowImporter(false)
-    fetchNovel() // Refresh the chapters list
-  }
+  // const handleImportComplete = () => { // Removed by script
+  //   setShowImporter(false)
+  //   fetchNovel() 
+  // }
 
   if (isLoading) {
     return (
@@ -62,13 +64,9 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
           <p className="text-gray-400 mt-1">Manage chapters for this novel</p>
         </div>
         <div className="flex gap-3">
-          <Button
-            onClick={() => setShowImporter(true)}
-            variant="outline"
-            className="gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            Import DOCX
+          <Button onClick={() => setShowImportModal(true)} variant="outline" className="gap-2">
+              <Upload className="h-4 w-4" />
+              Import Chapters
           </Button>
           <Link href={`/admin/novels/${novel.id}/chapters/create`}>
             <Button variant="primary" className="gap-2">
@@ -131,7 +129,7 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
                     <div className="flex items-center gap-2">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                         chapter.status === 'free' ? 'bg-green-900/50 text-green-300' :
-                        'bg-yellow-900/50 text-yellow-300'
+                        'bg-yellow-900/50 text-yellow-300' // Assuming 'draft' or other non-free are yellow
                       }`}>
                         {chapter.status}
                       </span>
@@ -165,13 +163,14 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
             <h3 className="text-lg font-medium text-white mb-2">No chapters yet</h3>
             <p className="text-gray-400 mb-6">Get started by adding your first chapter</p>
             <div className="flex gap-3 justify-center">
+              {/* This button's onClick was already correct in your provided file */}
               <Button
-                onClick={() => setShowImporter(true)}
+                onClick={() => setShowImportModal(true)} 
                 variant="outline"
                 className="gap-2"
               >
                 <Upload className="h-4 w-4" />
-                Import from DOCX
+                Import Chapters 
               </Button>
               <Link href={`/admin/novels/${novel.id}/chapters/create`}>
                 <Button variant="primary" className="gap-2">
@@ -183,21 +182,19 @@ export default function ChaptersPage({ params }: { params: { id: string } }) {
           </div>
         )}
       </div>
+{/* Old importer modal block removed by script */} 
 
-      {/* Import Modal */}
-      {showImporter && (
-        <Modal
-          isOpen={showImporter}
-          onClose={() => setShowImporter(false)}
-          title="Import Chapters from DOCX"
-          size="lg"
-        >
-          <DocumentImporter
+      {/* New Import Modal */}
+      {showImportModal && novel && (
+          <ImportModal
+            isOpen={showImportModal}
+            onClose={() => setShowImportModal(false)}
             novelId={novel.id}
-            onComplete={handleImportComplete}
-            onCancel={() => setShowImporter(false)}
+            onImportComplete={() => {
+              fetchNovel(); // Refresh chapters
+              setShowImportModal(false);
+            }}
           />
-        </Modal>
       )}
     </div>
   )

@@ -1,399 +1,243 @@
-// src/services/documentImportService.ts
 import { prisma } from '@/lib/db';
 import mammoth from 'mammoth';
-import { v2 as cloudinary } from 'cloudinary';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
+import * as XLSX from 'xlsx';
+import { Prisma } from '@prisma/client'; // Added for Prisma.Decimal
+import type { ChapterStatus } from '@/types'; // Added for ChapterStatus type
 
-// Configure Cloudinary (already done in your media service)
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true
-});
+// Cloudinary config is not used in this simplified version, 
+// but can be added back if DOCX files are to be stored in Cloudinary first
+// import { v2 as cloudinary } from 'cloudinary';
+// cloudinary.config({ /* ... */ });
 
-interface ImportOptions {
-  novelId: string;
-  userId: string;
-  chapterNumberStart?: number;
-  importAsPublished?: boolean;
-  importAsPremium?: boolean;
-}
-
-interface ExtractedImage {
-  buffer: Buffer;
-  contentType: string;
-  originalName: string;
-}
-
-interface ParsedChapter {
+interface ExtractedChapterInfo {
+  chapterNumber: number;
   title: string;
   content: string;
-  images: ExtractedImage[];
   wordCount: number;
 }
 
+interface BulkChapterData {
+  chapterNumber: number;
+  title: string;
+  content: string;
+  isPremium?: boolean;
+  isPublished?: boolean;
+}
+
 export const documentImportService = {
-  // Upload DOCX to Cloudinary for temporary storage
-  async uploadDocxToCloudinary(buffer: Buffer, filename: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'canon-story/imports/docx',
-          resource_type: 'raw',
-          public_id: `docx_${Date.now()}_${filename.replace(/\.docx$/, '')}`,
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result!.secure_url);
-        }
-      );
-      uploadStream.end(buffer);
-    });
-  },
-
-  // Parse DOCX file and extract content
-  async parseDocx(buffer: Buffer): Promise<ParsedChapter[]> {
-    try {
-      const result = await mammoth.convertToHtml({
-        buffer,
-        convertImage: mammoth.images.imgElement((image) => {
-          return image.read().then((buffer) => {
-            return {
-              src: `data:${image.contentType};base64,${buffer.toString('base64')}`,
-            };
-          });
-        }),
-      });
-
-      if (result.messages.length > 0) {
-        console.warn('DOCX parsing warnings:', result.messages);
-      }
-
-      const chapters = this.splitIntoChapters(result.value);
-      const parsedChapters: ParsedChapter[] = [];
-      
-      for (const chapter of chapters) {
-        const images = await this.extractImagesFromHtml(chapter.content);
-        const cleanContent = this.cleanHtmlContent(chapter.content);
-        const wordCount = cleanContent.split(/\s+/).filter(word => word.length > 0).length;
-        
-        parsedChapters.push({
-          title: chapter.title,
-          content: cleanContent,
-          images,
-          wordCount,
-        });
-      }
-
-      return parsedChapters;
-    } catch (error) {
-      console.error('Error parsing DOCX:', error);
-      throw new Error('Failed to parse DOCX file');
-    }
-  },
-
-  // Split HTML content into chapters
-  splitIntoChapters(html: string): { title: string; content: string }[] {
-    const chapters: { title: string; content: string }[] = [];
-    const parts = html.split(/<h1[^>]*>/);
+  extractChapterInfoFromFilename(filename: string): { number: number | null; title: string } {
+    const pattern = /Chapter\s+(\d+(?:\.\d+)?)\s*[:|-]\s*(.+?)(?:\.\w+)?$/i;
+    const match = filename.match(pattern);
     
-    if (parts.length <= 1) {
-      return [{
-        title: 'Imported Chapter',
-        content: html,
-      }];
+    if (match) {
+      return {
+        number: parseFloat(match[1]),
+        title: match[2].trim()
+      };
     }
+    // Fallback: try to get a number if "Chapter X" is not present but a number is
+    const simpleNumberPattern = /^(\d+(?:\.\d+)?)[\s:_-]+(.+?)(?:\.\w+)?$/;
+    const simpleMatch = filename.match(simpleNumberPattern);
+    if (simpleMatch) {
+        return {
+            number: parseFloat(simpleMatch[1]),
+            title: simpleMatch[2].trim()
+        };
+    }
+    
+    return { number: null, title: filename.replace(/\.\w+$/, '') };
+  },
 
-    for (let i = 1; i < parts.length; i++) {
-      const part = parts[i];
-      const titleEndIndex = part.indexOf('</h1>');
-      
-      if (titleEndIndex > -1) {
-        const title = part.substring(0, titleEndIndex).replace(/<[^>]*>/g, '').trim();
-        const content = part.substring(titleEndIndex + 5).trim();
-        
-        if (title && content) {
-          chapters.push({ title, content });
-        }
+  async parseSingleDocx(buffer: Buffer, filename: string): Promise<ExtractedChapterInfo> {
+    const result = await mammoth.convertToHtml({ buffer });
+    let { number, title } = this.extractChapterInfoFromFilename(filename);
+    
+    const content = result.value.trim(); // Keep original spacing, HTML handles collapse
+    
+    const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
+    
+    return {
+      chapterNumber: number || 1, // Default to 1 if not found
+      title,
+      content,
+      wordCount
+    };
+  },
+
+  async createImportPreview(
+    buffer: Buffer,
+    filename: string,
+    novelId: string
+  ): Promise<ExtractedChapterInfo> {
+    const chapterInfo = await this.parseSingleDocx(buffer, filename);
+    
+    const existingChapter = await prisma.chapter.findFirst({
+      where: {
+        novelId,
+        chapterNumber: new Prisma.Decimal(chapterInfo.chapterNumber),
+        isDeleted: false // Use isDeleted instead of deletedAt
       }
+    });
+    
+    if (existingChapter) {
+      const lastChapter = await prisma.chapter.findFirst({
+        where: { novelId, isDeleted: false },
+        orderBy: { chapterNumber: 'desc' },
+        select: { chapterNumber: true }
+      });
+      chapterInfo.chapterNumber = (lastChapter ? Number(lastChapter.chapterNumber) : 0) + 1;
     }
+    
+    return chapterInfo;
+  },
 
+  generateBulkUploadTemplate(): Buffer {
+    const wb = XLSX.utils.book_new();
+    const instructions = [
+      ['Bulk Chapter Upload Template Instructions'],
+      [''],
+      ['Sheet: "Chapters" - Required Columns:'],
+      ['1. Chapter Number: Numeric (e.g., 1, 1.5, 2.1). Required.'],
+      ['2. Title: Text. Required.'],
+      ['3. Content: Text (can include basic HTML). Required.'],
+      ['4. Is Premium: TRUE/FALSE (default: FALSE). Optional.'],
+      ['5. Is Published: TRUE/FALSE (default: FALSE). Optional.'],
+      [''],
+      ['Notes:'],
+      ['- Maximum 50 chapters per upload.'],
+      ['- Save this file as .xlsx format to upload.'],
+      ['- Do not change the sheet name "Chapters".']
+    ];
+    const ws_instructions = XLSX.utils.aoa_to_sheet(instructions);
+    XLSX.utils.book_append_sheet(wb, ws_instructions, 'Instructions');
+    
+    const chapters_data = [
+      ['Chapter Number', 'Title', 'Content', 'Is Premium', 'Is Published'],
+      [1, 'Example Chapter One', '<p>This is the content for chapter one.</p>', 'FALSE', 'FALSE'],
+      [1.5, 'Example Interlude', '<p>Content for an interlude or side story.</p>', 'FALSE', 'TRUE'],
+      [2, 'Example Chapter Two', '<p>Chapter two content <strong>with bold</strong> and <em>italics</em>.</p>', 'TRUE', 'TRUE']
+    ];
+    const ws_chapters = XLSX.utils.aoa_to_sheet(chapters_data);
+    ws_chapters['!cols'] = [ {wch: 15}, {wch: 40}, {wch: 80}, {wch: 12}, {wch: 12} ];
+    XLSX.utils.book_append_sheet(wb, ws_chapters, 'Chapters');
+    
+    return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+  },
+
+  async parseBulkUploadFile(buffer: Buffer): Promise<BulkChapterData[]> {
+    const workbook = XLSX.read(buffer, { type: 'buffer' });
+    const sheet = workbook.Sheets['Chapters'];
+    if (!sheet) throw new Error('No "Chapters" sheet found in the Excel file.');
+    
+    const jsonData: any[] = XLSX.utils.sheet_to_json(sheet);
+    const chapters: BulkChapterData[] = [];
+    const errors: string[] = [];
+    
+    jsonData.forEach((row, index) => {
+      const rowNum = index + 2;
+      const chapterNumber = row['Chapter Number'];
+      const title = row['Title'];
+      const content = row['Content'];
+
+      if (chapterNumber == null || title == null || content == null) {
+        errors.push(`Row ${rowNum}: Missing Chapter Number, Title, or Content.`);
+        return;
+      }
+      if (typeof parseFloat(chapterNumber) !== 'number' || isNaN(parseFloat(chapterNumber))) {
+        errors.push(`Row ${rowNum}: Chapter Number must be a valid number.`);
+        return;
+      }
+      if (typeof title !== 'string' || title.trim() === '') {
+        errors.push(`Row ${rowNum}: Title must be a non-empty string.`);
+        return;
+      }
+       if (typeof content !== 'string' || content.trim() === '') {
+        errors.push(`Row ${rowNum}: Content must be a non-empty string.`);
+        return;
+      }
+
+      chapters.push({
+        chapterNumber: parseFloat(chapterNumber),
+        title: title.toString().trim(),
+        content: content.toString().trim(),
+        isPremium: row['Is Premium']?.toString().toUpperCase() === 'TRUE',
+        isPublished: row['Is Published']?.toString().toUpperCase() === 'TRUE'
+      });
+    });
+    
+    if (errors.length > 0) throw new Error(`Validation errors:\n${errors.join('\n')}`);
+    if (chapters.length === 0) throw new Error('No valid chapters found in the file.');
+    if (chapters.length > 50) throw new Error('Maximum 50 chapters allowed per bulk upload.');
+    
     return chapters;
   },
 
-  // Extract base64 images from HTML
-  async extractImagesFromHtml(html: string): Promise<ExtractedImage[]> {
-    const images: ExtractedImage[] = [];
-    const imgRegex = /<img[^>]+src="data:([^;]+);base64,([^"]+)"/g;
-    
-    let match;
-    let imageIndex = 0;
-    
-    while ((match = imgRegex.exec(html)) !== null) {
-      const contentType = match[1];
-      const base64Data = match[2];
-      const buffer = Buffer.from(base64Data, 'base64');
-      
-      images.push({
-        buffer,
-        contentType,
-        originalName: `image_${imageIndex++}.png`,
-      });
-    }
-
-    return images;
-  },
-
-  // Clean HTML content
-  cleanHtmlContent(html: string): string {
-    let cleaned = html.replace(/<img[^>]+src="data:[^"]+"/g, '<img src=""');
-    return cleaned;
-  },
-
-  // Upload image to Cloudinary
-  async uploadImageToCloudinary(image: ExtractedImage, importId: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'canon-story/chapters',
-          public_id: `import_${importId}_${Date.now()}`,
-          resource_type: 'image',
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      uploadStream.end(image.buffer);
-    });
-  },
-
-  // Create import record
-  async createImportRecord(
-    filename: string,
-    fileSize: number,
-    mimeType: string,
-    userId: string,
-    novelId: string,
-    cloudinaryUrl: string,
-    settings: any
-  ): Promise<string> {
-    const importRecord = await prisma.documentImport.create({
-      data: {
-        filename,
-        originalSize: fileSize,
-        mimeType,
+  async createBulkImportPreview(
+    chapters: BulkChapterData[],
+    novelId: string
+  ): Promise<{ chapters: BulkChapterData[]; conflicts: number[] }> {
+    const chapterNumbers = chapters.map(ch => new Prisma.Decimal(ch.chapterNumber));
+    const existingChapters = await prisma.chapter.findMany({
+      where: {
         novelId,
-        uploadedBy: userId,
-        cloudinaryUrl,
-        importSettings: settings,
-        status: 'pending',
+        chapterNumber: { in: chapterNumbers },
+        isDeleted: false
       },
+      select: { chapterNumber: true }
     });
-
-    return importRecord.id;
+    const conflicts = existingChapters.map(ch => Number(ch.chapterNumber));
+    return { chapters, conflicts };
   },
 
-  // Process import synchronously with progress updates
-  async processImport(importId: string): Promise<void> {
-    const importRecord = await prisma.documentImport.findUnique({
-      where: { id: importId },
-    });
-
-    if (!importRecord || !importRecord.cloudinaryUrl) {
-      throw new Error('Import record not found');
-    }
-
-    try {
-      // Update status
-      await prisma.documentImport.update({
-        where: { id: importId },
-        data: {
-          status: 'processing',
-          processingStarted: new Date(),
-        },
-      });
-
-      // Download DOCX from Cloudinary
-      const response = await fetch(importRecord.cloudinaryUrl);
-      const buffer = Buffer.from(await response.arrayBuffer());
-
-      // Parse DOCX
-      const chapters = await this.parseDocx(buffer);
-      
-      const settings = importRecord.importSettings as any || {};
-      let chapterNumber = settings.chapterNumberStart || 1;
-      const createdChapters = [];
-      let totalImages = 0;
-
-      for (const [index, chapter] of chapters.entries()) {
-        // Upload images
-        const uploadedImages = [];
-        
-        for (const image of chapter.images) {
-          const cloudinaryResult = await this.uploadImageToCloudinary(image, importId);
-          
-          const mediaFile = await prisma.mediaFile.create({
-            data: {
-              filename: cloudinaryResult.public_id,
-              originalName: image.originalName,
-              mimeType: image.contentType,
-              fileSize: BigInt(image.buffer.length),
-              width: cloudinaryResult.width,
-              height: cloudinaryResult.height,
-              url: cloudinaryResult.secure_url,
-              cdnUrl: cloudinaryResult.secure_url,
-              thumbnailUrl: `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/w_300,h_300,c_fill/${cloudinaryResult.public_id}`,
-              uploadedBy: importRecord.uploadedBy,
-            },
-          });
-          
-          uploadedImages.push(mediaFile);
-          totalImages++;
-        }
-
-        // Replace image placeholders
-        let processedContent = chapter.content;
-        uploadedImages.forEach((img) => {
-          processedContent = processedContent.replace(
-            /<img src=""/, 
-            `<img src="${img.url}" alt="${img.altText || ''}"`
-          );
-        });
-
-        // Create chapter
-        const newChapter = await prisma.chapter.create({
-          data: {
-            novelId: importRecord.novelId!,
-            title: chapter.title,
-            content: processedContent,
-            slug: generateSlug(chapter.title),
-            chapterNumber: chapterNumber,
-            displayOrder: chapterNumber,
-            wordCount: chapter.wordCount,
-            estimatedReadTime: calculateReadingTime(chapter.wordCount),
-            status: settings.importAsPremium ? 'premium' : 'free',
-            isPublished: settings.importAsPublished || false,
-            hasImages: uploadedImages.length > 0,
-            imageCount: uploadedImages.length,
-            importedFrom: importRecord.filename,
-            importedAt: new Date(),
-          },
-        });
-
-        // Link images to chapter
-        for (const [index, img] of uploadedImages.entries()) {
-          await prisma.chapterMedia.create({
-            data: {
-              chapterId: newChapter.id,
-              mediaId: img.id,
-              position: index,
-            },
-          });
-        }
-
-        createdChapters.push(newChapter);
-        chapterNumber++;
-
-        // Update progress
-        const progress = Math.round(((index + 1) / chapters.length) * 100);
-        await prisma.documentImport.update({
-          where: { id: importId },
-          data: { progress },
-        });
-      }
-
-      // Update import as completed
-      await prisma.documentImport.update({
-        where: { id: importId },
-        data: {
-          status: 'completed',
-          progress: 100,
-          chaptersCreated: createdChapters.length,
-          imagesExtracted: totalImages,
-          processingCompleted: new Date(),
-          extractedContent: {
-            chapters: createdChapters.map(ch => ({
-              id: ch.id,
-              title: ch.title,
-              wordCount: ch.wordCount,
-            })),
-          },
-        },
-      });
-
-      // Update novel word count
-      if (importRecord.novelId) {
-        const totalWordCount = await prisma.chapter.aggregate({
-          where: { novelId: importRecord.novelId, isDeleted: false },
-          _sum: { wordCount: true },
-        });
-
-        await prisma.novel.update({
-          where: { id: importRecord.novelId },
-          data: {
-            wordCount: totalWordCount._sum.wordCount || 0,
-            updatedAt: new Date(),
-          },
-        });
-      }
-
-      // Clean up temporary file from Cloudinary after successful import
+  async processBulkImport(
+    chapters: BulkChapterData[],
+    novelId: string
+    // Removed userId as it's not in Chapter schema
+  ): Promise<{ created: number; errors: string[] }> {
+    let createdCount = 0;
+    const errorMessages: string[] = [];
+    
+    for (const chapter of chapters) {
       try {
-        const publicId = importRecord.cloudinaryUrl.split('/').pop()?.split('.')[0];
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+        const slug = generateSlug(chapter.title);
+        const wordCount = chapter.content.split(/\s+/).filter(w => w.length > 0).length;
+        const estimatedReadTime = calculateReadingTime(wordCount);
+        
+        let chapterStatus: ChapterStatus = 'draft';
+        if (chapter.isPublished) {
+          chapterStatus = chapter.isPremium ? 'premium' : 'free';
         }
-      } catch (error) {
-        console.error('Error cleaning up temporary file:', error);
+
+        await prisma.chapter.create({
+          data: {
+            novelId,
+            chapterNumber: new Prisma.Decimal(chapter.chapterNumber),
+            title: chapter.title,
+            slug,
+            content: chapter.content,
+            wordCount,
+            estimatedReadTime,
+            status: chapterStatus,
+            isPublished: chapter.isPublished ?? false,
+            isPremium: chapter.isPremium ?? false,
+            displayOrder: new Prisma.Decimal(chapter.chapterNumber * 10),
+            publishedAt: (chapter.isPublished ?? false) ? new Date() : null
+            // removed createdBy, updatedBy
+          }
+        });
+        createdCount++;
+      } catch (error: any) {
+        errorMessages.push(`Chapter ${chapter.chapterNumber} (${chapter.title}): ${error.message}`);
       }
-
-    } catch (error) {
-      await prisma.documentImport.update({
-        where: { id: importId },
-        data: {
-          status: 'failed',
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        },
-      });
-      throw error;
     }
-  },
-
-  // Get import status
-  async getImportStatus(importId: string) {
-    return await prisma.documentImport.findUnique({
-      where: { id: importId },
-      include: {
-        novel: {
-          select: { id: true, title: true },
-        },
-        uploader: {
-          select: { id: true, displayName: true },
-        },
-      },
-    });
-  },
-
-  // Get import history
-  async getImportHistory(userId?: string, novelId?: string) {
-    const where: any = {};
-    if (userId) where.uploadedBy = userId;
-    if (novelId) where.novelId = novelId;
-
-    return await prisma.documentImport.findMany({
-      where,
-      include: {
-        novel: {
-          select: { id: true, title: true },
-        },
-        uploader: {
-          select: { id: true, displayName: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
-  },
-};
+    // Update novel's updatedAt timestamp
+    if (createdCount > 0) {
+        await prisma.novel.update({
+            where: { id: novelId },
+            data: { updatedAt: new Date() }
+        });
+    }
+    return { created: createdCount, errors: errorMessages };
+  }
+}
