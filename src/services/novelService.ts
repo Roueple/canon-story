@@ -1,3 +1,4 @@
+import { serializePrismaData } from '@/lib/serialization';
 // src/services/novelService.ts
 import { prisma } from '@/lib/db'
 import { slugify } from '@/lib/utils'

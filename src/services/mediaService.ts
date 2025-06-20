@@ -1,3 +1,4 @@
+import { serializePrismaData } from '@/lib/serialization';
 // src/services/mediaService.ts
 import { prisma } from '@/lib/db';
 import { v2 as cloudinary } from 'cloudinary';
@@ -30,7 +31,7 @@ export const mediaService = {
     thumbnailUrl: string;
     uploadedBy: string;
   }) {
-    return prisma.mediaFile.create({
+    const mediaFile = await prisma.mediaFile.create({
       data: {
         filename: data.publicId,
         originalName: data.originalName,
@@ -44,6 +45,7 @@ export const mediaService = {
         uploadedBy: data.uploadedBy,
       }
     });
+    return serializePrismaData(mediaFile);
   },
 
   async findAll(options: { page?: number; limit?: number; search?: string }) {
@@ -60,17 +62,14 @@ export const mediaService = {
       prisma.mediaFile.count({ where })
     ]);
 
-    return { mediaFiles, total };
+    return { mediaFiles: serializePrismaData(mediaFiles), total };
   },
 
   async delete(id: string) {
     const usageCount = await prisma.chapterMedia.count({ where: { mediaId: id } });
     if (usageCount > 0) throw new Error(`Cannot delete: media is used in ${usageCount} chapter(s).`);
 
-    await prisma.mediaFile.update({
-      where: { id },
-      data: { isDeleted: true, deletedAt: new Date() }
-    });
-    return { message: 'Media file marked as deleted.' };
+    const deletedMedia = await prisma.mediaFile.update({ where: { id }, data: { isDeleted: true, deletedAt: new Date() } });
+    return serializePrismaData({ message: 'Media file marked as deleted.', media: deletedMedia });
   }
 };

@@ -2,38 +2,31 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/db' // Keep prisma import if needed for getGenres
 import { EditNovelForm } from '@/components/admin/forms/EditNovelForm'
+import { novelService } from '@/services/novelService'; // <--- ADD THIS IMPORT
 
 async function getNovel(id: string) {
-  const novel = await prisma.novel.findFirst({
-    where: { id, isDeleted: false },
-    include: {
-      genres: {
-        include: { genre: true }
-      },
-      tags: {
-        include: { tag: true }
-      }
-    }
-  })
-
-  if (!novel) notFound()
-  return novel
+  const novelData = await novelService.findById(id, true); // Use true to include deleted for admin view if needed
+  if (!novelData) {
+    notFound();
+  }
+  return novelData; // novelService now returns serialized data
 }
 
 async function getGenres() {
   return await prisma.genre.findMany({
     where: { isActive: true },
     orderBy: { sortOrder: 'asc' }
-  })
+  });
 }
 
 export default async function EditNovelPage({ params }: { params: { id: string } }) {
+  // Fetch novel and genres in parallel
   const [novel, genres] = await Promise.all([
     getNovel(params.id),
     getGenres()
-  ])
+  ]);
 
   return (
     <div>
@@ -46,10 +39,10 @@ export default async function EditNovelPage({ params }: { params: { id: string }
         <h1 className="text-2xl font-bold text-white mb-6">Edit Novel</h1>
         
         <EditNovelForm
-          novel={novel}
+          novel={novel} // novel is now correctly defined and serialized
           genres={genres}
         />
       </div>
     </div>
-  )
+  );
 }

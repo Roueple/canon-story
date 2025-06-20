@@ -2,13 +2,8 @@ import { prisma } from '@/lib/db';
 import mammoth from 'mammoth';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import * as XLSX from 'xlsx';
-import { Prisma } from '@prisma/client'; // Added for Prisma.Decimal
-import type { ChapterStatus } from '@/types'; // Added for ChapterStatus type
-
-// Cloudinary config is not used in this simplified version, 
-// but can be added back if DOCX files are to be stored in Cloudinary first
-// import { v2 as cloudinary } from 'cloudinary';
-// cloudinary.config({ /* ... */ });
+import { Prisma } from '@prisma/client';
+import type { ChapterStatus } from '@/types';
 
 interface ExtractedChapterInfo {
   chapterNumber: number;
@@ -53,7 +48,7 @@ export const documentImportService = {
     const result = await mammoth.convertToHtml({ buffer });
     let { number, title } = this.extractChapterInfoFromFilename(filename);
     
-    const content = result.value.trim(); // Keep original spacing, HTML handles collapse
+    const content = result.value.trim();
     
     const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
     
@@ -76,7 +71,7 @@ export const documentImportService = {
       where: {
         novelId,
         chapterNumber: new Prisma.Decimal(chapterInfo.chapterNumber),
-        isDeleted: false // Use isDeleted instead of deletedAt
+        isDeleted: false
       }
     });
     
@@ -86,6 +81,7 @@ export const documentImportService = {
         orderBy: { chapterNumber: 'desc' },
         select: { chapterNumber: true }
       });
+      // Ensure chapterInfo.chapterNumber is a number for arithmetic operation
       chapterInfo.chapterNumber = (lastChapter ? Number(lastChapter.chapterNumber) : 0) + 1;
     }
     
@@ -135,7 +131,7 @@ export const documentImportService = {
     const errors: string[] = [];
     
     jsonData.forEach((row, index) => {
-      const rowNum = index + 2;
+      const rowNum = index + 2; // Assuming header is row 1
       const chapterNumber = row['Chapter Number'];
       const title = row['Title'];
       const content = row['Content'];
@@ -144,7 +140,8 @@ export const documentImportService = {
         errors.push(`Row ${rowNum}: Missing Chapter Number, Title, or Content.`);
         return;
       }
-      if (typeof parseFloat(chapterNumber) !== 'number' || isNaN(parseFloat(chapterNumber))) {
+      const parsedChapterNumber = parseFloat(String(chapterNumber));
+      if (isNaN(parsedChapterNumber)) {
         errors.push(`Row ${rowNum}: Chapter Number must be a valid number.`);
         return;
       }
@@ -158,16 +155,16 @@ export const documentImportService = {
       }
 
       chapters.push({
-        chapterNumber: parseFloat(chapterNumber),
-        title: title.toString().trim(),
-        content: content.toString().trim(),
-        isPremium: row['Is Premium']?.toString().toUpperCase() === 'TRUE',
-        isPublished: row['Is Published']?.toString().toUpperCase() === 'TRUE'
+        chapterNumber: parsedChapterNumber,
+        title: String(title).trim(),
+        content: String(content).trim(),
+        isPremium: String(row['Is Premium']).toUpperCase() === 'TRUE',
+        isPublished: String(row['Is Published']).toUpperCase() === 'TRUE'
       });
     });
     
     if (errors.length > 0) throw new Error(`Validation errors:\n${errors.join('\n')}`);
-    if (chapters.length === 0) throw new Error('No valid chapters found in the file.');
+    if (chapters.length === 0 && jsonData.length > 0) throw new Error('No valid chapters found in the file after validation.'); // Only throw if there was data but none was valid
     if (chapters.length > 50) throw new Error('Maximum 50 chapters allowed per bulk upload.');
     
     return chapters;
@@ -177,6 +174,9 @@ export const documentImportService = {
     chapters: BulkChapterData[],
     novelId: string
   ): Promise<{ chapters: BulkChapterData[]; conflicts: number[] }> {
+    if (chapters.length === 0) {
+      return { chapters: [], conflicts: [] };
+    }
     const chapterNumbers = chapters.map(ch => new Prisma.Decimal(ch.chapterNumber));
     const existingChapters = await prisma.chapter.findMany({
       where: {
@@ -194,12 +194,20 @@ export const documentImportService = {
   async processBulkImport(
     chapters: BulkChapterData[],
     novelId: string,
-    uploaderId: string, // Added for audit logging
-    importRecordId: string // Added to update DocumentImport record
+    uploaderId: string,
+    importRecordId: string
   ): Promise<{ created: number; errors: string[] }> {
     let createdCount = 0;
     const errorMessages: string[] = [];
     
+    // Fetch current highest displayOrder for the novel
+    const lastChapterOrder = await prisma.chapter.findFirst({
+        where: { novelId, isDeleted: false },
+        orderBy: { displayOrder: 'desc' },
+        select: { displayOrder: true }
+    });
+    let nextDisplayOrder = lastChapterOrder ? Number(lastChapterOrder.displayOrder) + 1 : 1;
+
     for (const chapter of chapters) {
       try {
         const slug = generateSlug(chapter.title);
@@ -223,23 +231,57 @@ export const documentImportService = {
             status: chapterStatus,
             isPublished: chapter.isPublished ?? false,
             isPremium: chapter.isPremium ?? false,
-            displayOrder: new Prisma.Decimal(chapter.chapterNumber * 10),
-            publishedAt: (chapter.isPublished ?? false) ? new Date() : null
-            // removed createdBy, updatedBy
+            displayOrder: new Prisma.Decimal(nextDisplayOrder), // Assign incremental display order
+            publishedAt: (chapter.isPublished ?? false) ? new Date() : null,
+            importedFrom: `bulk-excel:${importRecordId}`,
+            importedAt: new Date(),
           }
         });
         createdCount++;
+        nextDisplayOrder++; // Increment for the next chapter
       } catch (error: any) {
         errorMessages.push(`Chapter ${chapter.chapterNumber} (${chapter.title}): ${error.message}`);
       }
     }
-    // Update novel's updatedAt timestamp
+
     if (createdCount > 0) {
         await prisma.novel.update({
             where: { id: novelId },
             data: { updatedAt: new Date() }
         });
+        // Update the import record
+        await prisma.documentImport.update({
+            where: { id: importRecordId },
+            data: {
+                status: 'completed',
+                chaptersCreated: createdCount,
+                progress: 100,
+                processingCompleted: new Date(),
+                errorMessage: errorMessages.length > 0 ? errorMessages.join('; ') : null
+            }
+        });
+    } else if (chapters.length > 0 && errorMessages.length === chapters.length) { // All chapters failed
+        await prisma.documentImport.update({
+            where: { id: importRecordId },
+            data: {
+                status: 'failed',
+                errorMessage: `All ${chapters.length} chapters failed to import. Errors: ${errorMessages.join('; ')}`,
+                processingCompleted: new Date(),
+            }
+        });
+    } else if (chapters.length === 0) { // No chapters were passed to process (e.g., all were conflicts)
+         await prisma.documentImport.update({
+            where: { id: importRecordId },
+            data: {
+                status: 'completed', // Or a new status like 'empty_process'
+                chaptersCreated: 0,
+                errorMessage: 'No chapters were processed (e.g., all identified as conflicts).',
+                processingCompleted: new Date(),
+            }
+        });
     }
+
+
     return { created: createdCount, errors: errorMessages };
   }
-}
+};

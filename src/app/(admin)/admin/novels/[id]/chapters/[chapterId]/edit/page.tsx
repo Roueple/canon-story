@@ -2,44 +2,43 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { prisma } from '@/lib/db'
+// prisma import might not be needed here if getChapter solely relies on the service
+// import { prisma } from '@/lib/db'
 import { EditChapterForm } from '@/components/admin/forms/EditChapterForm'
-import { Prisma } from '@prisma/client' // Import Prisma
-
-async function getChapter(id: string) {
-  const chapter = await prisma.chapter.findFirst({
-    where: { id, isDeleted: false },
-    include: {
-      novel: {
-        select: { id: true, title: true }
-      }
-    }
-  })
-
-  if (!chapter) notFound()
-
-  // Convert Decimal fields to numbers
-  return {
-    ...chapter,
-    chapterNumber: Number(chapter.chapterNumber),
-    displayOrder: Number(chapter.displayOrder),
-    // Ensure other Decimal fields are also converted if they exist and are passed
-    // For example, if 'views' was Decimal (it's BigInt, handled by API utils, but as an example):
-    // views: Number(chapter.views) 
-  }
-}
+import { Prisma } from '@prisma/client' // Keep for types if EditChapterForm expects specific Prisma types
+import { chapterService } from '@/services/chapterService'; // <--- ADD THIS IMPORT
 
 // Define a type for the processed chapter to be passed to the client component
-type ProcessedChapter = Omit<Prisma.ChapterGetPayload<{
+// This type should align with what chapterService.findById returns AFTER serialization
+type ProcessedChapterForForm = Omit<Prisma.ChapterGetPayload<{
   include: {
     novel: {
       select: { id: true, title: true }
     }
   }
-}>, 'chapterNumber' | 'displayOrder'> & {
-  chapterNumber: number;
-  displayOrder: number;
+}>, 'chapterNumber' | 'displayOrder' | 'views' | 'wordCount' | 'estimatedReadTime' | 'imageCount'> & {
+  chapterNumber: number; // Expect number after serialization
+  displayOrder: number;  // Expect number after serialization
+  views: string; // Expect string for BigInt
+  wordCount: number;
+  estimatedReadTime: number;
+  imageCount: number;
+  // Add other fields if chapterService returns more or different structure
 };
+
+
+async function getChapter(id: string) {
+  // Use chapterService to get the chapter data, which should be serialized
+  const chapterData = await chapterService.findById(id, true); // true to include deleted for admin view
+
+  if (!chapterData) {
+    notFound();
+  }
+  // The chapterService should already handle Decimal to Number and BigInt to String conversions.
+  // If EditChapterForm requires specific types not matching service output, adjust ProcessedChapterForForm
+  // or the service's return structure.
+  return chapterData as ProcessedChapterForForm; // Cast if confident about the structure
+}
 
 
 export default async function EditChapterPage({ 
@@ -47,7 +46,7 @@ export default async function EditChapterPage({
 }: { 
   params: { id: string, chapterId: string } 
 }) {
-  const chapter = await getChapter(params.chapterId) as ProcessedChapter; // Cast to the processed type
+  const chapter = await getChapter(params.chapterId);
 
   return (
     <div>
@@ -63,9 +62,9 @@ export default async function EditChapterPage({
         <h1 className="text-2xl font-bold text-white mb-6">Edit Chapter</h1>
         
         <EditChapterForm
-          chapter={chapter}
+          chapter={chapter} // chapter is now correctly defined and serialized
         />
       </div>
     </div>
-  )
+  );
 }
