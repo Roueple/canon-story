@@ -3,32 +3,37 @@ import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api/utils';
 import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
-import { serializePrismaData } from '@/lib/serialization'; // <--- ADD THIS IMPORT
+import { serializePrismaData } from '@/lib/serialization';
 
-export async function GET(req: NextRequest, { params }: { params: { chapterId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) { // Corrected: params has 'id'
   try {
-    const chapterId = params.chapterId;
-    const novelId = req.nextUrl.searchParams.get('novelId'); // Ensure novelId is passed
+    const chapterIdFromParams = params.id; // Corrected: use params.id
+    const novelIdFromQuery = req.nextUrl.searchParams.get('novelId');
 
-    if (!chapterId || !novelId) {
-      return errorResponse('Chapter ID and Novel ID are required', 400);
+    if (!chapterIdFromParams || !novelIdFromQuery) {
+      return errorResponse('Chapter ID (from path) and Novel ID (from query) are required', 400);
     }
 
-    const currentChapterData = await prisma.chapter.findFirst({ // Renamed to avoid conflict with currentChapter variable below
-      where: { id: chapterId, novelId, isPublished: true, isDeleted: false },
+    const currentChapterData = await prisma.chapter.findFirst({
+      where: { 
+        id: chapterIdFromParams, // Use corrected variable
+        novelId: novelIdFromQuery, 
+        isPublished: true, 
+        isDeleted: false 
+      },
       include: { novel: { select: { id: true, title: true, slug: true } } },
     });
 
     if (!currentChapterData) {
-      return errorResponse('Chapter not found', 404);
+      return errorResponse('Chapter not found or not published for this novel', 404);
     }
 
-    const currentChapterNumber = Number(currentChapterData.chapterNumber); // Already converting here, good.
+    const currentChapterNumber = Number(currentChapterData.chapterNumber);
 
-    const [prevChapterData, nextChapterData] = await Promise.all([ // Renamed
+    const [prevChapterData, nextChapterData] = await Promise.all([
       prisma.chapter.findFirst({
         where: {
-          novelId,
+          novelId: novelIdFromQuery,
           isPublished: true,
           isDeleted: false,
           chapterNumber: { lt: new Prisma.Decimal(currentChapterNumber) },
@@ -38,7 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: { chapterId: s
       }),
       prisma.chapter.findFirst({
         where: {
-          novelId,
+          novelId: novelIdFromQuery,
           isPublished: true,
           isDeleted: false,
           chapterNumber: { gt: new Prisma.Decimal(currentChapterNumber) },
@@ -48,14 +53,13 @@ export async function GET(req: NextRequest, { params }: { params: { chapterId: s
       }),
     ]);
     
-    // Serialize the data before sending
     const responseData = {
-      currentChapter: currentChapterData, // Pass raw data to serializePrismaData
+      currentChapter: currentChapterData,
       prevChapterId: prevChapterData?.id || null,
       nextChapterId: nextChapterData?.id || null,
     };
 
-    return successResponse(serializePrismaData(responseData)); // <--- SERIALIZE HERE
+    return successResponse(serializePrismaData(responseData));
 
   } catch (error) {
     return handleApiError(error);

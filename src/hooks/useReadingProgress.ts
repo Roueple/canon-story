@@ -2,9 +2,9 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { useDebounce } from './useDebounce'; // Assuming you'll create this or have one
+// Removed: import { useDebounce } from './useDebounce';
 
-// A simple debounce hook (create this file or use a library)
+// A simple debounce hook (re-added here)
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -18,7 +18,6 @@ export function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-
 export interface ReadingProgress {
   chapterId: string;
   progressPercentage: number;
@@ -31,12 +30,16 @@ export function useReadingProgress(novelId: string, currentChapterId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const debouncedProgress = useDebounce(progress, 1500); // Debounce updates by 1.5 seconds
+  const debouncedProgress = useDebounce(progress, 1500); // Now uses the local useDebounce
 
-  // Fetch initial progress
   useEffect(() => {
+    if (!currentChapterId) {
+        setIsLoading(false);
+        return;
+    }
     if (!isSignedIn || !novelId || !user?.id) {
       setIsLoading(false);
+      setProgress({ chapterId: currentChapterId, progressPercentage: 0, scrollPosition: 0 });
       return;
     }
     
@@ -46,55 +49,60 @@ export function useReadingProgress(novelId: string, currentChapterId: string) {
       try {
         const response = await fetch(`/api/public/users/progress?novelId=${novelId}`);
         if (!response.ok) {
-          if (response.status === 404) { // No progress found is not an error
+          if (response.status === 404) {
             setProgress({ chapterId: currentChapterId, progressPercentage: 0, scrollPosition: 0 });
           } else {
-            throw new Error('Failed to fetch reading progress');
+            const errorData = await response.json().catch(() => ({ error: 'Failed to fetch reading progress and parse error' }));
+            throw new Error(errorData.error || 'Failed to fetch reading progress');
           }
         } else {
           const data = await response.json();
           if (data.success && data.data) {
-            setProgress({
-              chapterId: data.data.chapterId,
-              progressPercentage: data.data.progressPercentage,
-              scrollPosition: data.data.scrollPosition,
-            });
+            if (data.data.novelId === novelId) {
+                 setProgress({
+                    chapterId: data.data.chapterId,
+                    progressPercentage: data.data.progressPercentage,
+                    scrollPosition: data.data.scrollPosition,
+                });
+            } else {
+                 setProgress({ chapterId: currentChapterId, progressPercentage: 0, scrollPosition: 0 });
+            }
           } else {
              setProgress({ chapterId: currentChapterId, progressPercentage: 0, scrollPosition: 0 });
           }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setProgress({ chapterId: currentChapterId, progressPercentage: 0, scrollPosition: 0 });
         console.error("Error fetching progress:", err);
       } finally {
         setIsLoading(false);
       }
     };
     fetchProgress();
-  }, [novelId, isSignedIn, user?.id, currentChapterId]);
+  }, [novelId, currentChapterId, isSignedIn, user?.id]);
 
-  // Save progress
-  const saveProgress = useCallback(async (newProgress: ReadingProgress) => {
-    if (!isSignedIn || !novelId || !user?.id) return;
+  const saveProgress = useCallback(async (newProgressToSave: ReadingProgress) => {
+    if (!isSignedIn || !novelId || !user?.id || !newProgressToSave) return; // Added null check for newProgressToSave
     try {
       await fetch('/api/public/users/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           novelId,
-          chapterId: newProgress.chapterId,
-          progressPercentage: newProgress.progressPercentage,
-          scrollPosition: newProgress.scrollPosition,
+          chapterId: newProgressToSave.chapterId,
+          progressPercentage: newProgressToSave.progressPercentage,
+          scrollPosition: newProgressToSave.scrollPosition,
         }),
       });
     } catch (err) {
       console.error('Failed to save reading progress:', err);
-      // Optionally set an error state here for UI feedback
     }
   }, [novelId, isSignedIn, user?.id]);
   
   useEffect(() => {
-    if (debouncedProgress && debouncedProgress.progressPercentage > 0) { // Only save if there's actual progress
+    // Ensure debouncedProgress is not null before trying to access its properties
+    if (debouncedProgress && (debouncedProgress.progressPercentage > 0 || debouncedProgress.scrollPosition > 0)) {
       saveProgress(debouncedProgress);
     }
   }, [debouncedProgress, saveProgress]);
@@ -107,10 +115,13 @@ export function useReadingProgress(novelId: string, currentChapterId: string) {
     });
   }, [currentChapterId]);
 
+  const loadedChapterId = isLoading ? null : progress?.chapterId;
+  const applicableScrollPosition = isLoading ? 0 : (progress?.chapterId === currentChapterId ? (progress?.scrollPosition || 0) : 0);
+
   return {
-    progress, // This is the live progress object for the current chapter
-    initialChapterId: isLoading ? null : (progress?.chapterId || currentChapterId),
-    initialScrollPosition: isLoading ? 0 : (progress?.scrollPosition || 0),
+    progress,
+    initialChapterId: loadedChapterId,
+    initialScrollPosition: applicableScrollPosition,
     updateCurrentChapterProgress,
     isLoadingProgress: isLoading,
     progressError: error,

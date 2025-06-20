@@ -1,9 +1,9 @@
 // src/app/(public)/novels/[novelId]/chapters/[chapterId]/page.tsx
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, use } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // For navigation
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Home, Book, Loader2 } from 'lucide-react';
 import { Button } from '@/components/shared/ui/Button';
 import { Breadcrumbs, type BreadcrumbItem } from '@/components/shared/layout/Breadcrumbs';
@@ -26,60 +26,26 @@ interface ChapterPageData {
   nextChapterId: string | null;
 }
 
-// Client-side data fetching function
 async function fetchChapterPageData(novelId: string, chapterId: string): Promise<ChapterPageData | null> {
   try {
-    // OPTION 1: Ideal - A single API endpoint that provides current chapter and prev/next IDs
-    // const res = await fetch(`/api/public/chapters/${chapterId}/details?novelId=${novelId}`);
-    // if (!res.ok) throw new Error('Failed to fetch chapter details');
-    // const data = await res.json();
-    // if (data.success) return data.data;
-    // return null;
-
-    // OPTION 2: Fallback - Multiple API calls (less performant, adapt as needed)
-    const chapterRes = await fetch(`/api/public/chapters/${chapterId}`);
-    if (!chapterRes.ok) throw new Error('Chapter not found');
-    const chapterData = await chapterRes.json();
-    if (!chapterData.success) throw new Error(chapterData.error || 'Failed to load chapter');
-    
-    const currentChapterFromApi = chapterData.data as ChapterWithNovel; // Assuming API returns novel nested
-
-    // Fetch novel details if not included in chapter API (current API does include it)
-    // const novelRes = await fetch(`/api/public/novels/${novelId}`);
-    // if (!novelRes.ok) throw new Error('Novel not found');
-    // const novelData = await novelRes.json();
-    // if (!novelData.success) throw new Error(novelData.error || 'Failed to load novel');
-    // const novelInfo = novelData.data as Pick<Novel, 'id' | 'title' | 'slug'>;
-
-    // Fetch all chapters for the novel to determine prev/next (can be slow for many chapters)
-    const allChaptersRes = await fetch(`/api/public/novels/${novelId}/chapters?limit=1000`); // Adjust limit
-    if (!allChaptersRes.ok) throw new Error('Failed to fetch chapter list for navigation');
-    const allChaptersData = await allChaptersRes.json();
-    if (!allChaptersData.success) throw new Error(allChaptersData.error || 'Failed to load chapter list');
-    
-    const chaptersList: { id: string, chapterNumber: number | string }[] = allChaptersData.data.map((ch: any) => ({
-        id: ch.id,
-        chapterNumber: parseFloat(String(ch.chapterNumber)) // Ensure chapterNumber is numeric for sorting
-    })).sort((a:any, b:any) => a.chapterNumber - b.chapterNumber);
-
-    const currentIndex = chaptersList.findIndex(ch => ch.id === chapterId);
-    const prevChapterId = currentIndex > 0 ? chaptersList[currentIndex - 1].id : null;
-    const nextChapterId = currentIndex < chaptersList.length - 1 ? chaptersList[currentIndex + 1].id : null;
-    
-    return {
-      currentChapter: currentChapterFromApi, // Use the novel info from the chapter API
-      prevChapterId,
-      nextChapterId,
-    };
-
+    const chapterRes = await fetch(`/api/public/chapters/${chapterId}/details?novelId=${novelId}`);
+    if (!chapterRes.ok) {
+      const errorData = await chapterRes.json().catch(() => ({ error: 'Failed to fetch chapter details and parse error' }));
+      console.error("API Error fetching chapter details:", chapterRes.status, errorData.error);
+      throw new Error(errorData.error || `Failed to fetch chapter details (status: ${chapterRes.status})`);
+    }
+    const data = await chapterRes.json();
+    if (data.success) return data.data;
+    console.error("API call to fetchChapterPageData was not successful:", data.error);
+    return null;
   } catch (error) {
     console.error("Failed to fetch chapter data:", error);
     return null;
   }
 }
 
-
-export default function ChapterReadingPage({ params }: { params: { novelId: string, chapterId: string } }) {
+export default function ChapterReadingPage({ params: paramsPromise }: { params: Promise<{ novelId: string, chapterId: string }> }) {
+  const params = use(paramsPromise);
   const router = useRouter();
   const [pageData, setPageData] = useState<ChapterPageData | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
@@ -88,21 +54,29 @@ export default function ChapterReadingPage({ params }: { params: { novelId: stri
   const contentRef = useRef<HTMLDivElement>(null);
   const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+  const [initialScrollApplied, setInitialScrollApplied] = useState(false); // Flag for initial scroll
 
   const { fontSize, autoScrollSpeed, isSettingsReady } = useReadingSettings();
+  
   const { 
-    progress, 
+    progress: currentReadingProgress, // Renamed to avoid confusion with progress bar's 'progress' prop
     updateCurrentChapterProgress, 
-    initialChapterId, 
-    initialScrollPosition, 
+    initialChapterId, // This is the chapterId from the *loaded* progress
+    initialScrollPosition, // This is the scrollPos if loaded progress is for *current* chapter
     isLoadingProgress 
   } = useReadingProgress(params.novelId, params.chapterId);
   const { isBookmarked, toggleBookmark, isLoadingBookmarks } = useBookmarks(params.chapterId);
 
   useEffect(() => {
     async function loadData() {
+      if (!params.novelId || !params.chapterId) {
+        setErrorPage("Novel or Chapter ID is missing.");
+        setIsLoadingPage(false);
+        return;
+      }
       setIsLoadingPage(true);
       setErrorPage(null);
+      setInitialScrollApplied(false); // Reset flag when new chapter data is being loaded
       const data = await fetchChapterPageData(params.novelId, params.chapterId);
       if (data) {
         setPageData(data);
@@ -114,16 +88,44 @@ export default function ChapterReadingPage({ params }: { params: { novelId: stri
     loadData();
   }, [params.novelId, params.chapterId]);
 
+  // Effect for applying initial scroll position
   useEffect(() => {
     const contentEl = contentRef.current;
-    if (!contentEl || isLoadingProgress || !pageData || !isSettingsReady) return;
-
-    if (initialChapterId === params.chapterId && initialScrollPosition > 0) {
-      setTimeout(() => {
-        if (contentRef.current) contentRef.current.scrollTop = initialScrollPosition;
-      }, 100);
+    if (!contentEl || isLoadingProgress || !pageData || !isSettingsReady || initialScrollApplied) {
+      return;
     }
-    
+
+    // Only apply if the loaded progress (initialChapterId) is for the current chapter (params.chapterId)
+    // and initialScrollPosition is meaningful (greater than 0)
+    if (initialChapterId === params.chapterId && initialScrollPosition > 0) {
+      console.log(`Applying initial scroll: ${initialScrollPosition} for chapter ${params.chapterId}`);
+      contentEl.scrollTop = initialScrollPosition;
+      setInitialScrollApplied(true);
+    } else if (initialChapterId !== params.chapterId && contentEl.scrollTop !== 0) {
+      // If loaded progress is for a different chapter, or no progress, scroll to top for current chapter
+      console.log(`No specific progress for ${params.chapterId} or different chapter's progress loaded. Scrolling to top.`);
+      contentEl.scrollTop = 0;
+      setInitialScrollApplied(true); // Mark as "applied" even if it's just to scroll to top
+    } else if (initialScrollPosition === 0) {
+      // If scroll position is 0, consider it applied
+      setInitialScrollApplied(true);
+    }
+  }, [
+    contentRef, 
+    isLoadingProgress, 
+    pageData, 
+    isSettingsReady, 
+    initialScrollApplied, 
+    initialChapterId, 
+    initialScrollPosition, 
+    params.chapterId
+  ]);
+
+  // Effect for handling scroll events
+  useEffect(() => {
+    const contentEl = contentRef.current;
+    if (!contentEl || !pageData) return; // Ensure pageData is loaded
+
     const handleScroll = () => {
       if (!contentRef.current) return;
       const scrollTop = contentRef.current.scrollTop;
@@ -136,7 +138,7 @@ export default function ChapterReadingPage({ params }: { params: { novelId: stri
     return () => {
         if (contentEl) contentEl.removeEventListener('scroll', handleScroll);
     };
-  }, [contentRef, updateCurrentChapterProgress, isLoadingProgress, initialChapterId, initialScrollPosition, params.chapterId, pageData, isSettingsReady]);
+  }, [contentRef, pageData, updateCurrentChapterProgress]); // Dependencies: only what's needed for listening
 
   useEffect(() => {
     if (isAutoScrolling && contentRef.current) {
@@ -157,7 +159,9 @@ export default function ChapterReadingPage({ params }: { params: { novelId: stri
     };
   }, [isAutoScrolling, autoScrollSpeed]);
 
-  const toggleAutoScroll = () => setIsAutoScrolling(prev => !prev);
+  const toggleAutoScroll = useCallback(() => {
+    setIsAutoScrolling(prev => !prev);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -172,7 +176,7 @@ export default function ChapterReadingPage({ params }: { params: { novelId: stri
   }, [pageData, params.novelId, router]);
 
 
-  if (isLoadingPage || !isSettingsReady) {
+  if (isLoadingPage || !isSettingsReady || !params.novelId || !params.chapterId) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -196,12 +200,12 @@ export default function ChapterReadingPage({ params }: { params: { novelId: stri
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <ReadingProgressBar currentProgress={progress?.progressPercentage || 0} className="fixed top-0 left-0 right-0 z-[60] h-1" /> {/* Increased z-index */}
+      <ReadingProgressBar currentProgress={currentReadingProgress?.progressPercentage || 0} className="fixed top-0 left-0 right-0 z-[60] h-1" />
       
       <div className="max-w-4xl mx-auto px-4 pt-8 pb-24 sm:pt-12 sm:pb-32 w-full flex-grow">
         <Breadcrumbs items={breadcrumbItems} className="mb-6" />
 
-        <article ref={contentRef} className="overflow-y-auto chapter-content-area" style={{ maxHeight: 'calc(100vh - 220px)', fontSize: `${fontSize}px` }}> {/* Added class and applied font size here */}
+        <article ref={contentRef} className="overflow-y-auto chapter-content-area" style={{ maxHeight: 'calc(100vh - 220px)', fontSize: `${fontSize}px` }}>
           <header className="mb-8 text-center">
             <h1 className="text-3xl sm:text-4xl font-extrabold mb-2">
               {currentChapter.title}
@@ -216,7 +220,7 @@ export default function ChapterReadingPage({ params }: { params: { novelId: stri
           </header>
 
           <div
-            className="prose prose-lg dark:prose-invert max-w-none leading-relaxed" // Prose handles its own font sizing relative to parent
+            className="prose prose-lg dark:prose-invert max-w-none leading-relaxed"
             dangerouslySetInnerHTML={{ __html: currentChapter.content }}
           />
         </article>

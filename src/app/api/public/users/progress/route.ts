@@ -1,34 +1,37 @@
 // src/app/api/public/users/progress/route.ts
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+// Simplified GET handler for debugging
+export async function GET(req: NextRequest) {
+  try {
+    const novelId = req.nextUrl.searchParams.get('novelId');
+    console.log(`[DEBUG] Simplified /api/public/users/progress GET. novelId: ${novelId}`);
+    
+    // Return a simple success response
+    return NextResponse.json({ 
+      success: true, 
+      data: { 
+        message: "Progress API test OK (simplified)", 
+        novelId: novelId,
+        // Mocked progress data
+        chapterId: "mock-chapter-id", 
+        progressPercentage: 0, 
+        scrollPosition: 0 
+      } 
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error('[DEBUG] Error in simplified progress GET:', error);
+    return NextResponse.json({ success: false, error: 'Error in simplified handler' }, { status: 500 });
+  }
+}
+
+// You can comment out or also simplify the POST handler if you only test GET for now
+// For instance, to keep the original POST handler:
 import { createProtectedRoute } from '@/lib/api/middleware';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api/utils';
 import { prisma } from '@/lib/db';
 
-// GET user's reading progress for a novel
-export const GET = createProtectedRoute(async (req, { user }) => {
-  try {
-    const novelId = req.nextUrl.searchParams.get('novelId');
-    if (!novelId) {
-      return errorResponse('Novel ID is required', 400);
-    }
-
-    const progress = await prisma.userReadingProgress.findUnique({
-      where: { userId_novelId: { userId: user.id, novelId } },
-    });
-
-    if (!progress) {
-      return errorResponse('No progress found for this novel', 404);
-    }
-    // Convert Decimal to number for chapterId if it's stored as Decimal
-    // For now, assuming chapterId is string UUID.
-    // progressPercentage and scrollPosition are Int, so no conversion needed.
-    return successResponse(progress);
-  } catch (error) {
-    return handleApiError(error);
-  }
-});
-
-// POST (update) user's reading progress
 export const POST = createProtectedRoute(async (req, { user }) => {
   try {
     const body = await req.json();
@@ -47,7 +50,6 @@ export const POST = createProtectedRoute(async (req, { user }) => {
     if (isNaN(numericScrollPosition) || numericScrollPosition < 0) {
         return errorResponse('Invalid scrollPosition. Must be a non-negative number.', 400);
     }
-
 
     const updatedProgress = await prisma.userReadingProgress.upsert({
       where: { userId_novelId: { userId: user.id, novelId } },
