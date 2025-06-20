@@ -142,3 +142,25 @@ export function excludeDeleted<T extends SoftDeletable>(items: T[]): T[] {
 export function onlyDeleted<T extends SoftDeletable>(items: T[]): T[] {
   return items.filter(item => item.isDeleted)
 }
+
+// Reading Progress Data
+export interface UserReadingProgressData {
+  id: string;
+  userId: string;
+  novelId: string;
+  chapterId: string;
+  progressPercentage: number;
+  scrollPosition: number;
+  lastReadAt: Date;
+}
+
+// User Bookmark Data
+export interface UserBookmarkData {
+  id: string;
+  userId: string;
+  chapterId: string;
+  position?: number | null; // Character position or paragraph, 0 for chapter-level
+  note?: string | null;
+  isPrivate: boolean;
+  createdAt: Date;
+}
