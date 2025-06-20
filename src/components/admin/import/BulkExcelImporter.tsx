@@ -1,8 +1,9 @@
+// src/components/admin/import/BulkExcelImporter.tsx
 'use client'
 
 import { useState } from 'react'
 import { Upload, Download, AlertCircle, CheckCircle, FileSpreadsheet } from 'lucide-react'
-import { Button } from '@/components/shared/ui' // Corrected path
+import { Button, Badge } from '@/components/shared/ui' // Correctly import Badge from your UI lib
 
 interface Props {
   novelId: string;
@@ -18,12 +19,12 @@ interface ChapterData {
   isPublished?: boolean;
 }
 
-interface PreviewData {
+interface PreviewState {
   chapters: ChapterData[];
   conflicts: number[];
 }
 
-interface ImportResult {
+interface ImportResultState {
   created: number;
   errors: string[];
 }
@@ -32,8 +33,10 @@ export function BulkExcelImporter({ novelId, onComplete, onCancel }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
-  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
-  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  
+  const [previewData, setPreviewData] = useState<PreviewState | null>(null);
+  const [importResult, setImportResult] = useState<ImportResultState | null>(null);
+  const [importRecordId, setImportRecordId] = useState<string | null>(null);
 
   const handleDownloadTemplate = async () => {
     setIsProcessing(true);
@@ -69,6 +72,7 @@ export function BulkExcelImporter({ novelId, onComplete, onCancel }: Props) {
       setError('');
       setPreviewData(null);
       setImportResult(null);
+      setImportRecordId(null);
     }
   };
 
@@ -81,6 +85,7 @@ export function BulkExcelImporter({ novelId, onComplete, onCancel }: Props) {
     setError('');
     setPreviewData(null);
     setImportResult(null);
+    setImportRecordId(null);
 
     try {
       const formData = new FormData();
@@ -93,7 +98,15 @@ export function BulkExcelImporter({ novelId, onComplete, onCancel }: Props) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Preview generation failed.');
-      setPreviewData(data.data);
+      
+      setImportRecordId(data.data.importRecordId);
+      if (data.data.message === 'No valid chapters found in the file.') {
+        setError(data.data.message);
+        setPreviewData({ chapters: [], conflicts: [] }); 
+      } else {
+        setPreviewData({ chapters: data.data.chapters, conflicts: data.data.conflicts });
+      }
+
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -102,10 +115,12 @@ export function BulkExcelImporter({ novelId, onComplete, onCancel }: Props) {
   };
 
   const handleConfirmImport = async () => {
-    if (!previewData || previewData.chapters.length === 0) {
-      setError('No chapters to import or preview data is missing.');
+    if (!previewData || !importRecordId) {
+      setError('Import process not initiated or preview data is missing. Please try previewing again.');
       return;
     }
+    const chaptersToImport = previewData.chapters.filter(ch => !previewData.conflicts.includes(ch.chapterNumber));
+    
     setIsProcessing(true);
     setError('');
 
@@ -114,15 +129,17 @@ export function BulkExcelImporter({ novelId, onComplete, onCancel }: Props) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          importRecordId,
           novelId,
-          chapters: previewData.chapters
+          chapters: chaptersToImport 
         })
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Import processing failed.');
+      
       setImportResult(result.data);
-      if (result.data.created > 0) {
-        setTimeout(() => { onComplete(); }, 2000); // Auto-close modal on success
+      if (response.ok && result.data) { 
+        onComplete(); 
       }
     } catch (err: any) {
       setError(err.message);
@@ -130,6 +147,8 @@ export function BulkExcelImporter({ novelId, onComplete, onCancel }: Props) {
       setIsProcessing(false);
     }
   };
+  
+  const validChaptersToImportCount = previewData ? previewData.chapters.filter(ch => !previewData.conflicts.includes(ch.chapterNumber)).length : 0;
 
   return (
     <div className="space-y-6">
@@ -174,7 +193,7 @@ export function BulkExcelImporter({ novelId, onComplete, onCancel }: Props) {
             </div>
           )}
           <p className="text-sm text-gray-300 mb-2">
-            Found <span className="font-semibold text-white">{previewData.chapters.length}</span> chapters to import. Showing first 5:
+            Found <span className="font-semibold text-white">{previewData.chapters.length}</span> chapters in the file. Showing first 5:
           </p>
           <div className="overflow-x-auto rounded border border-gray-700 max-h-60">
             <table className="min-w-full text-sm">
@@ -192,9 +211,10 @@ export function BulkExcelImporter({ novelId, onComplete, onCancel }: Props) {
                     <td className="px-3 py-2 text-gray-200">{ch.chapterNumber}</td>
                     <td className="px-3 py-2 text-gray-300 truncate max-w-xs">{ch.title}</td>
                     <td className="px-3 py-2 text-gray-300">{ch.content.split(/\s+/).filter(Boolean).length}</td>
-                    <td className="px-3 py-2 text-gray-300">
-                      {ch.isPublished && <Badge size="sm" variant="success" className="mr-1">Published</Badge>}
-                      {ch.isPremium && <Badge size="sm" variant="primary" className="bg-purple-500/20 text-purple-300">Premium</Badge>}
+                    <td className="px-3 py-2 text-gray-300 space-x-1"> {/* Added space-x-1 for multiple badges */}
+                      {ch.isPublished && <Badge size="sm" variant="success">Published</Badge>}
+                      {ch.isPremium && <Badge size="sm" variant="primary" className="bg-purple-600/30 text-purple-300 border-purple-500/50">Premium</Badge>}
+                      {previewData.conflicts.includes(ch.chapterNumber) && <Badge size="sm" variant="warning">Conflict</Badge>}
                     </td>
                   </tr>
                 ))}
@@ -211,12 +231,18 @@ export function BulkExcelImporter({ novelId, onComplete, onCancel }: Props) {
           {importResult.created > 0 && (
             <div className="flex items-center gap-2 text-green-400 bg-green-900/20 p-3 rounded-md mb-2">
               <CheckCircle className="h-5 w-5" />
-              <span>{importResult.created} chapters imported successfully! The page will refresh.</span>
+              <span>{importResult.created} chapters imported successfully! The chapter list will refresh.</span>
             </div>
           )}
-          {importResult.errors?.length > 0 && (
+          {importResult.created === 0 && (!importResult.errors || importResult.errors.length === 0) && (
+            <div className="flex items-center gap-2 text-yellow-400 bg-yellow-900/20 p-3 rounded-md mb-2">
+              <AlertCircle className="h-5 w-5" />
+              <span>No new chapters were imported. This might be because all chapters were conflicts or the file was empty.</span>
+            </div>
+          )}
+          {importResult.errors && importResult.errors.length > 0 && (
             <div className="bg-red-900/20 p-3 rounded-md">
-              <p className="text-red-400 text-sm font-medium mb-1">Encountered {importResult.errors.length} errors:</p>
+              <p className="text-red-400 text-sm font-medium mb-1">Encountered {importResult.errors.length} errors during import:</p>
               <ul className="list-disc list-inside text-xs text-red-400 max-h-32 overflow-y-auto">
                 {importResult.errors.map((errMsg: string, i: number) => <li key={i}>{errMsg}</li>)}
               </ul>
@@ -233,8 +259,13 @@ export function BulkExcelImporter({ novelId, onComplete, onCancel }: Props) {
           </Button>
         )}
         {previewData && !importResult && (
-          <Button onClick={handleConfirmImport} disabled={isProcessing || previewData.chapters.length === 0} isLoading={isProcessing} variant="primary">
-            {isProcessing ? 'Importing...' : `Confirm Import (${previewData.chapters.length - previewData.conflicts.length} valid)`}
+          <Button 
+            onClick={handleConfirmImport} 
+            disabled={isProcessing || !importRecordId || validChaptersToImportCount === 0}
+            isLoading={isProcessing} 
+            variant="primary"
+          >
+            {isProcessing ? 'Importing...' : `Confirm Import (${validChaptersToImportCount} valid)`}
           </Button>
         )}
       </div>

@@ -5,10 +5,10 @@ import { documentImportService } from '@/services/documentImportService';
 
 export const POST = createAdminRoute(async (req, { user }) => { // user is available if needed for audit logs etc.
   try {
-    const { novelId, chapters } = await req.json();
+    const { novelId, chapters, importRecordId } = await req.json();
 
-    if (!novelId || !chapters || !Array.isArray(chapters) || chapters.length === 0) {
-      return errorResponse('Invalid request data: novelId and a non-empty chapters array are required.', 400);
+    if (!novelId || !importRecordId || !chapters || !Array.isArray(chapters) /* chapters.length === 0 is now allowed if all were conflicts */) {
+      return errorResponse('Invalid request data: novelId, importRecordId, and chapters array are required.', 400);
     }
     if (chapters.length > 50) {
         return errorResponse('Cannot process more than 50 chapters in a single bulk import.', 400);
@@ -16,8 +16,9 @@ export const POST = createAdminRoute(async (req, { user }) => { // user is avail
 
     const result = await documentImportService.processBulkImport(
       chapters,
-      novelId
-      // userId if you add createdBy/updatedBy to Chapter schema
+      novelId,
+      user.id, // uploaderId
+      importRecordId
     );
 
     return successResponse(result);

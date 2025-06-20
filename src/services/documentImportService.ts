@@ -187,13 +187,15 @@ export const documentImportService = {
       select: { chapterNumber: true }
     });
     const conflicts = existingChapters.map(ch => Number(ch.chapterNumber));
+    
     return { chapters, conflicts };
   },
 
   async processBulkImport(
     chapters: BulkChapterData[],
-    novelId: string
-    // Removed userId as it's not in Chapter schema
+    novelId: string,
+    uploaderId: string, // Added for audit logging
+    importRecordId: string // Added to update DocumentImport record
   ): Promise<{ created: number; errors: string[] }> {
     let createdCount = 0;
     const errorMessages: string[] = [];
