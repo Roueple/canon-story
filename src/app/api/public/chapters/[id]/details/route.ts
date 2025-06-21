@@ -7,7 +7,7 @@ import { serializePrismaData } from '@/lib/serialization';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) { // Corrected: params has 'id'
   try {
-    const chapterIdFromParams = params.id; // Corrected: use params.id
+    const chapterIdFromParams = params.novelId; // Corrected: use params.novelId
     const novelIdFromQuery = req.nextUrl.searchParams.get('novelId');
 
     if (!chapterIdFromParams || !novelIdFromQuery) {

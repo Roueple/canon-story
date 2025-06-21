@@ -1,264 +1,215 @@
 // src/app/(public)/novels/[novelId]/chapters/[chapterId]/page.tsx
-'use client';
+'use client'
 
-import { useEffect, useState, useRef, useCallback, use } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Home, Book, Loader2 } from 'lucide-react';
-import { Button } from '@/components/shared/ui/Button';
-import { Breadcrumbs, type BreadcrumbItem } from '@/components/shared/layout/Breadcrumbs';
-import { ReadingControls } from '@/components/reader/ReadingControls';
-import { ReadingProgressBar } from '@/components/reader/ReadingProgressBar';
-import { BookmarkButton } from '@/components/reader/BookmarkButton';
-import { useReadingSettings } from '@/hooks/useReadingSettings';
-import { useReadingProgress } from '@/hooks/useReadingProgress';
-import { useBookmarks } from '@/hooks/useBookmarks';
-import { formatChapterNumber, calculateReadingTime } from '@/lib/utils';
-import type { Chapter, Novel } from '@prisma/client';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import { useAuth } from '@clerk/nextjs'
+import { ArrowLeft, Bookmark, BookmarkCheck, Clock, Eye } from 'lucide-react'
+import { Button } from '@/components/shared/ui/Button'
+import { LoadingSpinner } from '@/components/shared/ui/LoadingSpinner'
+import { InfiniteScrollReader } from '@/components/reader/InfiniteScrollReader'
+import { ReadingControls } from '@/components/reader/ReadingControls'
+import { ReadingProgressBar } from '@/components/reader/ReadingProgressBar'
+import { useReadingProgress } from '@/hooks/useReadingProgress'
+import { useBookmarks } from '@/hooks/useBookmarks'
+import { useReadingSettings } from '@/hooks/useReadingSettings'
+import { useTheme } from '@/providers/theme-provider'
+import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
-interface ChapterWithNovel extends Chapter {
-  novel: Pick<Novel, 'id' | 'title' | 'slug'>;
-}
-
-interface ChapterPageData {
-  currentChapter: ChapterWithNovel;
-  prevChapterId: string | null;
-  nextChapterId: string | null;
-}
-
-async function fetchChapterPageData(novelId: string, chapterId: string): Promise<ChapterPageData | null> {
-  try {
-    const chapterRes = await fetch(`/api/public/chapters/${chapterId}/details?novelId=${novelId}`);
-    if (!chapterRes.ok) {
-      const errorData = await chapterRes.json().catch(() => ({ error: 'Failed to fetch chapter details and parse error' }));
-      console.error("API Error fetching chapter details:", chapterRes.status, errorData.error);
-      throw new Error(errorData.error || `Failed to fetch chapter details (status: ${chapterRes.status})`);
-    }
-    const data = await chapterRes.json();
-    if (data.success) return data.data;
-    console.error("API call to fetchChapterPageData was not successful:", data.error);
-    return null;
-  } catch (error) {
-    console.error("Failed to fetch chapter data:", error);
-    return null;
+interface Chapter {
+  id: string
+  novelId: string
+  title: string
+  content: string
+  chapterNumber: any
+  wordCount: number
+  publishedAt: string | null
+  novel: {
+    id: string
+    title: string
+    author: string
   }
 }
 
-export default function ChapterReadingPage({ params: paramsPromise }: { params: Promise<{ novelId: string, chapterId: string }> }) {
-  const params = use(paramsPromise);
-  const router = useRouter();
-  const [pageData, setPageData] = useState<ChapterPageData | null>(null);
-  const [isLoadingPage, setIsLoadingPage] = useState(true);
-  const [errorPage, setErrorPage] = useState<string | null>(null);
+interface ChapterWithNavigation {
+  currentChapter: Chapter
+  prevChapterId: string | null
+  nextChapterId: string | null
+  totalChapters: number
+  allChapterIds: string[]
+}
 
-  const contentRef = useRef<HTMLDivElement>(null);
-  const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
-  const [initialScrollApplied, setInitialScrollApplied] = useState(false); // Flag for initial scroll
-
-  const { fontSize, autoScrollSpeed, isSettingsReady } = useReadingSettings();
+export default function ChapterPage() {
+  const params = useParams()
+  const router = useRouter()
+  const { isSignedIn, userId } = useAuth()
+  const contentRef = useRef<HTMLDivElement>(null)
   
-  const { 
-    progress: currentReadingProgress, // Renamed to avoid confusion with progress bar's 'progress' prop
-    updateCurrentChapterProgress, 
-    initialChapterId, // This is the chapterId from the *loaded* progress
-    initialScrollPosition, // This is the scrollPos if loaded progress is for *current* chapter
-    isLoadingProgress 
-  } = useReadingProgress(params.novelId, params.chapterId);
-  const { isBookmarked, toggleBookmark, isLoadingBookmarks } = useBookmarks(params.chapterId);
-
+  const [pageData, setPageData] = useState<ChapterWithNavigation | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false)
+  const [isFocusMode, setIsFocusMode] = useState(false)
+  
+  const { fontSize, autoScrollSpeed, updateFontSize, updateAutoScrollSpeed, isSettingsReady } = useReadingSettings()
+  const { theme } = useTheme()
+  
+  // Initial chapter load
   useEffect(() => {
-    async function loadData() {
-      if (!params.novelId || !params.chapterId) {
-        setErrorPage("Novel or Chapter ID is missing.");
-        setIsLoadingPage(false);
-        return;
-      }
-      setIsLoadingPage(true);
-      setErrorPage(null);
-      setInitialScrollApplied(false); // Reset flag when new chapter data is being loaded
-      const data = await fetchChapterPageData(params.novelId, params.chapterId);
-      if (data) {
-        setPageData(data);
-      } else {
-        setErrorPage("Failed to load chapter content or chapter not found.");
-      }
-      setIsLoadingPage(false);
-    }
-    loadData();
-  }, [params.novelId, params.chapterId]);
-
-  // Effect for applying initial scroll position
-  useEffect(() => {
-    const contentEl = contentRef.current;
-    if (!contentEl || isLoadingProgress || !pageData || !isSettingsReady || initialScrollApplied) {
-      return;
-    }
-
-    // Only apply if the loaded progress (initialChapterId) is for the current chapter (params.chapterId)
-    // and initialScrollPosition is meaningful (greater than 0)
-    if (initialChapterId === params.chapterId && initialScrollPosition > 0) {
-      console.log(`Applying initial scroll: ${initialScrollPosition} for chapter ${params.chapterId}`);
-      contentEl.scrollTop = initialScrollPosition;
-      setInitialScrollApplied(true);
-    } else if (initialChapterId !== params.chapterId && contentEl.scrollTop !== 0) {
-      // If loaded progress is for a different chapter, or no progress, scroll to top for current chapter
-      console.log(`No specific progress for ${params.chapterId} or different chapter's progress loaded. Scrolling to top.`);
-      contentEl.scrollTop = 0;
-      setInitialScrollApplied(true); // Mark as "applied" even if it's just to scroll to top
-    } else if (initialScrollPosition === 0) {
-      // If scroll position is 0, consider it applied
-      setInitialScrollApplied(true);
-    }
-  }, [
-    contentRef, 
-    isLoadingProgress, 
-    pageData, 
-    isSettingsReady, 
-    initialScrollApplied, 
-    initialChapterId, 
-    initialScrollPosition, 
-    params.chapterId
-  ]);
-
-  // Effect for handling scroll events
-  useEffect(() => {
-    const contentEl = contentRef.current;
-    if (!contentEl || !pageData) return; // Ensure pageData is loaded
-
-    const handleScroll = () => {
-      if (!contentRef.current) return;
-      const scrollTop = contentRef.current.scrollTop;
-      const scrollHeight = contentRef.current.scrollHeight - contentRef.current.clientHeight;
-      const currentProgressVal = scrollHeight > 0 ? Math.min(100, Math.round((scrollTop / scrollHeight) * 100)) : (contentRef.current.scrollHeight > 0 ? 100 : 0);
-      updateCurrentChapterProgress(scrollTop, currentProgressVal);
-    };
-
-    contentEl.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-        if (contentEl) contentEl.removeEventListener('scroll', handleScroll);
-    };
-  }, [contentRef, pageData, updateCurrentChapterProgress]); // Dependencies: only what's needed for listening
-
-  useEffect(() => {
-    if (isAutoScrolling && contentRef.current) {
-      autoScrollIntervalRef.current = setInterval(() => {
-        if (contentRef.current) {
-          contentRef.current.scrollBy({ top: autoScrollSpeed, behavior: 'smooth' });
-          if (contentRef.current.scrollTop + contentRef.current.clientHeight >= contentRef.current.scrollHeight - 5) {
-            setIsAutoScrolling(false);
-          }
+    async function fetchChapter() {
+      try {
+        setIsLoading(true)
+        const response = await fetch(`/api/public/novels/${params.novelId}/chapters/${params.chapterId}`)
+        if (!response.ok) throw new Error('Failed to fetch chapter')
+        
+        const data = await response.json()
+        setPageData(data)
+        
+        // Track view
+        if (isSignedIn) {
+          fetch('/api/public/novels/track-view', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              novelId: params.novelId,
+              chapterId: params.chapterId 
+            })
+          }).catch(console.error)
         }
-      }, 100);
-    } else if (autoScrollIntervalRef.current) {
-      clearInterval(autoScrollIntervalRef.current);
-      autoScrollIntervalRef.current = null;
-    }
-    return () => {
-      if (autoScrollIntervalRef.current) clearInterval(autoScrollIntervalRef.current);
-    };
-  }, [isAutoScrolling, autoScrollSpeed]);
-
-  const toggleAutoScroll = useCallback(() => {
-    setIsAutoScrolling(prev => !prev);
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowLeft' && pageData?.prevChapterId) {
-        router.push(`/novels/${params.novelId}/chapters/${pageData.prevChapterId}`);
-      } else if (event.key === 'ArrowRight' && pageData?.nextChapterId) {
-        router.push(`/novels/${params.novelId}/chapters/${pageData.nextChapterId}`);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load chapter')
+      } finally {
+        setIsLoading(false)
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pageData, params.novelId, router]);
-
-
-  if (isLoadingPage || !isSettingsReady || !params.novelId || !params.chapterId) {
+    }
+    
+    fetchChapter()
+  }, [params.novelId, params.chapterId, isSignedIn])
+  
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      
+      switch(e.key.toLowerCase()) {
+        case 'f':
+          setIsFocusMode(prev => !prev)
+          break
+        case ' ':
+          e.preventDefault()
+          setIsAutoScrolling(prev => !prev)
+          break
+        case 'arrowleft':
+          if (pageData?.prevChapterId) {
+            router.push(`/novels/${params.novelId}/chapters/${pageData.prevChapterId}`)
+          }
+          break
+        case 'arrowright':
+          if (pageData?.nextChapterId) {
+            router.push(`/novels/${params.novelId}/chapters/${pageData.nextChapterId}`)
+          }
+          break
+        case '+':
+        case '=':
+          updateFontSize(Math.min(fontSize + 1, 32))
+          break
+        case '-':
+        case '_':
+          updateFontSize(Math.max(fontSize - 1, 12))
+          break
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [fontSize, pageData, params.novelId, router, updateFontSize])
+  
+  if (isLoading || !isSettingsReady) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner />
       </div>
-    );
+    )
   }
-
-  if (errorPage || !pageData) {
-    return <div className="text-center py-10 text-error bg-background min-h-screen">{errorPage || "Chapter not found."}</div>;
+  
+  if (error || !pageData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <p className="text-destructive">{error || 'Chapter not found'}</p>
+        <Button onClick={() => router.back()}>Go Back</Button>
+      </div>
+    )
   }
-
-  const { currentChapter, prevChapterId, nextChapterId } = pageData;
-  const estimatedReadTime = calculateReadingTime(currentChapter.wordCount);
-
-  const breadcrumbItems: BreadcrumbItem[] = [
-    { label: 'Home', href: '/' },
-    { label: 'Novels', href: '/novels' },
-    { label: currentChapter.novel.title, href: `/novels/${currentChapter.novel.id}` },
-    { label: `Chapter ${formatChapterNumber(Number(currentChapter.chapterNumber))}` }
-  ];
-
+  
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <ReadingProgressBar currentProgress={currentReadingProgress?.progressPercentage || 0} className="fixed top-0 left-0 right-0 z-[60] h-1" />
-      
-      <div className="max-w-4xl mx-auto px-4 pt-8 pb-24 sm:pt-12 sm:pb-32 w-full flex-grow">
-        <Breadcrumbs items={breadcrumbItems} className="mb-6" />
-
-        <article ref={contentRef} className="overflow-y-auto chapter-content-area" style={{ maxHeight: 'calc(100vh - 220px)', fontSize: `${fontSize}px` }}>
-          <header className="mb-8 text-center">
-            <h1 className="text-3xl sm:text-4xl font-extrabold mb-2">
-              {currentChapter.title}
-            </h1>
-            <div className="text-sm text-secondary space-x-2">
-              <span>Chapter {formatChapterNumber(Number(currentChapter.chapterNumber))}</span>
-              <span>•</span>
-              <span>~{estimatedReadTime} min read</span>
-              <span>•</span>
-              <span>{currentChapter.wordCount.toLocaleString()} words</span>
+    <div className={cn(
+      "min-h-screen bg-background text-foreground transition-all duration-300",
+      isFocusMode && "focus-mode"
+    )}>
+      {/* Header - Hidden in focus mode via CSS */}
+      <header className="reader-header sticky top-0 z-50 bg-card/95 backdrop-blur border-b">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push(`/novels/${params.novelId}`)}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Novel
+              </Button>
+              <div className="hidden sm:block">
+                <h1 className="text-lg font-semibold">{pageData.currentChapter.novel.title}</h1>
+                <p className="text-sm text-muted-foreground">by {pageData.currentChapter.novel.author}</p>
+              </div>
             </div>
-          </header>
-
-          <div
-            className="prose prose-lg dark:prose-invert max-w-none leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: currentChapter.content }}
-          />
-        </article>
-
-        <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
-          {prevChapterId ? (
-            <Button asChild variant="outline" className="w-full sm:w-auto">
-              <Link href={`/novels/${params.novelId}/chapters/${prevChapterId}`}>
-                <ArrowLeft className="h-4 w-4 mr-2" /> Previous
-              </Link>
-            </Button>
-          ) : <div className="w-full sm:w-auto" />}
-          
-          <div className="flex flex-col sm:flex-row items-center gap-2">
-            <Button asChild variant="ghost" className="w-full sm:w-auto">
-              <Link href={`/novels/${params.novelId}`}>
-                <Book className="h-4 w-4 mr-2" /> All Chapters
-              </Link>
-            </Button>
-            <BookmarkButton 
-              isBookmarked={isBookmarked} 
-              onToggleBookmark={toggleBookmark} 
-              isLoading={isLoadingBookmarks}
-              className="w-full sm:w-auto"
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                Chapter {pageData.currentChapter.chapterNumber} of {pageData.totalChapters}
+              </span>
+            </div>
           </div>
-
-          {nextChapterId ? (
-            <Button asChild variant="outline" className="w-full sm:w-auto">
-              <Link href={`/novels/${params.novelId}/chapters/${nextChapterId}`}>
-                Next <ArrowRight className="h-4 w-4 ml-2" />
-              </Link>
-            </Button>
-          ) : <div className="w-full sm:w-auto" />}
         </div>
-      </div>
+      </header>
       
-      <ReadingControls onToggleAutoScroll={toggleAutoScroll} isAutoScrolling={isAutoScrolling} />
+      {/* Progress Bar */}
+      <ReadingProgressBar />
+      
+      {/* Main Content */}
+      <main ref={contentRef} className="reader-content">
+        <InfiniteScrollReader
+          initialChapterId={params.chapterId as string}
+          novelId={params.novelId as string}
+          allChapterIds={pageData.allChapterIds}
+          fontSize={fontSize}
+          theme={theme}
+          isAutoScrolling={isAutoScrolling}
+          autoScrollSpeed={autoScrollSpeed}
+        />
+      </main>
+      
+      {/* Reading Controls */}
+      <ReadingControls
+        fontSize={fontSize}
+        onFontSizeChange={updateFontSize}
+        isAutoScrolling={isAutoScrolling}
+        onToggleAutoScroll={() => setIsAutoScrolling(!isAutoScrolling)}
+        autoScrollSpeed={autoScrollSpeed}
+        onAutoScrollSpeedChange={updateAutoScrollSpeed}
+        theme={theme}
+        isFocusMode={isFocusMode}
+        onToggleFocusMode={() => setIsFocusMode(!isFocusMode)}
+      />
+      
+      {/* Keyboard shortcuts hint */}
+      <div className="fixed bottom-20 right-4 text-xs text-muted-foreground opacity-50 hover:opacity-100 transition-opacity">
+        <div>F - Focus Mode</div>
+        <div>Space - Auto Scroll</div>
+        <div>← → - Navigate</div>
+        <div>+ - - Font Size</div>
+      </div>
     </div>
-  );
+  )
 }

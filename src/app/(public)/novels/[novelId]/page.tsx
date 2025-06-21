@@ -38,8 +38,15 @@ async function getNovelDetails(novelId: string) {
     return novel;
 }
 
-export default async function NovelHomepage({ params }: { params: { novelId: string } }) {
-    const novel = await getNovelDetails(params.novelId);
+export default async function NovelHomepage({ 
+  params 
+}: { 
+  params: Promise<{ novelId: string }> // Add Promise wrapper
+}) {
+  const { novelId } = await params // Await params
+  
+  // Then use novelId instead of params.novelId
+  const novel = await getNovelDetails(novelId);
 
     const totalWords = novel.chapters.reduce((sum, chapter) => sum + chapter.wordCount, 0);
     const estimatedReadTime = Math.ceil(totalWords / 200); // Average reading speed

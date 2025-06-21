@@ -24,7 +24,7 @@ async function getGenres() {
 export default async function EditNovelPage({ params }: { params: { id: string } }) {
   // Fetch novel and genres in parallel
   const [novel, genres] = await Promise.all([
-    getNovel(params.id),
+    getNovel(params.novelId),
     getGenres()
   ]);
 

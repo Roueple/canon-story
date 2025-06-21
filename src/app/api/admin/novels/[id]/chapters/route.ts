@@ -6,7 +6,7 @@ import { chapterService } from '@/services/chapterService'
 
 export const GET = createAdminRoute(async (req, { params }) => {
   try {
-    const novelId = params.id;
+    const novelId = params.novelId;
     if (!novelId) return errorResponse('Novel ID is required', 400);
 
     const { page, limit } = getPaginationParams(req.nextUrl.searchParams);
@@ -17,7 +17,7 @@ export const GET = createAdminRoute(async (req, { params }) => {
 
 export const POST = createAdminRoute(async (req, { params }) => {
   try {
-    const novelId = params.id;
+    const novelId = params.novelId;
     if (!novelId) return errorResponse('Novel ID is required', 400);
 
     const body = await req.json();

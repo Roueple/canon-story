@@ -51,7 +51,7 @@ export default async function EditChapterPage({
   return (
     <div>
       <Link 
-        href={`/admin/novels/${params.id}/chapters`} 
+        href={`/admin/novels/${params.novelId}/chapters`} 
         className="inline-flex items-center text-gray-400 hover:text-white mb-6"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />

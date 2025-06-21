@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 const FONT_SIZE_KEY = 'reading_font_size';
 const AUTOSCROLL_SPEED_KEY = 'reading_autoscroll_speed';
 const MIN_FONT_SIZE = 12;
-const MAX_FONT_SIZE = 28; // Increased max font size
+const MAX_FONT_SIZE = 32; // Increased max font size for better accessibility
 const DEFAULT_FONT_SIZE = 16;
 const DEFAULT_AUTOSCROLL_SPEED = 3; // 1-5 scale
 

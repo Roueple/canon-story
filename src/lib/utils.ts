@@ -22,7 +22,8 @@ export function formatNumber(num: number | bigint): string {
 }
 
 // Calculate reading time in minutes based on word count
-export function calculateReadingTime(wordCount: number, wordsPerMinute: number = 200): number {
+export function calculateReadingTime(wordCount: number): number {
+  const wordsPerMinute = 500 // Average reading speed
   return Math.ceil(wordCount / wordsPerMinute)
 }
 
@@ -121,3 +122,4 @@ export function formatChapterNumber(chapterNumber: number | string): string {
 }
 // Alias for backward compatibility
 export const slugify = generateSlug;
+

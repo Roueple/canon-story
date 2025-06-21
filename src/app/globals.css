@@ -15,23 +15,6 @@
   --cardForeground: #1F2937;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-secondary: var(--secondary);
-  --color-accent: var(--accent);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
-  --color-border: var(--border);
-  --color-muted: var(--muted);
-  --color-card: var(--card);
-  --color-card-foreground: var(--cardForeground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -119,4 +102,161 @@ body {
   margin-top: 1.5em; /* Example margin */
   margin-bottom: 1.5em; /* Example margin */
   border-radius: 0.375rem; /* Example rounded corners */
+}
+
+/* Add these styles to src/app/globals.css */
+
+/* Reader Container Styles */
+.reader-scroll-container {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Focus Mode */
+.focus-mode .reader-header,
+.focus-mode .reader-controls,
+.focus-mode header,
+.focus-mode footer {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.focus-mode .reader-content {
+  padding-top: 0;
+}
+
+/* Chapter Content Typography */
+.chapter-text-content {
+  --reader-font-size: 16px;
+  font-size: var(--reader-font-size) !important;
+}
+
+.chapter-text-content * {
+  color: inherit !important;
+  transition: font-size 0.2s ease;
+}
+
+.chapter-text-content p {
+  font-size: inherit !important;
+  margin-bottom: 1.5em;
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+.chapter-text-content h1,
+.chapter-text-content h2,
+.chapter-text-content h3,
+.chapter-text-content h4,
+.chapter-text-content h5,
+.chapter-text-content h6 {
+  color: inherit !important;
+  margin-top: 2em;
+  margin-bottom: 1em;
+  font-weight: 700;
+}
+
+.chapter-text-content h1 { font-size: calc(var(--reader-font-size) * 2) !important; }
+.chapter-text-content h2 { font-size: calc(var(--reader-font-size) * 1.75) !important; }
+.chapter-text-content h3 { font-size: calc(var(--reader-font-size) * 1.5) !important; }
+.chapter-text-content h4 { font-size: calc(var(--reader-font-size) * 1.25) !important; }
+.chapter-text-content h5 { font-size: calc(var(--reader-font-size) * 1.1) !important; }
+.chapter-text-content h6 { font-size: calc(var(--reader-font-size) * 1) !important; }
+
+.chapter-text-content ul,
+.chapter-text-content ol {
+  margin: 1.5em 0;
+  padding-left: 2em;
+}
+
+.chapter-text-content li {
+  font-size: inherit !important;
+  margin-bottom: 0.5em;
+}
+
+.chapter-text-content blockquote {
+  border-left: 4px solid var(--primary);
+  padding-left: 1em;
+  margin: 1.5em 0;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.chapter-text-content a {
+  color: var(--primary) !important;
+  text-decoration: underline;
+}
+
+.chapter-text-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 2em auto;
+  display: block;
+  border-radius: 0.5rem;
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+}
+
+.chapter-text-content img:hover {
+  transform: scale(1.02);
+}
+
+/* Theme-specific styles */
+.prose-reading {
+  --tw-prose-body: #3d2914;
+  --tw-prose-headings: #2d1810;
+  --tw-prose-links: #8b4513;
+  --tw-prose-bold: #2d1810;
+  --tw-prose-quotes: #5d4e37;
+}
+
+/* Reading theme background */
+.bg-\[\#f4e8d0\] {
+  background-color: #f4e8d0;
+}
+
+/* Dark theme adjustments */
+.dark .chapter-text-content {
+  color: #e5e5e5 !important;
+}
+
+.dark .chapter-text-content h1,
+.dark .chapter-text-content h2,
+.dark .chapter-text-content h3,
+.dark .chapter-text-content h4,
+.dark .chapter-text-content h5,
+.dark .chapter-text-content h6 {
+  color: #ffffff !important;
+}
+
+/* Loading animations */
+@keyframes pulse-fade {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.chapter-content-wrapper {
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* Smooth scrolling for auto-scroll */
+.reader-scroll-container:has(.auto-scrolling) {
+  scroll-behavior: auto;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .chapter-text-content {
+    text-align: left;
+  }
+  
+  .reader-scroll-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }

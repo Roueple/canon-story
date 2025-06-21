@@ -1,129 +1,99 @@
 // src/hooks/useReadingProgress.ts
 'use client'
-import { useState, useEffect, useCallback } from 'react';
-import { useUser } from '@clerk/nextjs';
-// Removed: import { useDebounce } from './useDebounce';
 
-// A simple debounce hook (re-added here)
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
+import { useState, useCallback, useEffect } from 'react'
+import { useAuth } from '@clerk/nextjs'
+
+interface ReadingProgress {
+  novelId: string
+  chapterId: string
+  progress: number
+  lastRead: Date
 }
 
-export interface ReadingProgress {
-  chapterId: string;
-  progressPercentage: number;
-  scrollPosition: number;
-}
-
-export function useReadingProgress(novelId: string, currentChapterId: string) {
-  const { user, isSignedIn } = useUser();
-  const [progress, setProgress] = useState<ReadingProgress | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const debouncedProgress = useDebounce(progress, 1500); // Now uses the local useDebounce
-
+export function useReadingProgress() {
+  const { isSignedIn } = useAuth()
+  const [progressMap, setProgressMap] = useState<Map<string, ReadingProgress>>(new Map())
+  
+  // Load saved progress from localStorage
   useEffect(() => {
-    if (!currentChapterId) {
-        setIsLoading(false);
-        return;
+    if (!isSignedIn) return
+    
+    const saved = localStorage.getItem('reading-progress')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        const map = new Map<string, ReadingProgress>()
+        Object.entries(parsed).forEach(([key, value]) => {
+          if (value && typeof value === 'object' && 'novelId' in value) {
+            map.set(key, value as ReadingProgress)
+          }
+        })
+        setProgressMap(map)
+      } catch (error) {
+        console.error('Error loading reading progress:', error)
+      }
     }
-    if (!isSignedIn || !novelId || !user?.id) {
-      setIsLoading(false);
-      setProgress({ chapterId: currentChapterId, progressPercentage: 0, scrollPosition: 0 });
-      return;
+  }, [isSignedIn])
+  
+  // Update progress
+  const updateProgress = useCallback((novelId: string, chapterId: string, progress: number) => {
+    const newProgress: ReadingProgress = {
+      novelId,
+      chapterId,
+      progress,
+      lastRead: new Date()
     }
     
-    const fetchProgress = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`/api/public/users/progress?novelId=${novelId}`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            setProgress({ chapterId: currentChapterId, progressPercentage: 0, scrollPosition: 0 });
-          } else {
-            const errorData = await response.json().catch(() => ({ error: 'Failed to fetch reading progress and parse error' }));
-            throw new Error(errorData.error || 'Failed to fetch reading progress');
-          }
-        } else {
-          const data = await response.json();
-          if (data.success && data.data) {
-            if (data.data.novelId === novelId) {
-                 setProgress({
-                    chapterId: data.data.chapterId,
-                    progressPercentage: data.data.progressPercentage,
-                    scrollPosition: data.data.scrollPosition,
-                });
-            } else {
-                 setProgress({ chapterId: currentChapterId, progressPercentage: 0, scrollPosition: 0 });
-            }
-          } else {
-             setProgress({ chapterId: currentChapterId, progressPercentage: 0, scrollPosition: 0 });
-          }
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        setProgress({ chapterId: currentChapterId, progressPercentage: 0, scrollPosition: 0 });
-        console.error("Error fetching progress:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchProgress();
-  }, [novelId, currentChapterId, isSignedIn, user?.id]);
-
-  const saveProgress = useCallback(async (newProgressToSave: ReadingProgress) => {
-    if (!isSignedIn || !novelId || !user?.id || !newProgressToSave) return; // Added null check for newProgressToSave
-    try {
-      await fetch('/api/public/users/progress', {
+    setProgressMap(prev => {
+      const newMap = new Map(prev)
+      newMap.set(`${novelId}-${chapterId}`, newProgress)
+      
+      // Save to localStorage
+      const toSave = Object.fromEntries(newMap)
+      localStorage.setItem('reading-progress', JSON.stringify(toSave))
+      
+      return newMap
+    })
+    
+    // Save to server (simplified without debounce for now)
+    if (isSignedIn) {
+      fetch('/api/public/users/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           novelId,
-          chapterId: newProgressToSave.chapterId,
-          progressPercentage: newProgressToSave.progressPercentage,
-          scrollPosition: newProgressToSave.scrollPosition,
-        }),
-      });
-    } catch (err) {
-      console.error('Failed to save reading progress:', err);
+          chapterId,
+          progressPercentage: progress,
+          scrollPosition: 0
+        })
+      }).catch(console.error)
     }
-  }, [novelId, isSignedIn, user?.id]);
+  }, [isSignedIn])
   
-  useEffect(() => {
-    // Ensure debouncedProgress is not null before trying to access its properties
-    if (debouncedProgress && (debouncedProgress.progressPercentage > 0 || debouncedProgress.scrollPosition > 0)) {
-      saveProgress(debouncedProgress);
-    }
-  }, [debouncedProgress, saveProgress]);
-
-  const updateCurrentChapterProgress = useCallback((scrollPos: number, percentage: number) => {
-    setProgress({
-      chapterId: currentChapterId,
-      scrollPosition: scrollPos,
-      progressPercentage: percentage,
-    });
-  }, [currentChapterId]);
-
-  const loadedChapterId = isLoading ? null : progress?.chapterId;
-  const applicableScrollPosition = isLoading ? 0 : (progress?.chapterId === currentChapterId ? (progress?.scrollPosition || 0) : 0);
-
+  // Get progress for a specific chapter
+  const getProgress = useCallback((novelId: string, chapterId: string): number => {
+    const progress = progressMap.get(`${novelId}-${chapterId}`)
+    return progress?.progress || 0
+  }, [progressMap])
+  
+  // Get last read chapter for a novel - SIMPLIFIED VERSION
+  const getLastReadChapter = useCallback((novelId: string): string | null => {
+    const entries = Array.from(progressMap.values())
+    const novelProgress = entries.filter(p => p.novelId === novelId)
+    
+    if (novelProgress.length === 0) return null
+    
+    const sorted = novelProgress.sort((a, b) => {
+      return new Date(b.lastRead).getTime() - new Date(a.lastRead).getTime()
+    })
+    
+    return sorted[0].chapterId
+  }, [progressMap])
+  
   return {
-    progress,
-    initialChapterId: loadedChapterId,
-    initialScrollPosition: applicableScrollPosition,
-    updateCurrentChapterProgress,
-    isLoadingProgress: isLoading,
-    progressError: error,
-  };
+    updateProgress,
+    getProgress,
+    getLastReadChapter
+  }
 }
