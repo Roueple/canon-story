@@ -38,7 +38,7 @@ interface NovelWithChapters {
 
 export default function ChaptersPage() {
   const routeParams = useParams<{ id: string }>()
-  const novelIdFromParams = routeparams.novelId
+  const novelIdFromParams = routeParams.id
 
   const [novel, setNovel] = useState<NovelWithChapters | null>(null)
   const [isLoading, setIsLoading] = useState(true)
