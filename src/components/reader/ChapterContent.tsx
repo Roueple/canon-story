@@ -1,51 +1,61 @@
 // src/components/reader/ChapterContent.tsx
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { cn } from '@/lib/utils'
+import { useRef, useEffect } from 'react'
 import { Clock } from 'lucide-react'
-import { calculateReadingTime } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+import { useImageModal } from '@/hooks/useImageModal'
 
 interface ChapterContentProps {
   chapter: {
     id: string
     title: string
     content: string
-    chapterNumber: any
+    chapterNumber: number | string // Can be number or string
     wordCount: number
   }
   fontSize: number
   theme: string
-  isFirst: boolean
-  isLast: boolean
-  isVisible: boolean
+  isFirst?: boolean
+  isLast?: boolean
+  isVisible?: boolean
 }
 
-export function ChapterContent({
-  chapter,
-  fontSize,
-  theme,
-  isFirst,
-  isLast,
-  isVisible
+export function ChapterContent({ 
+  chapter, 
+  fontSize, 
+  theme, 
+  isFirst = false,
+  isLast = false,
+  isVisible = true
 }: ChapterContentProps) {
   const contentRef = useRef<HTMLDivElement>(null)
-  
-  // Apply dynamic styles when component mounts or updates
-  useEffect(() => {
-    if (contentRef.current) {
-      // Apply font size to all text elements
-      const style = contentRef.current.style
-      style.setProperty('--reader-font-size', `${fontSize}px`)
+  useImageModal()
+
+  // Safe number formatting
+  const formatChapterNumber = (num: number | string): string => {
+    // Handle if it's already a string
+    if (typeof num === 'string') {
+      const parsed = parseFloat(num);
+      if (isNaN(parsed)) return num;
+      num = parsed;
     }
-  }, [fontSize])
-  
-  // Format chapter number
-  const formatChapterNumber = (num: any): string => {
-    const numStr = num?.toString() || '0'
-    const parsed = parseFloat(numStr)
-    return parsed % 1 === 0 ? parsed.toString() : parsed.toFixed(2).replace(/\.?0+$/, '')
+    
+    // Handle if it's a number
+    if (typeof num === 'number') {
+      return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '');
+    }
+    
+    // Fallback
+    return String(num);
   }
+  
+  // Safe number display
+  const safeWordCount = typeof chapter.wordCount === 'number' 
+    ? chapter.wordCount 
+    : parseInt(String(chapter.wordCount)) || 0;
+  
+  const calculateReadingTime = (words: number) => Math.ceil(words / 200);
   
   return (
     <article
@@ -68,10 +78,10 @@ export function ChapterContent({
         <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
-            {calculateReadingTime(chapter.wordCount)} min read
+            {calculateReadingTime(safeWordCount)} min read
           </span>
           <span>•</span>
-          <span>{chapter.wordCount.toLocaleString()} words</span>
+          <span>{safeWordCount.toLocaleString()} words</span>
         </div>
       </header>
       

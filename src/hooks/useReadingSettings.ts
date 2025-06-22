@@ -1,58 +1,99 @@
 // src/hooks/useReadingSettings.ts
-'use client'
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react'
 
-const FONT_SIZE_KEY = 'reading_font_size';
-const AUTOSCROLL_SPEED_KEY = 'reading_autoscroll_speed';
-const MIN_FONT_SIZE = 12;
-const MAX_FONT_SIZE = 32; // Increased max font size for better accessibility
-const DEFAULT_FONT_SIZE = 16;
-const DEFAULT_AUTOSCROLL_SPEED = 3; // 1-5 scale
-
-export interface ReadingSettings {
-  fontSize: number;
-  autoScrollSpeed: number;
+interface ReadingSettings {
+  fontSize: number
+  lineHeight: number
+  fontFamily: string
+  autoScrollSpeed: number
+  theme: 'light' | 'dark' | 'sepia'
 }
 
+const DEFAULT_SETTINGS: ReadingSettings = {
+  fontSize: 16,
+  lineHeight: 1.8,
+  fontFamily: 'sans-serif',
+  autoScrollSpeed: 1,
+  theme: 'light'
+}
+
+const STORAGE_KEY = 'canon-story-reading-settings'
+
 export function useReadingSettings() {
-  const [isMounted, setIsMounted] = useState(false);
-  const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE);
-  const [autoScrollSpeed, setAutoScrollSpeed] = useState(DEFAULT_AUTOSCROLL_SPEED);
+  const [settings, setSettings] = useState<ReadingSettings>(DEFAULT_SETTINGS)
+  const [isSettingsReady, setIsSettingsReady] = useState(false)
 
+  // Load settings from localStorage
   useEffect(() => {
-    setIsMounted(true);
-    const storedFontSize = localStorage.getItem(FONT_SIZE_KEY);
-    if (storedFontSize) {
-      setFontSize(Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, parseInt(storedFontSize, 10))));
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setSettings({ ...DEFAULT_SETTINGS, ...parsed })
+      }
+    } catch (error) {
+      console.error('Error loading reading settings:', error)
+    } finally {
+      setIsSettingsReady(true)
     }
-    const storedAutoScrollSpeed = localStorage.getItem(AUTOSCROLL_SPEED_KEY);
-    if (storedAutoScrollSpeed) {
-      setAutoScrollSpeed(parseInt(storedAutoScrollSpeed, 10));
-    }
-  }, []);
+  }, [])
 
-  const updateFontSize = useCallback((newSize: number) => {
-    const clampedSize = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, newSize));
-    setFontSize(clampedSize);
-    if (isMounted) {
-      localStorage.setItem(FONT_SIZE_KEY, clampedSize.toString());
+  // Save settings to localStorage
+  const saveSettings = useCallback((newSettings: ReadingSettings) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings))
+    } catch (error) {
+      console.error('Error saving reading settings:', error)
     }
-  }, [isMounted]);
+  }, [])
 
-  const updateAutoScrollSpeed = useCallback((newSpeed: number) => {
-    setAutoScrollSpeed(newSpeed);
-    if (isMounted) {
-      localStorage.setItem(AUTOSCROLL_SPEED_KEY, newSpeed.toString());
-    }
-  }, [isMounted]);
+  // Update specific setting
+  const updateSetting = useCallback(<K extends keyof ReadingSettings>(
+    key: K,
+    value: ReadingSettings[K]
+  ) => {
+    setSettings(prev => {
+      const updated = { ...prev, [key]: value }
+      saveSettings(updated)
+      return updated
+    })
+  }, [saveSettings])
+
+  // Convenience methods
+  const updateFontSize = useCallback((size: number) => {
+    updateSetting('fontSize', Math.max(12, Math.min(32, size)))
+  }, [updateSetting])
+
+  const updateLineHeight = useCallback((height: number) => {
+    updateSetting('lineHeight', Math.max(1.2, Math.min(3, height)))
+  }, [updateSetting])
+
+  const updateFontFamily = useCallback((family: string) => {
+    updateSetting('fontFamily', family)
+  }, [updateSetting])
+
+  const updateAutoScrollSpeed = useCallback((speed: number) => {
+    updateSetting('autoScrollSpeed', Math.max(0.1, Math.min(10, speed)))
+  }, [updateSetting])
+
+  const updateTheme = useCallback((theme: 'light' | 'dark' | 'sepia') => {
+    updateSetting('theme', theme)
+  }, [updateSetting])
+
+  const resetSettings = useCallback(() => {
+    setSettings(DEFAULT_SETTINGS)
+    saveSettings(DEFAULT_SETTINGS)
+  }, [saveSettings])
 
   return {
-    fontSize,
+    ...settings,
+    isSettingsReady,
     updateFontSize,
-    minFontSize: MIN_FONT_SIZE,
-    maxFontSize: MAX_FONT_SIZE,
-    autoScrollSpeed,
+    updateLineHeight,
+    updateFontFamily,
     updateAutoScrollSpeed,
-    isSettingsReady: isMounted, // Indicates if settings are loaded from localStorage
-  };
+    updateTheme,
+    updateSetting,
+    resetSettings
+  }
 }

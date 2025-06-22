@@ -1,5 +1,7 @@
+// src/app/api/public/novels/[novelId]/chapters/[chapterId]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { serializeForJSON } from '@/lib/api/utils'
 
 export async function GET(
   request: NextRequest,
@@ -19,7 +21,7 @@ export async function GET(
           select: {
             id: true,
             title: true,
-            author: true
+            author: true // String field, not relation
           }
         }
       }
@@ -46,13 +48,16 @@ export async function GET(
     const nextChapterId = currentIndex < allChapters.length - 1 ? allChapters[currentIndex + 1].id : null
     const allChapterIds = allChapters.map(ch => ch.id)
 
-    return NextResponse.json({
-      currentChapter,
+    // Use comprehensive serialization to handle all Prisma types
+    const response = {
+      currentChapter: serializeForJSON(currentChapter),
       prevChapterId,
       nextChapterId,
       totalChapters: allChapters.length,
       allChapterIds
-    })
+    }
+
+    return NextResponse.json(response)
   } catch (error) {
     console.error('Error fetching chapter:', error)
     return NextResponse.json({ error: 'Failed to fetch chapter' }, { status: 500 })

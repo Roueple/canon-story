@@ -5,7 +5,6 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api/utils'
 import { chapterService } from '@/services/chapterService'
 import { prisma } from '@/lib/db'
 
-// CORRECTED: Handler signature updated to use context
 export const GET = createAdminRoute(async (req, { params }) => {
   try {
     const { id } = params;
@@ -22,7 +21,6 @@ export const GET = createAdminRoute(async (req, { params }) => {
   }
 });
 
-// CORRECTED: Handler signature updated to use context
 export const PUT = createAdminRoute(async (req, { params }) => {
   try {
     const { id } = params;
@@ -31,17 +29,19 @@ export const PUT = createAdminRoute(async (req, { params }) => {
     }
     const body = await req.json();
     const chapter = await chapterService.update(id, body);
+    
+    // Update novel's updatedAt timestamp
     await prisma.novel.update({
       where: { id: chapter.novelId },
       data: { updatedAt: new Date() }
     });
+    
     return successResponse(chapter);
   } catch (error) {
     return handleApiError(error);
   }
 });
 
-// CORRECTED: Handler signature updated to use context
 export const DELETE = createAdminRoute(async (req, { user, params }) => {
   try {
     const { id } = params;
