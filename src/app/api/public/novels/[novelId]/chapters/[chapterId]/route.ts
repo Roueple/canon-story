@@ -1,65 +1,68 @@
 // src/app/api/public/novels/[novelId]/chapters/[chapterId]/route.ts
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/db'
-import { serializeForJSON } from '@/lib/api/utils'
+import { successResponse, errorResponse, handleApiError } from '@/lib/api/utils'
+import { serializeForJSON } from '@/lib/api/utils' // Use the correct serializer
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ novelId: string; chapterId: string }> }
+  { params }: { params: { novelId: string; chapterId: string } }
 ) {
   try {
-    const { novelId, chapterId } = await params
+    const { novelId, chapterId } = params
     
+    // 1. Fetch current chapter and its novel details
     const currentChapter = await prisma.chapter.findFirst({
       where: {
         id: chapterId,
         novelId: novelId,
-        publishedAt: { not: null }
+        isPublished: true,
+        isDeleted: false,
       },
       include: {
         novel: {
           select: {
-            id: true,
             title: true,
-            author: true // String field, not relation
           }
         }
       }
     })
 
     if (!currentChapter) {
-      return NextResponse.json({ error: 'Chapter not found' }, { status: 404 })
+      return errorResponse('Chapter not found or not published.', 404)
     }
 
-    const allChapters = await prisma.chapter.findMany({
+    // 2. Fetch all published chapter IDs and their order for navigation
+    const allChaptersInNovel = await prisma.chapter.findMany({
       where: {
         novelId: novelId,
-        publishedAt: { not: null }
+        isPublished: true,
+        isDeleted: false,
       },
       select: {
         id: true,
-        chapterNumber: true
+        displayOrder: true,
       },
-      orderBy: { chapterNumber: 'asc' }
+      orderBy: { displayOrder: 'asc' }
     })
 
-    const currentIndex = allChapters.findIndex(ch => ch.id === chapterId)
-    const prevChapterId = currentIndex > 0 ? allChapters[currentIndex - 1].id : null
-    const nextChapterId = currentIndex < allChapters.length - 1 ? allChapters[currentIndex + 1].id : null
-    const allChapterIds = allChapters.map(ch => ch.id)
+    const allChapterIds = allChaptersInNovel.map(ch => ch.id)
+    const currentIndex = allChapterIds.indexOf(chapterId)
+    
+    const prevChapterId = currentIndex > 0 ? allChapterIds[currentIndex - 1] : null
+    const nextChapterId = currentIndex < allChapterIds.length - 1 ? allChapterIds[currentIndex + 1] : null
 
-    // Use comprehensive serialization to handle all Prisma types
-    const response = {
-      currentChapter: serializeForJSON(currentChapter),
+    // 3. Prepare the response payload
+    const responsePayload = {
+      currentChapter,
       prevChapterId,
       nextChapterId,
-      totalChapters: allChapters.length,
-      allChapterIds
+      allChapterIds,
     }
 
-    return NextResponse.json(response)
+    // 4. Return serialized data
+    return successResponse(responsePayload)
   } catch (error) {
-    console.error('Error fetching chapter:', error)
-    return NextResponse.json({ error: 'Failed to fetch chapter' }, { status: 500 })
+    return handleApiError(error)
   }
 }

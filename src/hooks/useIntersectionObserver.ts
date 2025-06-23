@@ -1,52 +1,29 @@
 // src/hooks/useIntersectionObserver.ts
-
 import { useEffect, useRef } from 'react'
 
 export function useIntersectionObserver(
-  containerRef: React.RefObject<HTMLDivElement>, // Changed from HTMLElement to HTMLDivElement
-  callback: (entries: IntersectionObserverEntry[]) => void,
+  // FIX: Allow the ref's current value to be null initially
+  targetRef: React.RefObject<Element | null>, 
+  callback: IntersectionObserverCallback,
   options?: IntersectionObserverInit
 ) {
   const observerRef = useRef<IntersectionObserver | null>(null)
   
   useEffect(() => {
-    if (!containerRef.current) return
+    // This check already handles the null case correctly at runtime.
+    // The type signature now matches this logic.
+    if (!targetRef.current) return 
     
-    // Create observer
     observerRef.current = new IntersectionObserver(callback, {
-      root: containerRef.current,
+      root: null, // Observe against the viewport
       ...options
     })
     
-    // Observe all chapter elements
-    const chapters = containerRef.current.querySelectorAll('[data-chapter-id]')
-    chapters.forEach(chapter => {
-      observerRef.current?.observe(chapter)
-    })
+    observerRef.current.observe(targetRef.current)
     
+    const observer = observerRef.current; // Capture observer for cleanup
     return () => {
-      observerRef.current?.disconnect()
+      observer?.disconnect()
     }
-  }, [containerRef, callback, options])
-  
-  // Re-observe when new chapters are added
-  useEffect(() => {
-    if (!containerRef.current || !observerRef.current) return
-    
-    const observer = new MutationObserver(() => {
-      const chapters = containerRef.current!.querySelectorAll('[data-chapter-id]')
-      chapters.forEach(chapter => {
-        if (!observerRef.current) return
-        observerRef.current.unobserve(chapter)
-        observerRef.current.observe(chapter)
-      })
-    })
-    
-    observer.observe(containerRef.current, {
-      childList: true,
-      subtree: true
-    })
-    
-    return () => observer.disconnect()
-  }, [containerRef])
+  }, [targetRef, callback, options])
 }

@@ -11,13 +11,12 @@ interface ReadingProgress {
   lastReadAt: Date
 }
 
-export function useReadingProgress(novelId?: string, chapterId?: string) {
+export function useReadingProgress(novelId?: string) {
   const { isSignedIn, userId } = useAuth()
   const [progress, setProgress] = useState<ReadingProgress | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch current progress
   useEffect(() => {
     if (!isSignedIn || !userId || !novelId) {
       setProgress(null)
@@ -27,14 +26,9 @@ export function useReadingProgress(novelId?: string, chapterId?: string) {
     const fetchProgress = async () => {
       setIsLoading(true)
       setError(null)
-      
       try {
         const response = await fetch(`/api/public/users/progress?novelId=${novelId}`)
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch reading progress')
-        }
-        
+        if (!response.ok) throw new Error('Failed to fetch reading progress')
         const data = await response.json()
         setProgress(data.data || null)
       } catch (err) {
@@ -44,14 +38,12 @@ export function useReadingProgress(novelId?: string, chapterId?: string) {
         setIsLoading(false)
       }
     }
-
     fetchProgress()
   }, [isSignedIn, userId, novelId])
 
-  // Debounced update function
   const updateProgressDebounced = useCallback(
-    debounce(async (percentage: number, scrollPos?: number) => {
-      if (!isSignedIn || !userId || !novelId || !chapterId) return
+    debounce(async (chapterId: string, percentage: number, scrollPos?: number) => {
+      if (!isSignedIn || !userId || !novelId) return
 
       try {
         const response = await fetch('/api/public/users/progress', {
@@ -65,46 +57,21 @@ export function useReadingProgress(novelId?: string, chapterId?: string) {
           })
         })
 
-        if (!response.ok) {
-          throw new Error('Failed to update reading progress')
-        }
-
+        if (!response.ok) throw new Error('Failed to update reading progress')
+        
         const data = await response.json()
-        setProgress(data.data)
+        setProgress(data.data) // Update local state with response from server
       } catch (err) {
         console.error('Error updating reading progress:', err)
         setError(err instanceof Error ? err.message : 'Failed to update progress')
       }
-    }, 1000), // Debounce for 1 second
-    [isSignedIn, userId, novelId, chapterId]
+    }, 1000),
+    [isSignedIn, userId, novelId]
   )
 
-  // Update progress
-  const updateProgress = useCallback((percentage: number, scrollPos?: number) => {
-    // Update local state immediately
-    if (progress) {
-      setProgress({
-        ...progress,
-        progressPercentage: Math.round(percentage),
-        scrollPosition: scrollPos || progress.scrollPosition
-      })
-    }
-    
-    // Debounced API update
-    updateProgressDebounced(percentage, scrollPos)
-  }, [progress, updateProgressDebounced])
+  const updateProgress = useCallback((chapterId: string, percentage: number, scrollPos?: number) => {
+    updateProgressDebounced(chapterId, percentage, scrollPos)
+  }, [updateProgressDebounced])
 
-  // Get progress for specific chapter
-  const getChapterProgress = useCallback((targetChapterId: string): number => {
-    if (!progress || progress.chapterId !== targetChapterId) return 0
-    return progress.progressPercentage
-  }, [progress])
-
-  return {
-    progress,
-    isLoading,
-    error,
-    updateProgress,
-    getChapterProgress
-  }
+  return { progress, isLoading, error, updateProgress }
 }

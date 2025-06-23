@@ -113,10 +113,9 @@ body {
 }
 
 /* Focus Mode */
-.focus-mode .reader-header,
-.focus-mode .reader-controls,
 .focus-mode header,
-.focus-mode footer {
+.focus-mode footer,
+.focus-mode .reader-controls {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -245,7 +244,7 @@ body {
 }
 
 /* Smooth scrolling for auto-scroll */
-.reader-scroll-container:has(.auto-scrolling) {
+body:has(.auto-scrolling) {
   scroll-behavior: auto;
 }
 
@@ -254,9 +253,14 @@ body {
   .chapter-text-content {
     text-align: left;
   }
-  
-  .reader-scroll-container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
+}
+
+/* Anti-Copy/Paste Class */
+.no-select {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none;   /* Safari */
+  -khtml-user-select: none;    /* Konqueror HTML */
+  -moz-user-select: none;      /* Old versions of Firefox */
+  -ms-user-select: none;       /* Internet Explorer/Edge */
+  user-select: none;           /* Non-prefixed version */
 }

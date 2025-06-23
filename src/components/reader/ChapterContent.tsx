@@ -5,69 +5,70 @@ import { useRef, useEffect } from 'react'
 import { Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useImageModal } from '@/hooks/useImageModal'
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver'
 
 interface ChapterContentProps {
   chapter: {
     id: string
     title: string
     content: string
-    chapterNumber: number | string // Can be number or string
+    chapterNumber: number
     wordCount: number
   }
   fontSize: number
   theme: string
   isFirst?: boolean
   isLast?: boolean
-  isVisible?: boolean
+  onVisible: (chapterId: string) => void;
 }
 
 export function ChapterContent({ 
   chapter, 
   fontSize, 
-  theme, 
+  theme,
   isFirst = false,
   isLast = false,
-  isVisible = true
+  onVisible,
 }: ChapterContentProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   useImageModal()
 
-  // Safe number formatting
-  const formatChapterNumber = (num: number | string): string => {
-    // Handle if it's already a string
-    if (typeof num === 'string') {
-      const parsed = parseFloat(num);
-      if (isNaN(parsed)) return num;
-      num = parsed;
+  // Notify parent when this chapter becomes visible
+  useIntersectionObserver(contentRef, ([entry]) => {
+    if (entry.isIntersecting) {
+      onVisible(chapter.id)
     }
-    
-    // Handle if it's a number
-    if (typeof num === 'number') {
-      return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '');
+  }, { threshold: 0.5 })
+
+  // Anti-copy/paste measures
+  useEffect(() => {
+    const element = contentRef.current;
+    if (!element) return;
+
+    const preventRightClick = (e: MouseEvent) => e.preventDefault();
+    element.addEventListener('contextmenu', preventRightClick);
+
+    return () => {
+      element.removeEventListener('contextmenu', preventRightClick);
     }
-    
-    // Fallback
-    return String(num);
+  }, []);
+
+  const formatChapterNumber = (num: number): string => {
+    return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1')
   }
   
-  // Safe number display
-  const safeWordCount = typeof chapter.wordCount === 'number' 
-    ? chapter.wordCount 
-    : parseInt(String(chapter.wordCount)) || 0;
-  
-  const calculateReadingTime = (words: number) => Math.ceil(words / 200);
+  const calculateReadingTime = (words: number) => Math.ceil(words / 200)
   
   return (
     <article
+      ref={contentRef}
       data-chapter-id={chapter.id}
       className={cn(
         "chapter-content-wrapper scroll-mt-20",
         "animate-in fade-in duration-500",
-        !isFirst && "border-t-2 border-border pt-16",
-        isVisible && "chapter-visible"
+        !isFirst && "border-t-2 border-border pt-16"
       )}
     >
-      {/* Chapter Header */}
       <header className="mb-8 text-center space-y-2">
         <h2 className="text-3xl font-bold">
           Chapter {formatChapterNumber(chapter.chapterNumber)}
@@ -78,18 +79,16 @@ export function ChapterContent({
         <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
-            {calculateReadingTime(safeWordCount)} min read
+            {calculateReadingTime(chapter.wordCount)} min read
           </span>
           <span>•</span>
-          <span>{safeWordCount.toLocaleString()} words</span>
+          <span>{chapter.wordCount.toLocaleString()} words</span>
         </div>
       </header>
       
-      {/* Chapter Content */}
       <div
-        ref={contentRef}
         className={cn(
-          "chapter-text-content",
+          "chapter-text-content no-select", // Added 'no-select' class
           "prose prose-lg max-w-none",
           theme === 'dark' && "prose-invert",
           theme === 'reading' && "prose-reading"
@@ -101,7 +100,6 @@ export function ChapterContent({
         dangerouslySetInnerHTML={{ __html: chapter.content }}
       />
       
-      {/* Chapter Footer */}
       {!isLast && (
         <div className="mt-16 text-center">
           <div className="inline-flex items-center text-sm text-muted-foreground">

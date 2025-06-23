@@ -1,242 +1,126 @@
 // src/components/reader/InfiniteScrollReader.tsx
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { useAuth } from '@clerk/nextjs'
-import { LoadingSpinner } from '@/components/shared/ui/LoadingSpinner'
+import { useRef, useCallback, useEffect, useState } from 'react' // <--- FIX: Added useState here
 import { ChapterContent } from './ChapterContent'
+import { LoadingSpinner } from '@/components/shared/ui'
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver'
-import { useReadingProgress } from '@/hooks/useReadingProgress'
-import { cn } from '@/lib/utils'
 
 interface Chapter {
   id: string
   novelId: string
   title: string
   content: string
-  chapterNumber: any
+  chapterNumber: number
   wordCount: number
-  publishedAt: string | null
 }
 
 interface InfiniteScrollReaderProps {
-  initialChapterId: string
   novelId: string
+  initialChapter: Chapter
+  loadedChapters: Chapter[]
+  setLoadedChapters: React.Dispatch<React.SetStateAction<Chapter[]>>
   allChapterIds: string[]
+  onChapterVisible: (chapterId: string) => void
   fontSize: number
   theme: string
-  isAutoScrolling: boolean
-  autoScrollSpeed: number
 }
 
 export function InfiniteScrollReader({
-  initialChapterId,
   novelId,
+  initialChapter,
+  loadedChapters,
+  setLoadedChapters,
   allChapterIds,
+  onChapterVisible,
   fontSize,
   theme,
-  isAutoScrolling,
-  autoScrollSpeed
 }: InfiniteScrollReaderProps) {
-  const { isSignedIn } = useAuth()
-  const containerRef = useRef<HTMLDivElement>(null!)
-  const autoScrollRef = useRef<number | null>(null)
-  
-  const [loadedChapters, setLoadedChapters] = useState<Chapter[]>([])
-  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({})
-  const [currentChapterIndex, setCurrentChapterIndex] = useState(0)
-  const [visibleChapters, setVisibleChapters] = useState<Set<string>>(new Set())
-  
-  const { updateProgress } = useReadingProgress()
-  
-  // Find initial chapter index
-  useEffect(() => {
-    const index = allChapterIds.findIndex(id => id === initialChapterId)
-    if (index !== -1) {
-      setCurrentChapterIndex(index)
-    }
-  }, [initialChapterId, allChapterIds])
-  
-  // Load a chapter
-  const loadChapter = useCallback(async (chapterId: string) => {
-    if (loadingStates[chapterId] || loadedChapters.find(ch => ch.id === chapterId)) {
-      return
-    }
-    
-    setLoadingStates(prev => ({ ...prev, [chapterId]: true }))
-    
+  const topSentinelRef = useRef<HTMLDivElement>(null)
+  const bottomSentinelRef = useRef<HTMLDivElement>(null)
+  const [loading, setLoading] = useState<{ top: boolean; bottom: boolean }>({ top: false, bottom: false })
+
+  const fetchChapter = useCallback(async (chapterId: string) => {
+    if (loadedChapters.some(c => c.id === chapterId)) return null
     try {
-      const response = await fetch(`/api/public/novels/${novelId}/chapters/${chapterId}/content`)
-      if (!response.ok) throw new Error('Failed to fetch chapter')
-      
-      const chapter = await response.json()
-      
-      setLoadedChapters(prev => {
-        const newChapters = [...prev, chapter]
-        // Sort by chapter number to maintain order
-        return newChapters.sort((a, b) => {
-          const aNum = parseFloat(a.chapterNumber.toString())
-          const bNum = parseFloat(b.chapterNumber.toString())
-          return aNum - bNum
-        })
-      })
+      const res = await fetch(`/api/public/novels/${novelId}/chapters/${chapterId}/content`)
+      if (!res.ok) return null
+      const data = await res.json()
+      return data.data
     } catch (error) {
-      console.error('Error loading chapter:', error)
-    } finally {
-      setLoadingStates(prev => ({ ...prev, [chapterId]: false }))
+      console.error('Failed to fetch chapter:', error)
+      return null
     }
-  }, [novelId, loadingStates, loadedChapters])
-  
-  // Initial load: current chapter + adjacent ones
-  useEffect(() => {
-    const loadInitialChapters = async () => {
-      const startIdx = Math.max(0, currentChapterIndex - 1)
-      const endIdx = Math.min(allChapterIds.length - 1, currentChapterIndex + 1)
+  }, [novelId, loadedChapters])
+
+  const loadPrevious = useCallback(async () => {
+    const firstChapterId = loadedChapters[0]?.id
+    if (!firstChapterId) return
+
+    const currentIndex = allChapterIds.indexOf(firstChapterId)
+    if (currentIndex > 0) {
+      const prevChapterId = allChapterIds[currentIndex - 1]
+      if (loadedChapters.some(c => c.id === prevChapterId)) return
       
-      for (let i = startIdx; i <= endIdx; i++) {
-        await loadChapter(allChapterIds[i])
+      setLoading(prev => ({ ...prev, top: true }))
+      const chapter = await fetchChapter(prevChapterId)
+      if (chapter) {
+        setLoadedChapters(prev => [chapter, ...prev])
       }
+      setLoading(prev => ({ ...prev, top: false }))
     }
+  }, [allChapterIds, loadedChapters, fetchChapter, setLoadedChapters])
+
+  const loadNext = useCallback(async () => {
+    const lastChapterId = loadedChapters[loadedChapters.length - 1]?.id
+    if (!lastChapterId) return
     
-    loadInitialChapters()
-  }, [currentChapterIndex, allChapterIds, loadChapter])
-  
-  // Intersection observer for tracking visible chapters
-  const observerCallback = useCallback((entries: IntersectionObserverEntry[]) => {
-    entries.forEach(entry => {
-      const chapterId = entry.target.getAttribute('data-chapter-id')
-      if (!chapterId) return
-      
-      if (entry.isIntersecting) {
-        setVisibleChapters(prev => new Set(prev).add(chapterId))
-        
-        // Update current chapter based on visibility
-        const chapterIndex = allChapterIds.indexOf(chapterId)
-        if (chapterIndex !== -1 && entry.intersectionRatio > 0.5) {
-          setCurrentChapterIndex(chapterIndex)
-          
-          // Update URL without navigation
-          window.history.replaceState({}, '', `/novels/${novelId}/chapters/${chapterId}`)
-        }
-        
-        // Track reading progress
-        if (isSignedIn) {
-          const chapter = loadedChapters.find(ch => ch.id === chapterId)
-          if (chapter) {
-            updateProgress(novelId, chapterId, entry.intersectionRatio * 100)
-          }
-        }
-      } else {
-        setVisibleChapters(prev => {
-          const newSet = new Set(prev)
-          newSet.delete(chapterId)
-          return newSet
-        })
+    const currentIndex = allChapterIds.indexOf(lastChapterId)
+    if (currentIndex < allChapterIds.length - 1) {
+      const nextChapterId = allChapterIds[currentIndex + 1]
+      if (loadedChapters.some(c => c.id === nextChapterId)) return
+
+      setLoading(prev => ({ ...prev, bottom: true }))
+      const chapter = await fetchChapter(nextChapterId)
+      if (chapter) {
+        setLoadedChapters(prev => [...prev, chapter])
       }
-    })
-  }, [allChapterIds, novelId, isSignedIn, loadedChapters, updateProgress])
-  
-  // Setup intersection observer
-  useIntersectionObserver(
-    containerRef,
-    observerCallback,
-    { threshold: [0, 0.25, 0.5, 0.75, 1], rootMargin: '100px' }
-  )
-  
-  // Load more chapters when scrolling near edges
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!containerRef.current) return
-      
-      const { scrollTop, scrollHeight, clientHeight } = containerRef.current
-      const scrollPercentage = (scrollTop / (scrollHeight - clientHeight)) * 100
-      
-      // Load next chapter when 80% scrolled
-      if (scrollPercentage > 80 && currentChapterIndex < allChapterIds.length - 1) {
-        const nextIdx = Math.min(currentChapterIndex + 2, allChapterIds.length - 1)
-        loadChapter(allChapterIds[nextIdx])
-      }
-      
-      // Load previous chapter when scrolled to top
-      if (scrollPercentage < 20 && currentChapterIndex > 0) {
-        const prevIdx = Math.max(currentChapterIndex - 2, 0)
-        loadChapter(allChapterIds[prevIdx])
-      }
+      setLoading(prev => ({ ...prev, bottom: false }))
     }
-    
-    const container = containerRef.current
-    if (container) {
-      container.addEventListener('scroll', handleScroll, { passive: true })
-      return () => container.removeEventListener('scroll', handleScroll)
+  }, [allChapterIds, loadedChapters, fetchChapter, setLoadedChapters])
+
+  useIntersectionObserver(topSentinelRef, ([entry]) => {
+    if (entry.isIntersecting && !loading.top) {
+      loadPrevious()
     }
-  }, [currentChapterIndex, allChapterIds, loadChapter])
-  
-  // Auto-scroll functionality
-  useEffect(() => {
-    if (isAutoScrolling && containerRef.current) {
-      const scroll = () => {
-        if (containerRef.current) {
-          containerRef.current.scrollTop += autoScrollSpeed * 0.5
-        }
-      }
-      
-      autoScrollRef.current = window.setInterval(scroll, 50)
-    } else if (autoScrollRef.current) {
-      window.clearInterval(autoScrollRef.current)
-      autoScrollRef.current = null
+  }, { threshold: 1.0 })
+
+  useIntersectionObserver(bottomSentinelRef, ([entry]) => {
+    if (entry.isIntersecting && !loading.bottom) {
+      loadNext()
     }
-    
-    return () => {
-      if (autoScrollRef.current) {
-        window.clearInterval(autoScrollRef.current)
-      }
-    }
-  }, [isAutoScrolling, autoScrollSpeed])
-  
+  }, { threshold: 1.0 })
+
   return (
-    <div
-      ref={containerRef}
-      className={cn(
-        "reader-scroll-container h-screen overflow-y-auto scroll-smooth",
-        "px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16",
-        theme === 'dark' && 'bg-gray-900',
-        theme === 'reading' && 'bg-[#f4e8d0]'
-      )}
-      style={{
-        fontSize: `${fontSize}px`,
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}
-    >
-      <div className="py-8 space-y-16">
-        {loadedChapters.map((chapter, index) => (
-          <ChapterContent
-            key={chapter.id}
-            chapter={chapter}
-            fontSize={fontSize}
-            theme={theme}
-            isFirst={index === 0}
-            isLast={index === loadedChapters.length - 1}
-            isVisible={visibleChapters.has(chapter.id)}
-          />
-        ))}
-        
-        {/* Loading indicator for next chapter */}
-        {loadingStates[allChapterIds[currentChapterIndex + 1]] && (
-          <div className="flex justify-center py-8">
-            <LoadingSpinner />
-            <span className="ml-2 text-muted-foreground">Loading next chapter...</span>
-          </div>
-        )}
-        
-        {/* End of novel indicator */}
-        {currentChapterIndex === allChapterIds.length - 1 && 
-         loadedChapters.length === allChapterIds.length && (
-          <div className="text-center py-16 space-y-4">
-            <h3 className="text-2xl font-semibold">End of Novel</h3>
-            <p className="text-muted-foreground">You've reached the end. Thank you for reading!</p>
-          </div>
-        )}
+    <div className="space-y-16">
+      <div ref={topSentinelRef} className="h-1">
+        {loading.top && <div className="flex justify-center py-4"><LoadingSpinner /></div>}
+      </div>
+
+      {loadedChapters.map((chapter, index) => (
+        <ChapterContent
+          key={chapter.id}
+          chapter={chapter}
+          fontSize={fontSize}
+          theme={theme}
+          onVisible={onChapterVisible}
+          isFirst={index === 0}
+          isLast={index === allChapterIds.length - 1 && loadedChapters.length === allChapterIds.length}
+        />
+      ))}
+      
+      <div ref={bottomSentinelRef} className="h-1">
+        {loading.bottom && <div className="flex justify-center py-4"><LoadingSpinner /></div>}
       </div>
     </div>
   )
