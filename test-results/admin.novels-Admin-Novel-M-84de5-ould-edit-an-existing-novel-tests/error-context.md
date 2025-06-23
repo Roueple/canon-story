@@ -37,6 +37,17 @@
   - link "Create Novel":
     - /url: /admin/novels/create
     - button "Create Novel"
+  - heading "My E2E Test Novel 1750659493312" [level=3]
+  - text: ongoing
+  - paragraph: by Admin
+  - paragraph: This is a description written by an automated test.
+  - text: 0 chapters 0 views Updated June 23, 2025
+  - link "Edit":
+    - /url: /admin/novels/2bdbf1f2-7193-4a15-ada6-48defedc79a9
+    - button "Edit"
+  - link "Chapters":
+    - /url: /admin/novels/2bdbf1f2-7193-4a15-ada6-48defedc79a9/chapters
+    - button "Chapters"
   - img "I Quit The Hero Party"
   - heading "I Quit The Hero Party" [level=3]
   - text: ongoing

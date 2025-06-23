@@ -7,7 +7,7 @@ import { prisma } from '@/lib/db'
 
 export const GET = createAdminRoute(async (req, { params }) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) return errorResponse('Novel ID is required', 400);
     
     const { page, limit } = getPaginationParams(req.nextUrl.searchParams);
@@ -25,7 +25,7 @@ export const GET = createAdminRoute(async (req, { params }) => {
 
 export const POST = createAdminRoute(async (req, { params }) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) return errorResponse('Novel ID is required', 400);
     
     const body = await req.json();

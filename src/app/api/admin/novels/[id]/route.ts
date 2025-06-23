@@ -6,7 +6,7 @@ import { novelService } from '@/services/novelService'
 
 export const GET = createAdminRoute(async (req, { params }) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) return errorResponse('Novel ID is required', 400);
     const novel = await novelService.findById(id, true);
     if (!novel) return errorResponse('Novel not found', 404);
@@ -18,7 +18,7 @@ export const GET = createAdminRoute(async (req, { params }) => {
 
 export const PUT = createAdminRoute(async (req, { params }) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) return errorResponse('Novel ID is required', 400);
     const body = await req.json();
     const novel = await novelService.update(id, body);
@@ -30,7 +30,7 @@ export const PUT = createAdminRoute(async (req, { params }) => {
 
 export const DELETE = createAdminRoute(async (req, { user, params }) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) return errorResponse('Novel ID is required', 400);
     await novelService.softDelete(id, user.id);
     return successResponse({ message: 'Novel deleted successfully' });

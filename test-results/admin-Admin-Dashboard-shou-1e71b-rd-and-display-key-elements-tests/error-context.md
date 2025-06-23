@@ -38,7 +38,7 @@
   - paragraph: "1"
   - paragraph: 1 active
   - heading "Novels" [level=3]
-  - paragraph: "5"
+  - paragraph: "6"
   - paragraph: 3 published
   - heading "Chapters" [level=3]
   - paragraph: "4"

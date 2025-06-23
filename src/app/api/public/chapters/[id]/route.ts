@@ -10,7 +10,7 @@ export async function GET(
 ) {
   try {
     const params = await props.params;
-    const { id } = params;
+    const { id } = await params;
     
     if (!id) {
       return errorResponse('Chapter ID is required', 400);

@@ -7,7 +7,7 @@ import { prisma } from '@/lib/db'
 
 export const GET = createAdminRoute(async (req, { params }) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return errorResponse('Chapter ID is required', 400);
     }
@@ -23,7 +23,7 @@ export const GET = createAdminRoute(async (req, { params }) => {
 
 export const PUT = createAdminRoute(async (req, { params }) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return errorResponse('Chapter ID is required', 400);
     }
@@ -44,7 +44,7 @@ export const PUT = createAdminRoute(async (req, { params }) => {
 
 export const DELETE = createAdminRoute(async (req, { user, params }) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return errorResponse('Chapter ID is required', 400);
     }

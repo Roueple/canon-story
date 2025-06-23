@@ -26,7 +26,7 @@
     - /url: /admin
   - link "Test API":
     - /url: /api/test-api
-  - text: 6 Novels 4 Chapters 1 Users
+  - text: 7 Novels 4 Chapters 1 Users
   - heading "Quick Navigation" [level=2]
   - link "All Novels Browse our collection":
     - /url: /novels
