@@ -1,38 +1,88 @@
-import { test as setup, expect } from '@playwright/test';
-import 'dotenv/config';
+import { test as setup } from '@playwright/test';
+import path from 'path';
 
-const adminFile = 'playwright/.auth/admin.json';
+const authFile = path.join(__dirname, '../../.auth/user.json');
 
 setup('authenticate as admin', async ({ page }) => {
-  // 1. PRE-FLIGHT CHECK: Fail immediately if env vars are missing.
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminEmail = process.env.ADMIN_TEST_EMAIL || 'admin@canonstory.com';
+  const adminPassword = process.env.ADMIN_TEST_PASSWORD || 'TestPassword123!';
 
-  if (!adminEmail || !adminPassword) {
-    throw new Error(
-      'TESTING FAILED: ADMIN_EMAIL and ADMIN_PASSWORD must be set in your .env file.'
-    );
-  }
+  console.log('Starting admin authentication...');
 
-  // 2. Navigate to the sign-in page.
+  // Navigate to sign-in page
   await page.goto('/sign-in');
 
-  // 3. ROBUST WAIT: Wait for the main Clerk container to be visible.
-  // This is more reliable than waiting for a specific label.
-  const signInContainer = page.locator('.cl-signIn-root');
-  await expect(signInContainer).toBeVisible({ timeout: 25000 });
+  // Wait for the page to be fully loaded
+  await page.waitForLoadState('networkidle');
 
-  // 4. INTERACTION: Now that the container is visible, interact with the form.
+  // Wait for Clerk's sign-in form to be visible
+  await page.waitForSelector('form', { timeout: 10000 });
+
+  // Fill email - be more specific with the selector
   await page.getByLabel('Email address').fill(adminEmail);
-  await page.getByRole('button', { name: 'Continue' }).click();
 
+  // Click the specific Continue button for email/password flow
+  // Use a more specific selector to avoid ambiguity
+  await page.locator('button[type="submit"]').filter({ hasText: /^Continue$/ }).click();
+
+  // Wait for password field to appear
+  await page.waitForSelector('input[type="password"]', { timeout: 5000 });
+
+  // Fill password
   await page.getByLabel('Password').fill(adminPassword);
-  await page.getByRole('button', { name: 'Continue' }).click();
 
-  // 5. VERIFICATION: Wait for successful login by checking the URL and a unique element.
-  await page.waitForURL('**/admin', { timeout: 15000 });
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  // Click Continue again for password submission
+  await page.locator('button[type="submit"]').filter({ hasText: /^Continue$/ }).click();
 
-  // 6. SAVE STATE: Persist the authenticated state.
-  await page.context().storageState({ path: adminFile });
+  // Wait for successful authentication
+  // Clerk redirects after successful login, so we wait for navigation
+  await page.waitForURL('**/admin/**', { timeout: 10000 });
+
+  // Verify we're logged in by checking for a user element or admin-specific content
+  await page.waitForSelector('[data-testid="user-button"], [data-clerk-user-button]', { timeout: 10000 });
+
+  console.log('Admin authentication successful');
+
+  // Save authentication state
+  await page.context().storageState({ path: authFile });
+});
+
+setup('authenticate as reader', async ({ page }) => {
+  const readerEmail = process.env.READER_TEST_EMAIL || 'reader@canonstory.com';
+  const readerPassword = process.env.READER_TEST_PASSWORD || 'TestPassword123!';
+
+  console.log('Starting reader authentication...');
+
+  // Navigate to sign-in page
+  await page.goto('/sign-in');
+
+  // Wait for the page to be fully loaded
+  await page.waitForLoadState('networkidle');
+
+  // Wait for Clerk's sign-in form
+  await page.waitForSelector('form', { timeout: 10000 });
+
+  // Fill email
+  await page.getByLabel('Email address').fill(readerEmail);
+
+  // Click Continue button specifically for email flow
+  await page.locator('button[type="submit"]').filter({ hasText: /^Continue$/ }).click();
+
+  // Wait for password field
+  await page.waitForSelector('input[type="password"]', { timeout: 5000 });
+
+  // Fill password
+  await page.getByLabel('Password').fill(readerPassword);
+
+  // Click Continue for password
+  await page.locator('button[type="submit"]').filter({ hasText: /^Continue$/ }).click();
+
+  // Wait for redirect to home or reader area
+  await page.waitForURL('**/', { timeout: 10000 });
+
+  console.log('Reader authentication successful');
+
+  // Save authentication state
+  const readerAuthFile = path.join(__dirname, '../../.auth/reader.json');
+  await page.context().storageState({ path: readerAuthFile });
 });

@@ -39,7 +39,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@playwright/test": "^1.45.3",
+    "@playwright/test": "^1.53.1",
     "@tailwindcss/postcss": "^4.1.8",
     "@types/node": "latest",
     "@types/react": "latest",

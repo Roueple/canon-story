@@ -1,50 +1,63 @@
-import 'dotenv/config';
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
-
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
 export default defineConfig({
   testDir: './tests/e2e',
-  timeout: 60 * 1000, // 60 seconds timeout for each test
-  expect: {
-    timeout: 10 * 1000, // 10 seconds default for expect()
-  },
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL,
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
 
-  /* Configure projects for major browsers */
   projects: [
-    // Setup project: runs authentication before all tests
-    { name: 'setup', testMatch: /.*\.setup\.ts/ },
-
+    // Setup project that runs auth.setup.ts
     {
-      name: 'chromium',
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
+    },
+    
+    // Admin tests with admin authentication
+    {
+      name: 'admin-tests',
+      testMatch: /admin.*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
-        // Use prepared auth state.
-        storageState: 'playwright/.auth/admin.json',
+        storageState: '.auth/user.json',
       },
       dependencies: ['setup'],
     },
+
+    // Public/Reader tests with reader authentication
+    {
+      name: 'reader-tests',
+      testMatch: /reader.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: '.auth/reader.json',
+      },
+      dependencies: ['setup'],
+    },
+
+    // Public tests without authentication
+    {
+      name: 'public-tests',
+      testMatch: /public.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+    },
   ],
 
-  /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run dev',
-    url: baseURL,
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes for the server to start
-    stdout: 'pipe',
-    stderr: 'pipe',
+    timeout: 120 * 1000,
   },
 });

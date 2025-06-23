@@ -76,3 +76,6 @@ script-archive/
 *.sh
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Playwright auth states
+.auth/
