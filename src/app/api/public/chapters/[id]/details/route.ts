@@ -1,14 +1,14 @@
 // src/app/api/public/chapters/[id]/details/route.ts
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api/utils';
 import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
-import { serializePrismaData } from '@/lib/serialization';
+import { serializeForJSON } from '@/lib/serialization';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) { // Corrected: params has 'id'
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const chapterIdFromParams = params.novelId; // Corrected: use params.novelId
-    const novelIdFromQuery = req.nextUrl.searchParams.get('novelId');
+    const chapterIdFromParams = params.id; // The ID from the URL path
+    const novelIdFromQuery = req.nextUrl.searchParams.get('novelId'); // The novel ID from query params
 
     if (!chapterIdFromParams || !novelIdFromQuery) {
       return errorResponse('Chapter ID (from path) and Novel ID (from query) are required', 400);
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     const currentChapterData = await prisma.chapter.findFirst({
       where: { 
-        id: chapterIdFromParams, // Use corrected variable
+        id: chapterIdFromParams,
         novelId: novelIdFromQuery, 
         isPublished: true, 
         isDeleted: false 
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       nextChapterId: nextChapterData?.id || null,
     };
 
-    return successResponse(serializePrismaData(responseData));
+    return successResponse(serializeForJSON(responseData));
 
   } catch (error) {
     return handleApiError(error);

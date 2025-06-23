@@ -1,0 +1,115 @@
+# Page snapshot
+
+```yaml
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+- banner:
+  - link "Canon Story":
+    - /url: /
+  - navigation:
+    - link "Browse":
+      - /url: /novels
+    - link "Genres":
+      - /url: /genres
+    - link "Trending":
+      - /url: /trending
+  - button "Toggle theme"
+  - button "Open user button":
+    - img "'s logo"
+- main:
+  - heading "Welcome to Canon Story" [level=1]
+  - paragraph: Discover amazing stories, engage with a vibrant community, and track your reading journey.
+  - link "Browse Novels":
+    - /url: /novels
+  - link "Admin Dashboard":
+    - /url: /admin
+  - link "Test API":
+    - /url: /api/test-api
+  - text: 6 Novels 4 Chapters 1 Users
+  - heading "Quick Navigation" [level=2]
+  - link "All Novels Browse our collection":
+    - /url: /novels
+    - heading "All Novels" [level=3]
+    - paragraph: Browse our collection
+  - link "Genres Find by category":
+    - /url: /genres
+    - heading "Genres" [level=3]
+    - paragraph: Find by category
+  - link "Trending Popular right now":
+    - /url: /trending
+    - heading "Trending" [level=3]
+    - paragraph: Popular right now
+  - link "UI Test Component showcase":
+    - /url: /ui-test
+    - heading "UI Test" [level=3]
+    - paragraph: Component showcase
+  - heading "Featured Novels" [level=2]
+  - link "View all →":
+    - /url: /novels
+  - link "I am Not A Heroine by Admin No description available. 1 chapters 0.0":
+    - /url: /novels/998cebe9-cbb6-4169-bf64-6500334c84ec
+    - heading "I am Not A Heroine" [level=3]
+    - paragraph: by Admin
+    - paragraph: No description available.
+    - text: 1 chapters 0.0
+  - link "I Quit The Hero Party by Admin No description available. 3 chapters 0.0":
+    - /url: /novels/a598d2cc-1451-4c75-8b44-ff01ac2f6bc7
+    - heading "I Quit The Hero Party" [level=3]
+    - paragraph: by Admin
+    - paragraph: No description available.
+    - text: 3 chapters 0.0
+  - link "Became a God of Destruction by Admin “In a world where the boundary between game and reality has collapsed, I ended up becoming the final boss that no one had ever managed to defeat.” 0 chapters 0.0":
+    - /url: /novels/cc5b99d8-cfa5-4510-89ae-7faa49856c91
+    - heading "Became a God of Destruction" [level=3]
+    - paragraph: by Admin
+    - paragraph: “In a world where the boundary between game and reality has collapsed, I ended up becoming the final boss that no one had ever managed to defeat.”
+    - text: 0 chapters 0.0
+  - heading "Why Choose Canon Story?" [level=2]
+  - heading "Rich Content" [level=3]
+  - paragraph: Immerse yourself in stories with beautiful formatting and media support
+  - heading "Track Progress" [level=3]
+  - paragraph: Never lose your place with automatic progress tracking and bookmarks
+  - heading "Regular Updates" [level=3]
+  - paragraph: Get notified when your favorite stories update with new chapters
+- contentinfo:
+  - text: Canon Story
+  - paragraph: A modern novel reading platform with community features and gamification.
+  - heading "Discover" [level=3]
+  - list:
+    - listitem:
+      - link "All Novels":
+        - /url: /novels
+    - listitem:
+      - link "Genres":
+        - /url: /genres
+    - listitem:
+      - link "Trending":
+        - /url: /trending
+    - listitem:
+      - link "Leaderboards":
+        - /url: /leaderboards
+  - heading "Community" [level=3]
+  - list:
+    - listitem:
+      - link "Forums":
+        - /url: /community/forums
+    - listitem:
+      - link "Events":
+        - /url: /community/events
+    - listitem:
+      - link "Premium":
+        - /url: /subscription/plans
+  - heading "Support" [level=3]
+  - list:
+    - listitem:
+      - link "Help Center":
+        - /url: /help
+    - listitem:
+      - link "Terms of Service":
+        - /url: /terms
+    - listitem:
+      - link "Privacy Policy":
+        - /url: /privacy
+  - paragraph: Â© 2025 Canon Story. All rights reserved. Built with safety-first architecture.
+```

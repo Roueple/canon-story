@@ -1,48 +1,48 @@
-import { test as setup } from '@playwright/test';
+import { test as setup, expect } from '@playwright/test';
 import path from 'path';
+import 'dotenv/config';
 
-const authFile = path.join(__dirname, '../../.auth/user.json');
+const authFile = '.auth/user.json';
 
 setup('authenticate as admin', async ({ page }) => {
-  const adminEmail = process.env.ADMIN_TEST_EMAIL || 'admin@canonstory.com';
-  const adminPassword = process.env.ADMIN_TEST_PASSWORD || 'TestPassword123!';
+  const adminEmail = process.env.ADMIN_TEST_EMAIL;
+  const adminPassword = process.env.ADMIN_TEST_PASSWORD;
 
-  console.log('Starting authentication...');
+  if (!adminEmail || !adminPassword) {
+    throw new Error('ADMIN_TEST_EMAIL and ADMIN_TEST_PASSWORD must be set in your .env file for testing.');
+  }
 
-  // Navigate to sign-in
-  await page.goto('/sign-in', { waitUntil: 'domcontentloaded' });
+  console.log('Starting authentication for:', adminEmail);
 
-  // Wait for Clerk to load
-  await page.waitForTimeout(2000);
+  await page.goto('/sign-in');
 
-  // Fill email - using multiple strategies
-  const emailInput = page.locator('input[name="identifier"], input[type="email"], input[placeholder*="email" i]').first();
-  await emailInput.fill(adminEmail);
+  // Wait for the Clerk form to be visible and ready for interaction.
+  await expect(page.locator('input[name="identifier"]')).toBeVisible({ timeout: 15000 });
 
-  // Find and click the Continue button - avoiding the Google button
-  const continueButton = page.locator('button').filter({ 
-    hasText: /^Continue$/ 
-  }).filter({
-    hasNotText: /Google/
-  }).first();
+  // Fill in the email address.
+  await page.locator('input[name="identifier"]').fill(adminEmail);
+
+  // Use a more robust locator to find the "Continue" button.
+  // getByRole targets elements the way a user would, by their accessible name.
+  // The regular expression /^Continue$/i ensures we match the exact word "Continue", case-insensitively.
+  await page.getByRole('button', { name: /^Continue$/i }).click();
+
+  // Wait for the password field to appear.
+  await expect(page.locator('input[name="password"]')).toBeVisible({ timeout: 10000 });
+
+  // Fill in the password.
+  await page.locator('input[name="password"]').fill(adminPassword);
+
+  // Click the "Continue" button again to submit the password.
+  await page.getByRole('button', { name: /^Continue$/i }).click();
+
+  // Wait for successful sign-in by checking for the main welcome heading on the homepage.
+  // This is a much more reliable way to confirm login than waiting for a timeout.
+  await expect(page.getByRole('heading', { name: /Welcome to Canon Story/i })).toBeVisible({ timeout: 15000 });
   
-  await continueButton.click();
+  console.log('Successfully authenticated and redirected to homepage.');
 
-  // Wait for password field
-  await page.waitForTimeout(1000);
-  
-  const passwordInput = page.locator('input[name="password"], input[type="password"]').first();
-  await passwordInput.waitFor({ state: 'visible', timeout: 5000 });
-  await passwordInput.fill(adminPassword);
-
-  // Click Continue again
-  await continueButton.click();
-
-  // Wait for redirect
-  await page.waitForTimeout(3000);
-
-  console.log('Authentication complete!');
-
-  // Save auth state
+  // Save the authenticated state to the file.
   await page.context().storageState({ path: authFile });
+  console.log('Authentication state saved.');
 });

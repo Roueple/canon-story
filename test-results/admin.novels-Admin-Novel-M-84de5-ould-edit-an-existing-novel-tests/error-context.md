@@ -1,0 +1,93 @@
+# Page snapshot
+
+```yaml
+- alert
+- button "Open Next.js Dev Tools":
+  - img
+- banner:
+  - heading "Canon Story Admin" [level=1]
+  - paragraph: Administrator Dashboard
+  - button
+  - paragraph: Admin
+  - paragraph: admin
+  - button "Sign out"
+- complementary:
+  - navigation:
+    - link "Go to Homepage":
+      - /url: /
+    - link "Dashboard":
+      - /url: /admin
+    - link "Novels":
+      - /url: /admin/novels
+    - link "Users":
+      - /url: /admin/users
+    - link "Gamification":
+      - /url: /admin/gamification
+    - link "Subscriptions":
+      - /url: /admin/subscriptions
+    - link "Content":
+      - /url: /admin/content
+    - link "Analytics":
+      - /url: /admin/analytics
+    - link "Settings":
+      - /url: /admin/settings
+- main:
+  - heading "Novels" [level=1]
+  - paragraph: Manage your novel collection
+  - link "Create Novel":
+    - /url: /admin/novels/create
+    - button "Create Novel"
+  - img "I Quit The Hero Party"
+  - heading "I Quit The Hero Party" [level=3]
+  - text: ongoing
+  - paragraph: by Admin
+  - text: 3 chapters 0 views Updated June 23, 2025
+  - link "Edit":
+    - /url: /admin/novels/a598d2cc-1451-4c75-8b44-ff01ac2f6bc7
+    - button "Edit"
+  - link "Chapters":
+    - /url: /admin/novels/a598d2cc-1451-4c75-8b44-ff01ac2f6bc7/chapters
+    - button "Chapters"
+  - img "Became a God of Destruction"
+  - heading "Became a God of Destruction" [level=3]
+  - text: ongoing
+  - paragraph: by Admin
+  - paragraph: “In a world where the boundary between game and reality has collapsed, I ended up becoming the final boss that no one had ever managed to defeat.”
+  - text: 0 chapters 0 views Updated June 19, 2025
+  - link "Edit":
+    - /url: /admin/novels/cc5b99d8-cfa5-4510-89ae-7faa49856c91
+    - button "Edit"
+  - link "Chapters":
+    - /url: /admin/novels/cc5b99d8-cfa5-4510-89ae-7faa49856c91/chapters
+    - button "Chapters"
+  - heading "I am Not A Heroine" [level=3]
+  - text: ongoing
+  - paragraph: by Admin
+  - text: 1 chapters 0 views Updated June 17, 2025
+  - link "Edit":
+    - /url: /admin/novels/998cebe9-cbb6-4169-bf64-6500334c84ec
+    - button "Edit"
+  - link "Chapters":
+    - /url: /admin/novels/998cebe9-cbb6-4169-bf64-6500334c84ec/chapters
+    - button "Chapters"
+  - heading "Childhood Friend of the Zenith" [level=3]
+  - text: ongoing
+  - paragraph: by Admin
+  - text: 0 chapters 0 views Updated June 14, 2025
+  - link "Edit":
+    - /url: /admin/novels/a3fe2e51-8fef-4a48-b9c1-9b139926b65c
+    - button "Edit"
+  - link "Chapters":
+    - /url: /admin/novels/a3fe2e51-8fef-4a48-b9c1-9b139926b65c/chapters
+    - button "Chapters"
+  - heading "I Became the Second-in-Command in a Romance Fantasy Novel" [level=3]
+  - text: ongoing
+  - paragraph: by Admin
+  - text: 0 chapters 0 views Updated June 14, 2025
+  - link "Edit":
+    - /url: /admin/novels/1c97587d-5fdf-4704-9d7d-fa4da2a36c36
+    - button "Edit"
+  - link "Chapters":
+    - /url: /admin/novels/1c97587d-5fdf-4704-9d7d-fa4da2a36c36/chapters
+    - button "Chapters"
+```
