@@ -3,8 +3,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { NovelForm } from './NovelForm'
 import { DeleteConfirmation } from '@/components/shared/ui/DeleteConfirmation'
+import { NovelFormWrapper } from './NovelFormWrapper'
 
 interface EditNovelFormProps {
   novel: any
@@ -17,64 +17,21 @@ export function EditNovelForm({ novel, genres }: EditNovelFormProps) {
   const [error, setError] = useState('')
   const [showDelete, setShowDelete] = useState(false)
 
-  const handleSubmit = async (data: any) => {
-    setIsLoading(true)
-    setError('')
-
-    try {
-      const response = await fetch(`/api/admin/novels/${novel.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to update novel')
-      }
-
-      router.refresh()
-      router.push('/admin/novels')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleDelete = async () => {
     try {
-      const response = await fetch(`/api/admin/novels/${novel.id}`, {
-        method: 'DELETE'
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to delete novel')
-      }
-
+      const response = await fetch(`/api/admin/novels/${novel.id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error((await response.json()).error || 'Failed to delete novel')
       router.push('/admin/novels')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message)
       setShowDelete(false)
     }
   }
 
   return (
     <>
-      <NovelForm
-        onSubmit={handleSubmit}
-        isLoading={isLoading}
-        error={error}
-        initialData={{
-          title: novel.title,
-          description: novel.description || '',
-          coverColor: novel.coverColor,
-          status: novel.status,
-          isPublished: novel.isPublished,
-          coverImageUrl: novel.coverImageUrl || ''
-        }}
-      />
+      <NovelFormWrapper novel={novel} genres={genres} />
 
       <div className="mt-8 pt-8 border-t border-gray-700">
         <h3 className="text-lg font-medium text-white mb-4">Danger Zone</h3>

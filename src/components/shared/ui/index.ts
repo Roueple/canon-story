@@ -7,3 +7,6 @@ export { LoadingSpinner } from './LoadingSpinner'
 export { ProgressBar } from './ProgressBar'
 export { Tooltip } from './Tooltip'
 export { DeleteConfirmation } from './DeleteConfirmation'
+export { ColorPicker } from './ColorPicker'
+export { MultiSelect } from './MultiSelect'
+
