@@ -10,7 +10,8 @@ test.describe('Admin Dashboard', () => {
     
     // Check for a few stat cards
     await expect(page.getByText('Total Users')).toBeVisible();
-    await expect(page.getByText('Novels')).toBeVisible();
+    // Use a more specific selector for the card to avoid ambiguity
+    await expect(page.locator('div.bg-gray-800', { hasText: 'Novels' }).getByRole('heading', { name: 'Novels' })).toBeVisible();
     
     // Check for a quick action button
     await expect(page.getByRole('link', { name: 'Create Novel' })).toBeVisible();

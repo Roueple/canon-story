@@ -6,19 +6,19 @@ test.describe('Public Homepage', () => {
     await page.goto('/');
     
     // Verify main elements are visible
-    await expect(page.getByRole('heading', { name: /Welcome to Canonstory/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Sign In' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Sign Up' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Welcome to Canon Story/i })).toBeVisible();
+    // CORRECTED: It's a button, not a link.
+    await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sign Up' })).toBeVisible();
   });
 
-  test('should navigate to sign in page', async ({ page }) => {
+  test('should open sign in modal', async ({ page }) => {
     await page.goto('/');
     
-    // Click sign in link
-    await page.getByRole('link', { name: 'Sign In' }).click();
+    // CORRECTED: Click the "Sign In" button
+    await page.getByRole('button', { name: 'Sign In' }).click();
     
-    // Verify we're on sign in page
-    await expect(page).toHaveURL(/.*sign-in/);
-    await expect(page.getByRole('heading', { name: 'Sign in to Canonstory' })).toBeVisible();
+    // CORRECTED: Verify the modal appears
+    await expect(page.locator('.cl-modal-body').getByRole('heading', { name: 'Sign in to Canon Story' })).toBeVisible();
   });
 });

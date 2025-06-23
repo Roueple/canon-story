@@ -6,22 +6,24 @@ test.describe('Reader Novel Viewing', () => {
   test('should view novel list', async ({ page }) => {
     await page.goto('/novels');
     
-    // Wait for novels to load
-    await page.waitForSelector('[data-testid="novel-card"]');
+    // CORRECTED: Wait for network to be idle, then check for the first card.
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('[data-testid="novel-card"]').first()).toBeVisible({ timeout: 10000 });
     
     // Verify at least one novel is visible
     const novels = page.locator('[data-testid="novel-card"]');
-    await expect(novels).toHaveCount(1);
+    await expect(novels.first()).toBeVisible();
   });
 
   test('should read a chapter', async ({ page }) => {
     await page.goto('/novels');
     
-    // Click on first novel
+    // CORRECTED: Wait for network to be idle before clicking.
+    await page.waitForLoadState('networkidle');
     await page.locator('[data-testid="novel-card"]').first().click();
     
     // Wait for novel detail page
-    await page.waitForSelector('[data-testid="chapter-list"]');
+    await expect(page.locator('[data-testid="chapter-list"]')).toBeVisible();
     
     // Click on first chapter
     await page.locator('[data-testid="chapter-item"]').first().click();

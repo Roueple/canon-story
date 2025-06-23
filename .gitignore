@@ -1,81 +1,43 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Next.js
+.next/
+out/
+next-env.d.ts
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Node
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# local env files
-.env*.local
+# Playwright Test Artifacts (The main cause of bloat)
+test-results/
+playwright-report/
+.auth/
+
+# Environment Variables
+# The user specified using .env only, so we will ignore it.
+# If you have specific env files for different environments, add them here.
 .env
+# .env.local
+# .env.development.local
+# .env.test.local
+# .env.production.local
 
-# vercel
-.vercel
+# Build artifacts
+dist/
+build/
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# prisma
-prisma/*.db
-prisma/*.db-journal
-prisma/migrations/dev/
-
-# editor
+# IDE / Editor specific
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# OS
+# OS specific
 .DS_Store
 Thumbs.db
-
-# Logs
-logs
-*.log
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Temporary files
-tmp/
-temp/
-.temp/
-
-# Upload directories
-uploads/
-public/uploads/
-script-archive/
-
-# Shell scripts (optional, remove if you want to track them)
-*.sh
-# clerk configuration (can include secrets)
-/.clerk/
-
-# Playwright auth states
-.auth/

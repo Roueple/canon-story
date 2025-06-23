@@ -159,10 +159,10 @@ export default async function NovelHomepage({
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <h2 className="text-2xl font-bold mb-6">Chapters</h2>
                 {novel.chapters.length > 0 ? (
-                    <div className="bg-card border border-border rounded-lg max-h-[600px] overflow-y-auto">
+                    <div data-testid="chapter-list" className="bg-card border border-border rounded-lg max-h-[600px] overflow-y-auto">
                         <ul className="divide-y divide-border">
                             {novel.chapters.map((chapter) => (
-                                <li key={chapter.id}>
+                                <li key={chapter.id} data-testid="chapter-item">
                                     <Link 
                                         href={`/novels/${novel.id}/chapters/${chapter.id}`} 
                                         className="block p-4 hover:bg-muted transition-colors"
