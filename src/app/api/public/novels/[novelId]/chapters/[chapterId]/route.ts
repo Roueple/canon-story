@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: { novelId: string; chapterId: string } }
 ) {
   try {
-    const { novelId, chapterId } = params
+    const { novelId, chapterId } = await params
     
     // 1. Fetch current chapter and its novel details
     const currentChapter = await prisma.chapter.findFirst({

@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: { novelId: string; chapterId: string } }
 ) {
   try {
-    const { novelId, chapterId } = params
+    const { novelId, chapterId } = await params
     const chapter = await prisma.chapter.findFirst({
       where: {
         id: chapterId,

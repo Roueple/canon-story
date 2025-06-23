@@ -1,44 +1,26 @@
 // src/lib/serialization.ts
-import { Prisma } from '@prisma/client';
 
-// Type guard for Prisma.Decimal (or any Decimal.js like object)
-function isDecimal(value: any): value is Prisma.Decimal {
-  // Check if it's an object, not null, and has a toFixed method (characteristic of Decimal)
-  // Also check constructor name if available, as Prisma.Decimal instances have it.
-  return value !== null && typeof value === 'object' && typeof value.toFixed === 'function' && value.constructor?.name === 'Decimal';
-}
-
-export function serializePrismaData<T>(data: T): any {
+// This is a robust, foolproof serializer. It uses a JSON replacer to handle
+// special data types that are not native to JSON, like BigInt.
+// It guarantees that the output is a plain JavaScript object/array.
+export function serializeForJSON(data: any): any {
   if (data === null || data === undefined) {
     return data;
   }
 
-  if (typeof data === 'bigint') {
-    return data.toString(); // Convert BigInt to string
-  }
-
-  if (isDecimal(data)) {
-    return Number(data); // Convert Prisma.Decimal to number
-  }
-
-  if (data instanceof Date) {
-    return data.toISOString(); // Ensure dates are ISO strings for consistency
-  }
-
-  if (Array.isArray(data)) {
-    return data.map(item => serializePrismaData(item));
-  }
-
-  if (typeof data === 'object') {
-    const result: { [key: string]: any } = {};
-    for (const key in data) {
-      // Check if the property belongs to the object itself, not its prototype
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        result[key] = serializePrismaData((data as any)[key]);
-      }
+  const jsonString = JSON.stringify(data, (key, value) => {
+    // Convert BigInt to a string. JSON.stringify() cannot handle BigInt by default.
+    if (typeof value === 'bigint') {
+      return value.toString();
     }
-    return result;
-  }
+    
+    // Prisma's Decimal type is an object. We convert it to a number.
+    if (value && typeof value === 'object' && value.constructor && value.constructor.name === 'Decimal') {
+      return Number(value);
+    }
 
-  return data;
+    return value;
+  });
+
+  return JSON.parse(jsonString);
 }

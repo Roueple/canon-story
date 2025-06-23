@@ -13,7 +13,7 @@ import { ChapterForm } from '@/components/admin/forms/ChapterForm'
 export default function CreateChapterPage() {
   const router = useRouter();
   const routeParams = useParams<{ id: string }>(); // Use the hook
-  const novelIdFromParams = routeparams.novelId; // Store the id
+  const novelIdFromParams = routeParams.id; // Store the id
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
