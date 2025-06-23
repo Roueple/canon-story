@@ -161,53 +161,6 @@ async function main() {
     console.log('✅ Test novel and chapter already exist');
   }
 
-  // Create a test novel for E2E tests
-  const testNovel = await prisma.novel.upsert({
-    where: { slug: 'e2e-test-novel' },
-    update: {},
-    create: {
-      title: 'E2E Test Novel',
-      slug: 'e2e-test-novel',
-      description: 'A novel created by the seed script for E2E testing.',
-      authorId: adminUser.id,
-      isPublished: true,
-      status: 'ongoing',
-      publishedAt: new Date(),
-      genres: {
-        create: {
-          genreId: genres[0].id // Fantasy
-        }
-      }
-    }
-  });
-
-  const testChapter = await prisma.chapter.findFirst({
-    where: {
-      novelId: testNovel.id,
-      chapterNumber: 1
-    }
-  });
-
-  if (!testChapter) {
-    await prisma.chapter.create({
-      data: {
-        title: 'Chapter 1: The Seeded Chapter',
-        slug: 'chapter-1-the-seeded-chapter',
-        content: '<p>This is content from a seeded chapter for testing purposes.</p>',
-        chapterNumber: 1,
-        displayOrder: 1,
-        novelId: testNovel.id,
-        isPublished: true,
-        status: 'free',
-        publishedAt: new Date(),
-        wordCount: 10,
-      }
-    });
-    console.log('✅ Created test novel and chapter');
-  } else {
-    console.log('✅ Test novel and chapter already exist');
-  }
-
   // Create initial backup log entry
   await prisma.backupLog.create({
     data: {

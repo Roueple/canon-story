@@ -61,6 +61,9 @@ test.describe('Admin Novel Management', () => {
     await page.getByRole('link', { name: 'Add Chapter' }).click();
     await expect(page).toHaveURL(new RegExp('/admin/novels/.*/chapters/create'));
 
+    // Wait for the page to be ready by checking for the heading
+    await expect(page.getByRole('heading', { name: /Create New Chapter|Finalize Imported Chapter/ })).toBeVisible({ timeout: 15000 });
+
     // Fill out the chapter form
     await page.getByLabel('Chapter Number *').fill('1');
     await page.getByPlaceholder('Enter chapter title').fill(chapterTitle);
