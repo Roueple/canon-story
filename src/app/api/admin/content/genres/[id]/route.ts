@@ -5,7 +5,7 @@ import { genreService } from '@/services/genreService';
 
 export const GET = createAdminRoute(async (req, { params }) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     const genre = await genreService.findById(id);
     if (!genre) return errorResponse('Genre not found', 404);
     return successResponse(genre);
@@ -16,7 +16,7 @@ export const GET = createAdminRoute(async (req, { params }) => {
 
 export const PUT = createAdminRoute(async (req, { params }) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
     const updatedGenre = await genreService.update(id, body);
     return successResponse(updatedGenre);
@@ -27,7 +27,7 @@ export const PUT = createAdminRoute(async (req, { params }) => {
 
 export const DELETE = createAdminRoute(async (req, { params }) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     await genreService.delete(id);
     return successResponse({ message: 'Genre deleted successfully' });
   } catch (error) {

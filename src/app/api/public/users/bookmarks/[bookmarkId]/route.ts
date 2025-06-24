@@ -7,7 +7,7 @@ import { prisma } from '@/lib/db'
 // DELETE /api/public/users/bookmarks/[bookmarkId] - Remove a bookmark
 export const DELETE = createProtectedRoute(async (req, { user, params }) => {
   try {
-    const { bookmarkId } = params
+    const { bookmarkId } = await params
     
     if (!bookmarkId) {
       return errorResponse('Bookmark ID is required', 400)
@@ -38,7 +38,7 @@ export const DELETE = createProtectedRoute(async (req, { user, params }) => {
 // PUT /api/public/users/bookmarks/[bookmarkId] - Update a bookmark
 export const PUT = createProtectedRoute(async (req, { user, params }) => {
   try {
-    const { bookmarkId } = params
+    const { bookmarkId } = await params
     const body = await req.json()
     const { position, note } = body
 
