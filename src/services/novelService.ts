@@ -2,6 +2,7 @@
 import { prisma } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { serializeForJSON } from '@/lib/serialization';
+import { Prisma } from '@prisma/client';
 
 // This service now strictly enforces that all outgoing data is serialized.
 
@@ -44,19 +45,60 @@ export const novelService = {
       include: {
         author: { select: { id: true, displayName: true, username: true } },
         chapters: { where: { isDeleted: false }, orderBy: { displayOrder: 'asc' } },
+        genres: {
+          select: {
+            genre: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
       }
     });
     return serializeForJSON(novel);
   },
 
   async create(data: any) {
-    const slug = await this.generateUniqueSlug(data.title);
-    const novel = await prisma.novel.create({ data: { ...data, slug } });
+    const { genreIds, ...novelData } = data;
+    const slug = await this.generateUniqueSlug(novelData.title);
+
+    const createPayload: Prisma.NovelCreateInput = {
+      ...novelData,
+      slug,
+    };
+
+    if (genreIds && Array.isArray(genreIds) && genreIds.length > 0) {
+      createPayload.genres = {
+        create: genreIds.map((id: string) => ({
+          genreId: id,
+        })),
+      };
+    }
+    
+    const novel = await prisma.novel.create({ data: createPayload });
     return serializeForJSON(novel);
   },
 
   async update(id: string, data: any) {
-    const novel = await prisma.novel.update({ where: { id }, data });
+    const { genreIds, ...novelData } = data;
+    const updatePayload: Prisma.NovelUpdateInput = { ...novelData };
+
+    if (genreIds !== undefined) {
+      updatePayload.genres = {
+        deleteMany: {}, // Delete all existing relations for this novel
+        create: (genreIds as string[]).map((genreId: string) => ({
+          genreId: genreId,
+        })),
+      };
+    }
+    
+    const novel = await prisma.novel.update({ 
+      where: { id }, 
+      data: updatePayload 
+    });
+    
     return serializeForJSON(novel);
   },
 

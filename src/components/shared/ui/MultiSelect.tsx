@@ -35,11 +35,12 @@ export function MultiSelect({
     onChange(newSelected)
   }
 
-  const filteredOptions = options.filter((option) =>
+  // FIX: Gracefully handle if options is undefined by treating it as an empty array.
+  const filteredOptions = (options || []).filter((option) =>
     option.label.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const selectedOptions = options.filter(option => selected.includes(option.value))
+  const selectedOptions = (options || []).filter(option => selected.includes(option.value))
 
   return (
     <div className="relative w-full">
