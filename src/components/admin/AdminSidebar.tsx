@@ -1,3 +1,4 @@
+
 // src/components/admin/AdminSidebar.tsx
 'use client'
 
@@ -6,13 +7,14 @@ import { usePathname } from 'next/navigation'
 import { 
   BookOpen, 
   Users, 
-  Trophy, 
   Settings, 
   BarChart3,
-  DollarSign,
   FileText,
   Home,
-  Globe
+  Globe,
+  Tags,
+  FolderKanban,
+  Library
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -23,48 +25,66 @@ interface AdminSidebarProps {
 export function AdminSidebar({ role }: AdminSidebarProps) {
   const pathname = usePathname()
 
-  const navigation = [
+  const mainNav = [
     { name: 'Dashboard', href: '/admin', icon: Home },
     { name: 'Novels', href: '/admin/novels', icon: BookOpen },
-    { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'Gamification', href: '/admin/gamification', icon: Trophy },
-    { name: 'Subscriptions', href: '/admin/subscriptions', icon: DollarSign },
-    { name: 'Content', href: '/admin/content', icon: FileText },
+    { name: 'Users', href: '/admin/users', icon: Users, adminOnly: true },
+  ]
+
+  const contentNav = [
+    { name: 'Media Library', href: '/admin/content/media', icon: Library },
+    { name: 'Genres', href: '/admin/content/genres', icon: FolderKanban },
+    { name: 'Tags', href: '/admin/content/tags', icon: Tags },
+  ]
+
+  const settingsNav = [
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ]
+  
+  const renderNav = (items) => {
+    return items.map((item) => {
+      if (item.adminOnly && role !== 'admin') return null;
+      const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+      return (
+        <Link
+          key={item.name}
+          href={item.href}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+            isActive
+              ? 'bg-gray-700 text-white'
+              : 'text-gray-300 hover:text-white hover:bg-gray-700'
+          )}
+        >
+          <item.icon className="h-5 w-5" />
+          {item.name}
+        </Link>
+      )
+    })
+  }
 
   return (
     <aside className="w-64 min-h-screen bg-gray-800 border-r border-gray-700">
-      <nav className="p-4 space-y-1">
-        {/* Go to Homepage Button */}
+      <nav className="p-4 space-y-4">
         <Link
           href="/"
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-gray-300 hover:text-white hover:bg-gray-700 mb-4 border border-gray-600"
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-gray-300 hover:text-white hover:bg-gray-700 mb-2 border border-gray-600"
         >
           <Globe className="h-5 w-5" />
           <span>Go to Homepage</span>
         </Link>
 
-        <div className="border-t border-gray-700 pt-4">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-gray-700 text-white'
-                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.name}
-              </Link>
-            )
-          })}
+        <div>{renderNav(mainNav)}</div>
+
+        <div>
+          <h3 className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">Content</h3>
+          {renderNav(contentNav)}
+        </div>
+        
+        <div>
+          <h3 className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">System</h3>
+          {renderNav(settingsNav)}
         </div>
       </nav>
     </aside>

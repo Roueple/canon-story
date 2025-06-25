@@ -1,10 +1,9 @@
+
 // src/services/novelService.ts
 import { prisma } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { serializeForJSON } from '@/lib/serialization';
 import { Prisma } from '@prisma/client';
-
-// This service now strictly enforces that all outgoing data is serialized.
 
 export const novelService = {
   async findAll(options: {
@@ -45,35 +44,33 @@ export const novelService = {
       include: {
         author: { select: { id: true, displayName: true, username: true } },
         chapters: { where: { isDeleted: false }, orderBy: { displayOrder: 'asc' } },
-        genres: {
-          select: {
-            genre: {
-              select: {
-                id: true,
-                name: true
-              }
-            }
-          }
-        }
+        genres: { select: { genre: { select: { id: true, name: true } } } },
+        // --- FIX: Include tags in the query ---
+        tags: { select: { tag: { select: { id: true, name: true } } } }
       }
     });
     return serializeForJSON(novel);
   },
 
   async create(data: any) {
-    const { genreIds, ...novelData } = data;
+    const { genreIds, tagIds, ...novelData } = data;
     const slug = await this.generateUniqueSlug(novelData.title);
 
     const createPayload: Prisma.NovelCreateInput = {
       ...novelData,
+      author: { connect: { id: novelData.authorId } },
       slug,
     };
 
     if (genreIds && Array.isArray(genreIds) && genreIds.length > 0) {
       createPayload.genres = {
-        create: genreIds.map((id: string) => ({
-          genreId: id,
-        })),
+        create: genreIds.map((id: string) => ({ genreId: id })),
+      };
+    }
+    // --- FIX: Add logic to create tag relations ---
+    if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
+      createPayload.tags = {
+        create: tagIds.map((id: string) => ({ tagId: id })),
       };
     }
     
@@ -82,15 +79,20 @@ export const novelService = {
   },
 
   async update(id: string, data: any) {
-    const { genreIds, ...novelData } = data;
+    const { genreIds, tagIds, ...novelData } = data;
     const updatePayload: Prisma.NovelUpdateInput = { ...novelData };
 
     if (genreIds !== undefined) {
       updatePayload.genres = {
-        deleteMany: {}, // Delete all existing relations for this novel
-        create: (genreIds as string[]).map((genreId: string) => ({
-          genreId: genreId,
-        })),
+        deleteMany: {},
+        create: (genreIds as string[]).map((genreId: string) => ({ genreId: genreId })),
+      };
+    }
+    // --- FIX: Add logic to update tag relations ---
+    if (tagIds !== undefined) {
+      updatePayload.tags = {
+        deleteMany: {},
+        create: (tagIds as string[]).map((tagId: string) => ({ tagId: tagId })),
       };
     }
     

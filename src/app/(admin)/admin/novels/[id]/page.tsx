@@ -1,19 +1,20 @@
+
 // src/app/(admin)/admin/novels/[id]/page.tsx
-import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
-import { prisma } from '@/lib/db'
-import { EditNovelForm } from '@/components/admin/forms/EditNovelForm'
-import { novelService } from '@/services/novelService'
-import { serializeForJSON } from '@/lib/serialization'
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import { prisma } from '@/lib/db';
+import { EditNovelForm } from '@/components/admin/forms/EditNovelForm';
+import { novelService } from '@/services/novelService';
+import { serializeForJSON } from '@/lib/serialization';
+import { tagService } from '@/services/tagService';
 
 async function getNovel(id: string) {
   const novelData = await novelService.findById(id, true);
   if (!novelData) {
     notFound();
   }
-  // The service guarantees serializable data. No further action needed here.
-  return novelData;
+  return novelData; // Already serialized by the service
 }
 
 async function getGenres() {
@@ -21,16 +22,23 @@ async function getGenres() {
     where: { isActive: true },
     orderBy: { sortOrder: 'asc' }
   });
-  // Simple serialization for consistency
   return serializeForJSON(genres);
+}
+
+// --- FIX: Add function to get all available tags ---
+async function getTags() {
+    const tags = await tagService.findAll({ isActive: true });
+    return tags; // Already serialized by the service
 }
 
 export default async function EditNovelPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = await paramsPromise;
   
-  const [novel, genres] = await Promise.all([
+  // --- FIX: Fetch novel, genres, and tags concurrently ---
+  const [novel, genres, tags] = await Promise.all([
     getNovel(params.id),
-    getGenres()
+    getGenres(),
+    getTags()
   ]);
 
   return (
@@ -43,9 +51,11 @@ export default async function EditNovelPage({ params: paramsPromise }: { params:
       <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
         <h1 className="text-2xl font-bold text-white mb-6">Edit Novel</h1>
         
+        {/* --- FIX: Pass tags to the form component --- */}
         <EditNovelForm
           novel={novel}
           genres={genres}
+          tags={tags}
         />
       </div>
     </div>

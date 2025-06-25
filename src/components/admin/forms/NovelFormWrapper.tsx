@@ -1,3 +1,4 @@
+
 // src/components/admin/forms/NovelFormWrapper.tsx
 'use client'
 
@@ -6,36 +7,36 @@ import { useRouter } from 'next/navigation'
 import { NovelForm, NovelFormData } from './NovelForm'
 import { MultiSelectOption } from '@/components/shared/ui/MultiSelect'
 
-// Define more specific types to fix the 'any' type error
-interface GenreOption {
+interface DataOption {
   id: string;
   name: string;
 }
 
 interface NovelForForm {
-  genres: Array<{
-    genre: {
-      id: string;
-    }
-  }>;
-  // Add other novel properties if needed for type safety, but this is enough for the fix
+  genres: Array<{ genre: { id: string } }>;
+  // --- FIX: Add tags type to the novel object ---
+  tags: Array<{ tag: { id: string } }>;
   [key: string]: any; 
 }
 
 interface NovelFormWrapperProps {
-  genres: GenreOption[] // From server
-  novel?: NovelForForm // Initial novel data for editing
+  genres: DataOption[]
+  // --- FIX: Add tags prop ---
+  tags: DataOption[]
+  novel?: NovelForForm
 }
 
-export function NovelFormWrapper({ genres, novel }: NovelFormWrapperProps) {
+export function NovelFormWrapper({ genres, tags, novel }: NovelFormWrapperProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
   const genreOptions: MultiSelectOption[] = genres.map(g => ({ value: g.id, label: g.name }))
-  
-  // With the new types, TypeScript can infer that 'ng' has a 'genre' property.
-  const initialGenreIds = (novel && novel.genres) ? novel.genres.map(ng => ng.genre.id) : []
+  const initialGenreIds = novel?.genres?.map(ng => ng.genre.id) || []
+
+  // --- FIX: Create tag options and get initial selections ---
+  const tagOptions: MultiSelectOption[] = tags.map(t => ({ value: t.id, label: t.name }))
+  const initialTagIds = novel?.tags?.map(nt => nt.tag.id) || []
 
   const handleSubmit = async (data: NovelFormData) => {
     setIsLoading(true)
@@ -55,10 +56,8 @@ export function NovelFormWrapper({ genres, novel }: NovelFormWrapperProps) {
         const errorData = await response.json()
         throw new Error(errorData.error || `Failed to ${novel ? 'update' : 'create'} novel`)
       }
-
-      // Using replace to prevent back-button issues after form submission
-      router.replace('/admin/novels');
-      // Refresh to ensure the list is up-to-date
+      
+      router.push('/admin/novels');
       router.refresh(); 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -75,6 +74,9 @@ export function NovelFormWrapper({ genres, novel }: NovelFormWrapperProps) {
       initialData={novel}
       genreOptions={genreOptions}
       initialGenreIds={initialGenreIds}
+      // --- FIX: Pass tag options and initial selections to the form ---
+      tagOptions={tagOptions}
+      initialTagIds={initialTagIds}
     />
   )
 }

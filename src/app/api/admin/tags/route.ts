@@ -1,3 +1,4 @@
+
 // src/app/api/admin/tags/route.ts
 import { NextRequest } from 'next/server';
 import { createAdminRoute } from '@/lib/api/middleware';
@@ -8,7 +9,11 @@ export const GET = createAdminRoute(async (req) => {
   try {
     const searchParams = req.nextUrl.searchParams;
     const type = searchParams.get('type') || undefined;
-    const isActive = searchParams.get('isActive') === 'true';
+    
+    // --- THIS IS THE CRITICAL FIX ---
+    // Handle the isActive parameter correctly. It can be true, false, or not present.
+    const isActiveParam = searchParams.get('isActive');
+    const isActive = isActiveParam === null ? undefined : isActiveParam === 'true';
 
     const tags = await tagService.findAll({ type, isActive });
     return successResponse(tags);
@@ -27,7 +32,7 @@ export const POST = createAdminRoute(async (req) => {
     }
 
     const tag = await tagService.create({ name, type, color });
-    return successResponse(tag);
+    return successResponse(tag, 201);
   } catch (error) {
     return handleApiError(error);
   }
