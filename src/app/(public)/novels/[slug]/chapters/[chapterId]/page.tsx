@@ -1,4 +1,4 @@
-// src/app/(public)/novels/[slug]/chapters/[chapterId]/page.tsx
+// FILE: src/app/(public)/novels/[slug]/chapters/[chapterId]/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -109,7 +109,7 @@ export default function ChapterPage() {
     fetchInitialData()
   }, [novelId, params.chapterId]);
 
-  // Auto-scroll logic (unchanged)
+  // Auto-scroll logic
   useEffect(() => {
     if (!isAutoScrolling) return
     const scrollInterval = setInterval(() => {
