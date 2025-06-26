@@ -28,7 +28,7 @@ export function Header() {
     setTheme(themes[nextIndex])
   }
 
-  const isAdmin = user?.publicMetadata?.role === 'admin'
+  const isAdmin = user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'moderator'
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-card/95 backdrop-blur">
@@ -47,7 +47,7 @@ export function Header() {
             {/* Desktop Navigation */}
             <nav className="hidden md:ml-8 md:flex md:space-x-4">
               <Link
-                href="/novels"
+                href="/browse"
                 className="px-3 py-2 text-sm font-medium text-secondary hover:text-foreground"
               >
                 Browse
@@ -67,7 +67,7 @@ export function Header() {
               {isAdmin && (
                 <Link
                   href="/admin"
-                  className="px-3 py-2 text-sm font-medium text-warning hover:text-warning/80"
+                  className="px-3 py-2 text-sm font-medium text-green-400 hover:text-green-300"
                 >
                   Admin
                 </Link>
@@ -121,7 +121,7 @@ export function Header() {
         {mobileMenuOpen && (
           <nav className="md:hidden py-4 space-y-2">
             <Link
-              href="/novels"
+              href="/browse"
               className="block px-3 py-2 text-base font-medium text-secondary hover:text-foreground"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -144,7 +144,7 @@ export function Header() {
             {isAdmin && (
               <Link
                 href="/admin"
-                className="block px-3 py-2 text-base font-medium text-warning hover:text-warning/80"
+                className="block px-3 py-2 text-base font-medium text-green-400 hover:text-green-300"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Admin Dashboard
