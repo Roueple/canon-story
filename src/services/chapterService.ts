@@ -34,6 +34,31 @@ export const chapterService = {
     return { chapters: serializePrismaData(chapters), total };
   },
 
+  async findBySlugAndChapterNumber(novelSlug: string, chapterNumber: Prisma.Decimal) {
+    const novel = await prisma.novel.findUnique({
+      where: { slug: novelSlug },
+      select: { id: true }
+    });
+
+    if (!novel) {
+      return null;
+    }
+
+    const chapter = await prisma.chapter.findFirst({
+      where: {
+        novelId: novel.id,
+        chapterNumber: chapterNumber,
+        isPublished: true,
+        isDeleted: false
+      },
+      include: {
+        novel: { select: { id: true, title: true, slug: true, authorId: true } },
+      }
+    });
+
+    return serializePrismaData(chapter);
+  },
+
   async create(data: any) {
     const slug = generateSlug(data.title);
     const wordCount = data.content.split(/\s+/).length;

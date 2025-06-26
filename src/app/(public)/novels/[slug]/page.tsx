@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { Book, Clock, Eye, Star, Calendar, BookOpen } from 'lucide-react';
 import { novelService } from '@/services/novelService';
 import { formatNumber, formatDate } from '@/lib/utils';
-import { Button } from '@/components/shared/ui/Button'; // Correct direct import
-import { Badge } from '@/components/shared/ui/Badge'; // Correct direct import
+import { Button } from '@/components/shared/ui/Button';
+import { Badge } from '@/components/shared/ui/Badge';
 
 async function getNovelDetails(slug: string) {
     const novel = await novelService.findBySlug(slug);
@@ -19,6 +19,10 @@ async function getNovelDetails(slug: string) {
 export default async function NovelHomepage({ params }: { params: { slug: string } }) {
     const { slug } = params;
     const novel = await getNovelDetails(slug);
+
+    if (!novel || !novel.chapters) {
+        return notFound();
+    }
 
     const totalWords = novel.chapters.reduce((sum, chapter) => sum + chapter.wordCount, 0);
     const estimatedReadTime = Math.ceil(totalWords / 200); // Average reading speed

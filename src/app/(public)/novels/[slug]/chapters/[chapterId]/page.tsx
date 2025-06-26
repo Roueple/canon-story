@@ -1,10 +1,10 @@
-// src/app/(public)/novels/[novelId]/chapters/[chapterId]/page.tsx
+// src/app/(public)/novels/[slug]/chapters/[chapterId]/page.tsx
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Bookmark, Loader2 } from 'lucide-react'
+import { ArrowLeft, Bookmark } from 'lucide-react'
 import { Button, LoadingSpinner } from '@/components/shared/ui'
 import { InfiniteScrollReader } from '@/components/reader/InfiniteScrollReader'
 import { ReadingControls } from '@/components/reader/ReadingControls'
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 
 interface Chapter {
   id: string
-  slug: string
+  novelId: string
   title: string
   content: string
   chapterNumber: number
@@ -38,6 +38,8 @@ export default function ChapterPage() {
   const params = useParams<{ slug: string; chapterId: string }>()
   const router = useRouter()
   
+  const [novelId, setNovelId] = useState<string | null>(null);
+  const [novelTitle, setNovelTitle] = useState<string>('');
   const [initialData, setInitialData] = useState<ChapterWithNav | null>(null)
   const [loadedChapters, setLoadedChapters] = useState<Chapter[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -56,21 +58,48 @@ export default function ChapterPage() {
   } = useReadingSettings()
   
   const { theme, setTheme } = useTheme()
+  const { updateProgress } = useReadingProgress(novelId)
+  const { bookmarks, toggleBookmark, isBookmarked, isLoading: bookmarkLoading } = useBookmarks(novelId)
 
-  const { updateProgress } = useReadingProgress(params.slug)
-  const { bookmarks, toggleBookmark, isBookmarked, isLoading: bookmarkLoading } = useBookmarks(params.slug)
-
-  // 1. Fetch initial chapter details and navigation
+  // 1. Fetch novel ID from slug
   useEffect(() => {
+    const fetchNovelMeta = async () => {
+      if (!params.slug) return;
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/public/novels/get-id-by-slug/${params.slug}`);
+        if (!res.ok) throw new Error('Novel not found');
+        const data = await res.json();
+        if (data.success && data.data.id) {
+            setNovelId(data.data.id);
+            setNovelTitle(data.data.title);
+        } else {
+            throw new Error(data.error || 'Could not fetch novel metadata.');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+        setIsLoading(false);
+      }
+    };
+    fetchNovelMeta();
+  }, [params.slug]);
+
+  // 2. Fetch initial chapter details and navigation once novel ID is available
+  useEffect(() => {
+    if (!novelId) return;
+
     const fetchInitialData = async () => {
       try {
-        setIsLoading(true)
-        const res = await fetch(`/api/public/novels/${params.slug}/chapters/${params.chapterId}`)
+        const res = await fetch(`/api/public/novels/${novelId}/chapters/${params.chapterId}`)
         if (!res.ok) throw new Error('Failed to load chapter details.')
         const data = await res.json()
-        setInitialData(data.data)
-        setLoadedChapters([data.data.currentChapter])
-        setVisibleChapterId(data.data.currentChapter.id)
+        if (data.success) {
+            setInitialData(data.data)
+            setLoadedChapters([data.data.currentChapter])
+            setVisibleChapterId(data.data.currentChapter.id)
+        } else {
+            throw new Error(data.error || 'Could not load chapter data.');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred.')
       } finally {
@@ -78,9 +107,9 @@ export default function ChapterPage() {
       }
     }
     fetchInitialData()
-  }, [params.slug, params.chapterId])
+  }, [novelId, params.chapterId]);
 
-  // 2. Auto-scroll logic
+  // Auto-scroll logic (unchanged)
   useEffect(() => {
     if (!isAutoScrolling) return
     const scrollInterval = setInterval(() => {
@@ -94,7 +123,7 @@ export default function ChapterPage() {
 
   const currentChapter = loadedChapters.find(c => c.id === visibleChapterId)
   
-  if (isLoading || !isSettingsReady) {
+  if (isLoading || !isSettingsReady || !novelId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
@@ -124,13 +153,12 @@ export default function ChapterPage() {
   return (
     <div className={cn("min-h-screen", isFocusMode && "focus-mode", theme)}>
       <ReadingProgressBar />
-      
       {!isFocusMode && (
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
           <div className="container mx-auto px-4 py-3 flex items-center justify-between">
             <Link href={`/novels/${params.slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">{currentChapter.novel.title}</span>
+              <span className="hidden sm:inline">{novelTitle}</span>
             </Link>
             <Button variant="ghost" size="sm" onClick={() => toggleBookmark(currentChapter.id)} disabled={bookmarkLoading}>
               {isBookmarked(currentChapter.id) ? (
@@ -142,10 +170,9 @@ export default function ChapterPage() {
           </div>
         </header>
       )}
-
       <main className="container mx-auto px-4 py-8 max-w-4xl" style={{ '--reader-font-size': `${fontSize}px` } as React.CSSProperties}>
         <InfiniteScrollReader
-          novelId={params.slug}
+          novelId={novelId}
           initialChapter={initialData.currentChapter}
           loadedChapters={loadedChapters}
           setLoadedChapters={setLoadedChapters}
@@ -155,7 +182,6 @@ export default function ChapterPage() {
           theme={theme}
         />
       </main>
-
       <ReadingControls
         fontSize={fontSize}
         onFontSizeChange={updateFontSize}

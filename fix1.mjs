@@ -1,320 +1,374 @@
-// fix_imports_and_paths.mjs
+// fix2.mjs
 import fs from 'fs/promises';
 import path from 'path';
 
-// --- Helper Function ---
+// --- Helper Functions ---
 async function writeFile(filePath, content) {
     try {
         await fs.mkdir(path.dirname(filePath), { recursive: true });
         await fs.writeFile(filePath, content.trim(), 'utf-8');
-        console.log(`✅ Fixed/Created: ${filePath}`);
+        console.log(`✅ Created/Fixed: ${filePath}`);
     } catch (error) {
         console.error(`❌ Error writing file ${filePath}:`, error);
     }
 }
 
+async function removePath(targetPath) {
+    try {
+        await fs.rm(path.resolve(process.cwd(), targetPath), { recursive: true, force: true });
+        console.log(`🗑️  Removed: ${targetPath}`);
+    } catch (error) {
+        if (error.code !== 'ENOENT') { // Ignore "file not found" errors
+            console.error(`❌ Error removing ${targetPath}:`, error);
+        } else {
+            console.log(`- Path not found, skipping removal: ${targetPath}`);
+        }
+    }
+}
+
+async function renamePath(oldPath, newPath) {
+    try {
+        await fs.rename(path.resolve(process.cwd(), oldPath), path.resolve(process.cwd(), newPath));
+        console.log(`🔄 Renamed: ${oldPath} -> ${newPath}`);
+    } catch (error) {
+        if (error.code !== 'ENOENT') {
+            console.error(`❌ Error renaming ${oldPath}:`, error);
+        } else {
+            console.log(`- Path not found, skipping rename: ${oldPath}`);
+        }
+    }
+}
+
+
 // --- File Content Definitions ---
 
-const newAdminTagsPage = `
-// src/app/(admin)/admin/content/tags/page.tsx
-'use client';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Plus, Edit, Loader2, Tag } from 'lucide-react';
-import { Button } from '@/components/shared/ui/Button'; // Corrected direct import
+const libDataContent = `
+// src/lib/data.ts
+import { Prisma } from '@prisma/client';
+import { prisma } from './db';
+import { serializeForJSON } from './serialization';
 
-interface Tag {
-  id: string;
-  name: string;
-  type: string;
-  color: string;
-  usageCount: number;
+const novelCardInclude = {
+  author: { select: { displayName: true, username: true } },
+  genres: { include: { genre: true } },
+  tags: { include: { tag: true } },
+  _count: { select: { chapters: { where: { isPublished: true, isDeleted: false } } } }
+};
+
+export async function getTrendingNovels(limit = 6) {
+  const novels = await prisma.novel.findMany({
+    where: { isPublished: true, isDeleted: false },
+    include: novelCardInclude,
+    orderBy: { totalViews: 'desc' },
+    take: limit
+  });
+  return serializeForJSON(novels);
 }
 
-export default function AdminTagsPage() {
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+export async function getRecentNovels(limit = 6) {
+  const novels = await prisma.novel.findMany({
+    where: { isPublished: true, isDeleted: false },
+    include: novelCardInclude,
+    orderBy: { publishedAt: 'desc' },
+    take: limit
+  });
+  return serializeForJSON(novels);
+}
 
-  const fetchTags = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/admin/tags');
-      const data = await res.json();
-      if (data.success) {
-        setTags(data.data);
-      } else {
-        throw new Error(data.error || 'Failed to fetch tags');
-      }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+export async function getPublishedNovels() {
+  const novels = await prisma.novel.findMany({
+    where: { isPublished: true, isDeleted: false },
+    include: novelCardInclude,
+    orderBy: { updatedAt: 'desc' }
+  });
+  return serializeForJSON(novels);
+}
+
+export async function getNovelBySlug(slug: string) {
+  const novel = await prisma.novel.findUnique({
+    where: { slug: slug, isPublished: true, isDeleted: false },
+    include: {
+      author: { select: { displayName: true, username: true } },
+      genres: { include: { genre: true } },
+      tags: { include: { tag: true } },
+      chapters: { 
+        where: { isPublished: true, isDeleted: false }, 
+        orderBy: { chapterNumber: 'asc' }, 
+        select: { id: true, title: true, chapterNumber: true, createdAt: true } 
+      },
+      _count: { select: { chapters: true } }
     }
-  };
+  });
+  return serializeForJSON(novel);
+}
 
+export async function getChapterByNumber(novelSlug: string, chapterNumberStr: string) {
+    const chapterNumber = new Prisma.Decimal(chapterNumberStr);
+    const chapter = await prisma.chapter.findFirst({
+        where: {
+            novel: { slug: novelSlug, isPublished: true, isDeleted: false },
+            chapterNumber: chapterNumber,
+            isPublished: true,
+            isDeleted: false
+        },
+        include: {
+            novel: {
+                select: {
+                    id: true,
+                    title: true,
+                    slug: true,
+                    chapters: {
+                        where: { isPublished: true, isDeleted: false },
+                        select: { id: true, chapterNumber: true },
+                        orderBy: { chapterNumber: 'asc' }
+                    }
+                }
+            }
+        }
+    });
+    return serializeForJSON(chapter);
+}
+`;
+
+const chapterIdPageContent = `
+// src/app/(public)/novels/[slug]/chapters/[chapterId]/page.tsx
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft, Bookmark } from 'lucide-react'
+import { Button, LoadingSpinner } from '@/components/shared/ui'
+import { InfiniteScrollReader } from '@/components/reader/InfiniteScrollReader'
+import { ReadingControls } from '@/components/reader/ReadingControls'
+import { ReadingProgressBar } from '@/components/reader/ReadingProgressBar'
+import { useReadingSettings } from '@/hooks/useReadingSettings'
+import { useReadingProgress } from '@/hooks/useReadingProgress'
+import { useBookmarks } from '@/hooks/useBookmarks'
+import { useTheme } from '@/providers/theme-provider'
+import { cn } from '@/lib/utils'
+
+interface Chapter {
+  id: string
+  novelId: string
+  title: string
+  content: string
+  chapterNumber: number
+  wordCount: number
+  novel: {
+    title: string;
+  }
+}
+
+interface ChapterWithNav {
+  currentChapter: Chapter;
+  prevChapterId: string | null;
+  nextChapterId: string | null;
+  allChapterIds: string[];
+}
+
+export default function ChapterPage() {
+  const params = useParams<{ slug: string; chapterId: string }>()
+  const router = useRouter()
+  
+  const [novelId, setNovelId] = useState<string | null>(null);
+  const [novelTitle, setNovelTitle] = useState<string>('');
+  const [initialData, setInitialData] = useState<ChapterWithNav | null>(null)
+  const [loadedChapters, setLoadedChapters] = useState<Chapter[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false)
+  const [isFocusMode, setIsFocusMode] = useState(false)
+  const [visibleChapterId, setVisibleChapterId] = useState<string | null>(params.chapterId)
+  
+  const { 
+    fontSize, 
+    autoScrollSpeed, 
+    updateFontSize, 
+    updateAutoScrollSpeed, 
+    isSettingsReady 
+  } = useReadingSettings()
+  
+  const { theme, setTheme } = useTheme()
+  const { updateProgress } = useReadingProgress(novelId)
+  const { bookmarks, toggleBookmark, isBookmarked, isLoading: bookmarkLoading } = useBookmarks(novelId)
+
+  // 1. Fetch novel ID from slug
   useEffect(() => {
-    fetchTags();
-  }, []);
+    const fetchNovelMeta = async () => {
+      if (!params.slug) return;
+      setIsLoading(true);
+      try {
+        const res = await fetch(\`/api/public/novels/get-id-by-slug/\${params.slug}\`);
+        if (!res.ok) throw new Error('Novel not found');
+        const data = await res.json();
+        if (data.success && data.data.id) {
+            setNovelId(data.data.id);
+            setNovelTitle(data.data.title);
+        } else {
+            throw new Error(data.error || 'Could not fetch novel metadata.');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+        setIsLoading(false);
+      }
+    };
+    fetchNovelMeta();
+  }, [params.slug]);
+
+  // 2. Fetch initial chapter details and navigation once novel ID is available
+  useEffect(() => {
+    if (!novelId) return;
+
+    const fetchInitialData = async () => {
+      try {
+        const res = await fetch(\`/api/public/novels/\${novelId}/chapters/\${params.chapterId}\`)
+        if (!res.ok) throw new Error('Failed to load chapter details.')
+        const data = await res.json()
+        if (data.success) {
+            setInitialData(data.data)
+            setLoadedChapters([data.data.currentChapter])
+            setVisibleChapterId(data.data.currentChapter.id)
+        } else {
+            throw new Error(data.error || 'Could not load chapter data.');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchInitialData()
+  }, [novelId, params.chapterId]);
+
+  // Auto-scroll logic (unchanged)
+  useEffect(() => {
+    if (!isAutoScrolling) return
+    const scrollInterval = setInterval(() => {
+      window.scrollBy(0, 1)
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+        setIsAutoScrolling(false)
+      }
+    }, 50 / autoScrollSpeed)
+    return () => clearInterval(scrollInterval)
+  }, [isAutoScrolling, autoScrollSpeed])
+
+  const currentChapter = loadedChapters.find(c => c.id === visibleChapterId)
+  
+  if (isLoading || !isSettingsReady || !novelId) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <p className="text-error">{error}</p>
+        <Button onClick={() => router.push(\`/novels/\${params.slug}\`)}>
+          Back to Novel
+        </Button>
+      </div>
+    )
+  }
+  
+  if (!initialData || !currentChapter) {
+    return (
+       <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Manage Tags</h1>
-          <p className="text-gray-400 mt-1">Create, edit, and organize content tags.</p>
-        </div>
-        <Link href="/admin/content/tags/create">
-          <Button variant="primary" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Create Tag
-          </Button>
-        </Link>
-      </div>
-
-      {error && <div className="text-red-400">{error}</div>}
-
-      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-x-auto">
-        <table className="w-full min-w-[600px]">
-          <thead className="bg-gray-900">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Tag</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Usage</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {isLoading ? (
-              <tr><td colSpan={4} className="text-center py-12"><Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" /></td></tr>
-            ) : tags.length > 0 ? (
-              tags.map((tag) => (
-                <tr key={tag.id}>
-                  <td className="px-6 py-4">
-                    <span className="flex items-center gap-2">
-                      <Tag className="h-4 w-4" style={{ color: tag.color }} />
-                      <span className="font-medium text-white">{tag.name}</span>
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-400 capitalize">{tag.type}</td>
-                  <td className="px-6 py-4 text-gray-300">{tag.usageCount}</td>
-                  <td className="px-6 py-4 text-right">
-                    <Link href={\`/admin/content/tags/\${tag.id}\`}>
-                      <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr><td colSpan={4} className="text-center py-12 text-gray-400">No tags found.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+    <div className={cn("min-h-screen", isFocusMode && "focus-mode", theme)}>
+      <ReadingProgressBar />
+      {!isFocusMode && (
+        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <Link href={\`/novels/\${params.slug}\`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">{novelTitle}</span>
+            </Link>
+            <Button variant="ghost" size="sm" onClick={() => toggleBookmark(currentChapter.id)} disabled={bookmarkLoading}>
+              {isBookmarked(currentChapter.id) ? (
+                <Bookmark className="h-4 w-4 text-primary fill-current" />
+              ) : (
+                <Bookmark className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </header>
+      )}
+      <main className="container mx-auto px-4 py-8 max-w-4xl" style={{ '--reader-font-size': \`\${fontSize}px\` } as React.CSSProperties}>
+        <InfiniteScrollReader
+          novelId={novelId}
+          initialChapter={initialData.currentChapter}
+          loadedChapters={loadedChapters}
+          setLoadedChapters={setLoadedChapters}
+          allChapterIds={initialData.allChapterIds}
+          onChapterVisible={setVisibleChapterId}
+          fontSize={fontSize}
+          theme={theme}
+        />
+      </main>
+      <ReadingControls
+        fontSize={fontSize}
+        onFontSizeChange={updateFontSize}
+        isAutoScrolling={isAutoScrolling}
+        onToggleAutoScroll={() => setIsAutoScrolling(prev => !prev)}
+        autoScrollSpeed={autoScrollSpeed}
+        onAutoScrollSpeedChange={updateAutoScrollSpeed}
+        theme={theme}
+        onThemeChange={setTheme}
+        isFocusMode={isFocusMode}
+        onToggleFocusMode={() => setIsFocusMode(prev => !prev)}
+      />
     </div>
-  );
+  )
 }
 `;
 
-const correctedNovelSlugPage = `
-// src/app/(public)/novels/[slug]/page.tsx
-import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Book, Clock, Eye, Star, Calendar, BookOpen } from 'lucide-react';
-import { novelService } from '@/services/novelService';
-import { formatNumber, formatDate } from '@/lib/utils';
-import { Button } from '@/components/shared/ui/Button'; // Correct direct import
-import { Badge } from '@/components/shared/ui/Badge'; // Correct direct import
-
-async function getNovelDetails(slug: string) {
-    const novel = await novelService.findBySlug(slug);
-    if (!novel) {
-        notFound();
-    }
-    return novel;
-}
-
-export default async function NovelHomepage({ params }: { params: { slug: string } }) {
-    const { slug } = params;
-    const novel = await getNovelDetails(slug);
-
-    const totalWords = novel.chapters.reduce((sum, chapter) => sum + chapter.wordCount, 0);
-    const estimatedReadTime = Math.ceil(totalWords / 200); // Average reading speed
-
-    return (
-        <div className="bg-background text-foreground">
-            {/* Novel Header with Cover */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid md:grid-cols-[300px_1fr] gap-8">
-                    {/* Cover Image */}
-                    <div className="flex justify-center md:justify-start">
-                        <div className="relative w-full max-w-[300px] aspect-[2/3] rounded-lg overflow-hidden shadow-xl">
-                            {novel.coverImageUrl ? (
-                                <Image
-                                    src={novel.coverImageUrl}
-                                    alt={\`Cover for \${novel.title}\`}
-                                    fill
-                                    className="object-cover"
-                                    priority
-                                />
-                            ) : (
-                                <div 
-                                    className="w-full h-full"
-                                    style={{ backgroundColor: novel.coverColor }}
-                                />
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Novel Info */}
-                    <div className="space-y-6">
-                        <div>
-                            <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-                                {novel.title}
-                            </h1>
-                            <p className="text-xl text-secondary">
-                                by {novel.author.displayName || novel.author.username}
-                            </p>
-                        </div>
-
-                        {novel.description && (
-                            <p className="text-lg leading-relaxed text-secondary">
-                                {novel.description}
-                            </p>
-                        )}
-
-                        {/* Novel Stats */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                            <div className="flex items-center text-secondary">
-                                <Star className="h-5 w-5 mr-2 text-yellow-500" />
-                                <span>{Number(novel.averageRating).toFixed(1)}/5.0 ({novel.ratingCount} ratings)</span>
-                            </div>
-                            <div className="flex items-center text-secondary">
-                                <Eye className="h-5 w-5 mr-2" />
-                                <span>{formatNumber(novel.totalViews)} Views</span>
-                            </div>
-                            <div className="flex items-center text-secondary">
-                                <Book className="h-5 w-5 mr-2" />
-                                <span>{novel.chapters.length} Chapters</span>
-                            </div>
-                            <div className="flex items-center text-secondary">
-                                <Clock className="h-5 w-5 mr-2" />
-                                <span>~{estimatedReadTime} min read</span>
-                            </div>
-                            <div className="flex items-center text-secondary">
-                                <Calendar className="h-5 w-5 mr-2" />
-                                <span>Updated: {formatDate(novel.updatedAt)}</span>
-                            </div>
-                        </div>
-
-                        {/* Genre and Tags */}
-                        {(novel.genres.length > 0 || novel.tags.length > 0) && (
-                            <div className="flex flex-wrap gap-2">
-                                {novel.genres.map((novelGenre) => (
-                                    <Link
-                                        key={novelGenre.genre.id}
-                                        href={\`/genres/\${novelGenre.genre.slug}\`}
-                                        className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors"
-                                    >
-                                        {novelGenre.genre.name}
-                                    </Link>
-                                ))}
-                                {novel.tags.map((novelTag) => (
-                                    <Badge
-                                        key={novelTag.tag.id}
-                                        variant="secondary"
-                                        className="text-sm"
-                                    >
-                                        #{novelTag.tag.name}
-                                    </Badge>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-4">
-                            {novel.chapters.length > 0 && (
-                                <Link href={\`/novels/\${novel.slug}/chapters/\${novel.chapters[0].id}\`}>
-                                    <Button size="lg" className="gap-2">
-                                        <BookOpen className="h-5 w-5" />
-                                        Start Reading
-                                    </Button>
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Chapters Section */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <h2 className="text-2xl font-bold mb-6">Chapters</h2>
-                {novel.chapters.length > 0 ? (
-                    <div data-testid="chapter-list" className="bg-card border border-border rounded-lg max-h-[600px] overflow-y-auto">
-                        <ul className="divide-y divide-border">
-                            {novel.chapters.map((chapter) => (
-                                <li key={chapter.id} data-testid="chapter-item">
-                                    <Link 
-                                        href={\`/novels/\${novel.slug}/chapters/\${chapter.id}\`} 
-                                        className="block p-4 hover:bg-muted transition-colors"
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="font-medium text-card-foreground">
-                                                    Chapter {String(chapter.chapterNumber)}: {chapter.title}
-                                                </p>
-                                                {chapter.wordCount > 0 && (
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {formatNumber(chapter.wordCount)} words
-                                                    </p>
-                                                )}
-                                            </div>
-                                            {chapter.status === 'premium' && (
-                                                <Badge variant="warning" size="sm">Premium</Badge>
-                                            )}
-                                        </div>
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                ) : (
-                    <div className="bg-card border border-border rounded-lg p-8 text-center">
-                        <p className="text-muted-foreground">No chapters available yet.</p>
-                    </div>
-                )}
-            </div>
-        </div>
-    )
-}
-`;
 
 // --- Main Execution ---
 async function main() {
-    console.log('🚀 Applying fixes for imports and paths...');
+    console.log('🚀 Applying structural fixes and creating missing files...');
 
-    // 1. Fix the import in the admin tags page.
-    await writeFile('src/app/(admin)/admin/content/tags/page.tsx', newAdminTagsPage);
-
-    // 2. Fix the public novel page by replacing its content with a corrected version.
-    // This will be written to the correct path.
-    await writeFile('src/app/(public)/novels/[slug]/page.tsx', correctedNovelSlugPage);
+    // 1. Clean up old/duplicate files and directories
+    console.log('\n--- Cleaning up project structure ---');
+    await removePath('src/app/novels');
+    await removePath('src/app/admin');
+    await removePath('src/app/(public)/novels/[novelId]');
+    await removePath('src/app/(public)/novel');
+    await removePath('src/lib/prisma.ts');
+    await removePath('src/app/(public)/novels/[slug]/chapters/[chapterNumber]/page.tsx'); // remove old file before renaming dir
     
-    // 3. To be safe, let's also delete the old incorrect file path if it exists
-    try {
-        await fs.rm(path.resolve(process.cwd(), 'src/app/(public)/novel'), { recursive: true, force: true });
-        console.log('🧹 Cleaned up old/incorrect `src/app/(public)/novel` directory.');
-    } catch (e) {
-        // This is fine, it just means the directory didn't exist.
-    }
+    // 2. Create the missing data.ts file
+    console.log('\n--- Creating missing files ---');
+    await writeFile('src/lib/data.ts', libDataContent);
 
-    console.log('\\n\\n✅ Fix script completed successfully!');
+    // 3. Fix the public chapter route
+    console.log('\n--- Fixing chapter reading route ---');
+    await renamePath(
+        'src/app/(public)/novels/[slug]/chapters/[chapterNumber]', 
+        'src/app/(public)/novels/[slug]/chapters/[chapterId]'
+    );
+    await writeFile(
+        'src/app/(public)/novels/[slug]/chapters/[chapterId]/page.tsx', 
+        chapterIdPageContent
+    );
+    
+    console.log('\n\n✅ Fix script completed successfully!');
     console.log('Summary of changes:');
-    console.log('  - Corrected import paths in `admin/tags/page.tsx`.');
-    console.log('  - Replaced `novels/[slug]/page.tsx` with corrected code that uses proper imports.');
-    console.log('  - Removed the potentially incorrect `novel` directory.');
-    console.log('\\nPlease restart your development server to see the changes.');
+    console.log('  - Removed several old/duplicate route directories.');
+    console.log('  - Removed redundant `src/lib/prisma.ts`.');
+    console.log('  - Created `src/lib/data.ts` with necessary data-fetching functions.');
+    console.log('  - Renamed chapter route to use `[chapterId]` for consistency.');
+    console.log('  - Updated chapter page logic to work correctly with slugs.');
+    console.log('\nPlease restart your development server to see the changes.');
 }
 
 main().catch(console.error);

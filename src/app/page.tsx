@@ -1,14 +1,15 @@
+// src/app/page.tsx
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/shared/ui';
+import { Button } from '@/components/shared/ui/Button';
 import { NovelCard } from '@/components/shared/NovelCard';
-import { getTrendingNovels, getRecentNovels } from '@/lib/data';
-import { LoadingSpinner } from '@/components/shared/ui';
+import { trendingService } from '@/services/trendingService';
+import { LoadingSpinner } from '@/components/shared/ui/LoadingSpinner';
 
 export const dynamic = 'force-dynamic';
 
 async function TrendingSection() {
-  const novels = await getTrendingNovels(6);
+  const novels = await trendingService.getTrendingNovels('week', 6);
   
   return (
     <section>
@@ -28,7 +29,7 @@ async function TrendingSection() {
 }
 
 async function RecentSection() {
-  const novels = await getRecentNovels(6);
+  const novels = await trendingService.getRecentlyUpdated(6);
   
   return (
     <section>

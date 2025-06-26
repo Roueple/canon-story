@@ -1,20 +1,20 @@
+// src/app/browse/page.tsx
 import { Suspense } from 'react';
-import { getPublishedNovels } from '@/lib/data';
+import { novelService } from '@/services/novelService';
 import { NovelCard } from '@/components/shared/NovelCard';
-import { LoadingSpinner } from '@/components/shared/ui';
-import { Input } from '@/components/shared/ui';
+import { LoadingSpinner } from '@/components/shared/ui/LoadingSpinner';
+import { Input } from '@/components/shared/ui/Input';
 import { Search } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 async function NovelGrid({ searchQuery }: { searchQuery?: string }) {
-  const novels = await getPublishedNovels();
+  const { novels } = await novelService.findAll({ isPublished: true, limit: 100 });
   
-  // Simple client-side filtering if search query exists
   const filteredNovels = searchQuery 
     ? novels.filter(novel => 
         novel.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        novel.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        (novel.description && novel.description.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : novels;
 

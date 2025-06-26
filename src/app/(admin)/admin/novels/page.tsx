@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/db'
 import { Plus, Edit, Eye, EyeOff, BookOpen } from 'lucide-react'
-import { Button } from '@/components/shared/ui'
+import { Button } from '@/components/shared/ui/Button'
 import { formatDate, formatNumber } from '@/lib/utils'
 
 async function getNovels() {
