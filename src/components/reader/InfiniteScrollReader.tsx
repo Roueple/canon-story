@@ -1,7 +1,7 @@
-// src/components/reader/InfiniteScrollReader.tsx
+// FILE: src/components/reader/InfiniteScrollReader.tsx
 'use client'
 
-import { useRef, useCallback, useEffect, useState } from 'react' // <--- FIX: Added useState here
+import { useRef, useCallback, useEffect, useState } from 'react'
 import { ChapterContent } from './ChapterContent'
 import { LoadingSpinner } from '@/components/shared/ui'
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver'
@@ -13,6 +13,9 @@ interface Chapter {
   content: string
   chapterNumber: number
   wordCount: number
+  novel: {
+    title: string
+  }
 }
 
 interface InfiniteScrollReaderProps {

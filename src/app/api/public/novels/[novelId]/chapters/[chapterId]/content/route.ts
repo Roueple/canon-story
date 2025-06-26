@@ -1,4 +1,4 @@
-// src/app/api/public/novels/[novelId]/chapters/[chapterId]/content/route.ts
+// FILE: src/app/api/public/novels/[novelId]/chapters/[chapterId]/content/route.ts
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/db'
 import { successResponse, errorResponse, handleApiError } from '@/lib/api/utils'
@@ -23,7 +23,12 @@ export async function GET(
         chapterNumber: true,
         wordCount: true,
         publishedAt: true,
-        novelId: true
+        novelId: true,
+        novel: {
+          select: {
+            title: true
+          }
+        }
       }
     })
     

@@ -38,7 +38,7 @@ export default function ChapterPage() {
   const params = useParams<{ slug: string; chapterId: string }>()
   const router = useRouter()
   
-  const [novelId, setNovelId] = useState<string | null>(null);
+  const [novelId, setNovelId] = useState<string | undefined>();
   const [novelTitle, setNovelTitle] = useState<string>('');
   const [initialData, setInitialData] = useState<ChapterWithNav | null>(null)
   const [loadedChapters, setLoadedChapters] = useState<Chapter[]>([])
