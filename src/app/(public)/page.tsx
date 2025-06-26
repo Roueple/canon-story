@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { BookOpen, TrendingUp, Clock, Star, Shield, ArrowRight, Users, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { currentUser } from '@clerk/nextjs/server'
+import { NovelCard } from '@/components/shared/NovelCard'
 
 async function getFeaturedNovels() {
   try {
@@ -49,7 +50,6 @@ export default async function HomePage() {
   const stats = await getStats()
   const user = await currentUser()
   
-  // Check if user is admin
   let isAdmin = false
   if (user) {
     try {
@@ -76,7 +76,6 @@ export default async function HomePage() {
               Discover amazing stories, engage with a vibrant community, and track your reading journey.
             </p>
             
-            {/* Navigation Links */}
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 href="/novels"
@@ -169,35 +168,7 @@ export default async function HomePage() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {featuredNovels.map((novel) => (
-                <Link
-                  key={novel.id}
-                  href={`/novels/${novel.id}`}
-                  className="bg-gray-50 dark:bg-gray-900 rounded-lg shadow hover:shadow-lg transition-shadow p-6"
-                >
-                  <div
-                    className="h-2 w-full rounded-full mb-4"
-                    style={{ backgroundColor: novel.coverColor }}
-                  />
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    {novel.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    by {novel.author.displayName || novel.author.username}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-300 line-clamp-3 mb-4">
-                    {novel.description || 'No description available.'}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="h-4 w-4" />
-                      {novel._count.chapters} chapters
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Star className="h-4 w-4" />
-                      {novel.averageRating.toFixed(1)}
-                    </span>
-                  </div>
-                </Link>
+                <NovelCard key={novel.id} novel={novel} />
               ))}
             </div>
           </div>

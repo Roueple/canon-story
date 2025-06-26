@@ -1,122 +1,3 @@
-// fix_imports_and_paths.mjs
-import fs from 'fs/promises';
-import path from 'path';
-
-// --- Helper Function ---
-async function writeFile(filePath, content) {
-    try {
-        await fs.mkdir(path.dirname(filePath), { recursive: true });
-        await fs.writeFile(filePath, content.trim(), 'utf-8');
-        console.log(`✅ Fixed/Created: ${filePath}`);
-    } catch (error) {
-        console.error(`❌ Error writing file ${filePath}:`, error);
-    }
-}
-
-// --- File Content Definitions ---
-
-const newAdminTagsPage = `
-// src/app/(admin)/admin/content/tags/page.tsx
-'use client';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Plus, Edit, Loader2, Tag } from 'lucide-react';
-import { Button } from '@/components/shared/ui/Button'; // Corrected direct import
-
-interface Tag {
-  id: string;
-  name: string;
-  type: string;
-  color: string;
-  usageCount: number;
-}
-
-export default function AdminTagsPage() {
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const fetchTags = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/admin/tags');
-      const data = await res.json();
-      if (data.success) {
-        setTags(data.data);
-      } else {
-        throw new Error(data.error || 'Failed to fetch tags');
-      }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTags();
-  }, []);
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Manage Tags</h1>
-          <p className="text-gray-400 mt-1">Create, edit, and organize content tags.</p>
-        </div>
-        <Link href="/admin/content/tags/create">
-          <Button variant="primary" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Create Tag
-          </Button>
-        </Link>
-      </div>
-
-      {error && <div className="text-red-400">{error}</div>}
-
-      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-x-auto">
-        <table className="w-full min-w-[600px]">
-          <thead className="bg-gray-900">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Tag</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Usage</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {isLoading ? (
-              <tr><td colSpan={4} className="text-center py-12"><Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" /></td></tr>
-            ) : tags.length > 0 ? (
-              tags.map((tag) => (
-                <tr key={tag.id}>
-                  <td className="px-6 py-4">
-                    <span className="flex items-center gap-2">
-                      <Tag className="h-4 w-4" style={{ color: tag.color }} />
-                      <span className="font-medium text-white">{tag.name}</span>
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-400 capitalize">{tag.type}</td>
-                  <td className="px-6 py-4 text-gray-300">{tag.usageCount}</td>
-                  <td className="px-6 py-4 text-right">
-                    <Link href={\`/admin/content/tags/\${tag.id}\`}>
-                      <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr><td colSpan={4} className="text-center py-12 text-gray-400">No tags found.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-`;
-
-const correctedNovelSlugPage = `
 // src/app/(public)/novels/[slug]/page.tsx
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -153,7 +34,7 @@ export default async function NovelHomepage({ params }: { params: { slug: string
                             {novel.coverImageUrl ? (
                                 <Image
                                     src={novel.coverImageUrl}
-                                    alt={\`Cover for \${novel.title}\`}
+                                    alt={`Cover for ${novel.title}`}
                                     fill
                                     className="object-cover"
                                     priority
@@ -214,7 +95,7 @@ export default async function NovelHomepage({ params }: { params: { slug: string
                                 {novel.genres.map((novelGenre) => (
                                     <Link
                                         key={novelGenre.genre.id}
-                                        href={\`/genres/\${novelGenre.genre.slug}\`}
+                                        href={`/genres/${novelGenre.genre.slug}`}
                                         className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors"
                                     >
                                         {novelGenre.genre.name}
@@ -235,7 +116,7 @@ export default async function NovelHomepage({ params }: { params: { slug: string
                         {/* Action Buttons */}
                         <div className="flex gap-4">
                             {novel.chapters.length > 0 && (
-                                <Link href={\`/novels/\${novel.slug}/chapters/\${novel.chapters[0].id}\`}>
+                                <Link href={`/novels/${novel.slug}/chapters/${novel.chapters[0].id}`}>
                                     <Button size="lg" className="gap-2">
                                         <BookOpen className="h-5 w-5" />
                                         Start Reading
@@ -256,7 +137,7 @@ export default async function NovelHomepage({ params }: { params: { slug: string
                             {novel.chapters.map((chapter) => (
                                 <li key={chapter.id} data-testid="chapter-item">
                                     <Link 
-                                        href={\`/novels/\${novel.slug}/chapters/\${chapter.id}\`} 
+                                        href={`/novels/${novel.slug}/chapters/${chapter.id}`} 
                                         className="block p-4 hover:bg-muted transition-colors"
                                     >
                                         <div className="flex items-center justify-between">
@@ -288,33 +169,3 @@ export default async function NovelHomepage({ params }: { params: { slug: string
         </div>
     )
 }
-`;
-
-// --- Main Execution ---
-async function main() {
-    console.log('🚀 Applying fixes for imports and paths...');
-
-    // 1. Fix the import in the admin tags page.
-    await writeFile('src/app/(admin)/admin/content/tags/page.tsx', newAdminTagsPage);
-
-    // 2. Fix the public novel page by replacing its content with a corrected version.
-    // This will be written to the correct path.
-    await writeFile('src/app/(public)/novels/[slug]/page.tsx', correctedNovelSlugPage);
-    
-    // 3. To be safe, let's also delete the old incorrect file path if it exists
-    try {
-        await fs.rm(path.resolve(process.cwd(), 'src/app/(public)/novel'), { recursive: true, force: true });
-        console.log('🧹 Cleaned up old/incorrect `src/app/(public)/novel` directory.');
-    } catch (e) {
-        // This is fine, it just means the directory didn't exist.
-    }
-
-    console.log('\\n\\n✅ Fix script completed successfully!');
-    console.log('Summary of changes:');
-    console.log('  - Corrected import paths in `admin/tags/page.tsx`.');
-    console.log('  - Replaced `novels/[slug]/page.tsx` with corrected code that uses proper imports.');
-    console.log('  - Removed the potentially incorrect `novel` directory.');
-    console.log('\\nPlease restart your development server to see the changes.');
-}
-
-main().catch(console.error);

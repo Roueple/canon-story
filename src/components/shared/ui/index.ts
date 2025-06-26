@@ -1,4 +1,5 @@
-﻿export { Button } from './Button'
+// src/components/shared/ui/index.ts
+export { Button } from './Button'
 export { Input } from './Input'
 export { Card, CardHeader, CardContent, CardFooter } from './Card'
 export { Modal } from './Modal'
@@ -9,4 +10,5 @@ export { Tooltip } from './Tooltip'
 export { DeleteConfirmation } from './DeleteConfirmation'
 export { ColorPicker } from './ColorPicker'
 export { MultiSelect } from './MultiSelect'
-
+export { Separator } from './Separator'
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './Select'

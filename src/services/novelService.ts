@@ -1,5 +1,5 @@
-
 // src/services/novelService.ts
+
 import { prisma } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { serializeForJSON } from '@/lib/serialization';
@@ -45,9 +45,32 @@ export const novelService = {
         author: { select: { id: true, displayName: true, username: true } },
         chapters: { where: { isDeleted: false }, orderBy: { displayOrder: 'asc' } },
         genres: { select: { genre: { select: { id: true, name: true } } } },
-        // --- FIX: Include tags in the query ---
         tags: { select: { tag: { select: { id: true, name: true } } } }
       }
+    });
+    return serializeForJSON(novel);
+  },
+
+  async findBySlug(slug: string) {
+    const novel = await prisma.novel.findUnique({
+      where: { slug },
+      include: {
+        author: { select: { id: true, displayName: true, username: true } },
+        chapters: { where: { isPublished: true, isDeleted: false }, orderBy: { chapterNumber: 'asc' } },
+        genres: { include: { genre: true } },
+        tags: { include: { tag: true } }
+      }
+    });
+    if (!novel || !novel.isPublished || novel.isDeleted) {
+      return null;
+    }
+    return serializeForJSON(novel);
+  },
+
+  async getIdFromSlug(slug: string) {
+    const novel = await prisma.novel.findUnique({
+      where: { slug },
+      select: { id: true, title: true }
     });
     return serializeForJSON(novel);
   },
@@ -67,7 +90,6 @@ export const novelService = {
         create: genreIds.map((id: string) => ({ genreId: id })),
       };
     }
-    // --- FIX: Add logic to create tag relations ---
     if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
       createPayload.tags = {
         create: tagIds.map((id: string) => ({ tagId: id })),
@@ -88,7 +110,6 @@ export const novelService = {
         create: (genreIds as string[]).map((genreId: string) => ({ genreId: genreId })),
       };
     }
-    // --- FIX: Add logic to update tag relations ---
     if (tagIds !== undefined) {
       updatePayload.tags = {
         deleteMany: {},

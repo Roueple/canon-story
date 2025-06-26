@@ -1,10 +1,10 @@
-// src/app/(public)/novels/[slug]/chapters/[chapterId]/page.tsx
+// src/app/(public)/novels/[novelId]/chapters/[chapterId]/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Bookmark } from 'lucide-react'
+import { ArrowLeft, Bookmark, Loader2 } from 'lucide-react'
 import { Button, LoadingSpinner } from '@/components/shared/ui'
 import { InfiniteScrollReader } from '@/components/reader/InfiniteScrollReader'
 import { ReadingControls } from '@/components/reader/ReadingControls'
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 
 interface Chapter {
   id: string
-  novelId: string
+  slug: string
   title: string
   content: string
   chapterNumber: number
@@ -38,7 +38,6 @@ export default function ChapterPage() {
   const params = useParams<{ slug: string; chapterId: string }>()
   const router = useRouter()
   
-  const [novelMeta, setNovelMeta] = useState<{ id: string; title: string } | null>(null);
   const [initialData, setInitialData] = useState<ChapterWithNav | null>(null)
   const [loadedChapters, setLoadedChapters] = useState<Chapter[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -58,40 +57,15 @@ export default function ChapterPage() {
   
   const { theme, setTheme } = useTheme()
 
-  // Hooks now depend on novelMeta.id, so they will run after it's fetched.
-  const { updateProgress } = useReadingProgress(novelMeta?.id)
-  const { bookmarks, toggleBookmark, isBookmarked, isLoading: bookmarkLoading } = useBookmarks(novelMeta?.id)
+  const { updateProgress } = useReadingProgress(params.slug)
+  const { bookmarks, toggleBookmark, isBookmarked, isLoading: bookmarkLoading } = useBookmarks(params.slug)
 
-  // 1. Fetch novel metadata (ID) from slug
+  // 1. Fetch initial chapter details and navigation
   useEffect(() => {
-    const fetchNovelMeta = async () => {
-      if (!params.slug) return;
-      setIsLoading(true);
-      try {
-        const res = await fetch(`/api/public/novels/get-id-by-slug/${params.slug}`);
-        if (!res.ok) throw new Error('Novel not found');
-        const data = await res.json();
-        if (data.success) {
-            setNovelMeta(data.data);
-        } else {
-            throw new Error(data.error || 'Could not fetch novel metadata.');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-        setIsLoading(false);
-      }
-    };
-    fetchNovelMeta();
-  }, [params.slug]);
-
-
-  // 2. Fetch initial chapter details and navigation once novel ID is available
-  useEffect(() => {
-    if (!novelMeta) return;
-
     const fetchInitialData = async () => {
       try {
-        const res = await fetch(`/api/public/novels/${novelMeta.id}/chapters/${params.chapterId}`)
+        setIsLoading(true)
+        const res = await fetch(`/api/public/novels/${params.slug}/chapters/${params.chapterId}`)
         if (!res.ok) throw new Error('Failed to load chapter details.')
         const data = await res.json()
         setInitialData(data.data)
@@ -104,9 +78,9 @@ export default function ChapterPage() {
       }
     }
     fetchInitialData()
-  }, [novelMeta, params.chapterId]);
+  }, [params.slug, params.chapterId])
 
-  // 3. Auto-scroll logic
+  // 2. Auto-scroll logic
   useEffect(() => {
     if (!isAutoScrolling) return
     const scrollInterval = setInterval(() => {
@@ -120,7 +94,7 @@ export default function ChapterPage() {
 
   const currentChapter = loadedChapters.find(c => c.id === visibleChapterId)
   
-  if (isLoading || !isSettingsReady || !novelMeta) {
+  if (isLoading || !isSettingsReady) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
@@ -156,7 +130,7 @@ export default function ChapterPage() {
           <div className="container mx-auto px-4 py-3 flex items-center justify-between">
             <Link href={`/novels/${params.slug}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">{novelMeta.title}</span>
+              <span className="hidden sm:inline">{currentChapter.novel.title}</span>
             </Link>
             <Button variant="ghost" size="sm" onClick={() => toggleBookmark(currentChapter.id)} disabled={bookmarkLoading}>
               {isBookmarked(currentChapter.id) ? (
@@ -171,7 +145,7 @@ export default function ChapterPage() {
 
       <main className="container mx-auto px-4 py-8 max-w-4xl" style={{ '--reader-font-size': `${fontSize}px` } as React.CSSProperties}>
         <InfiniteScrollReader
-          novelId={novelMeta.id}
+          novelId={params.slug}
           initialChapter={initialData.currentChapter}
           loadedChapters={loadedChapters}
           setLoadedChapters={setLoadedChapters}

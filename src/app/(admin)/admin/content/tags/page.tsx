@@ -1,10 +1,9 @@
-
 // src/app/(admin)/admin/content/tags/page.tsx
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Edit, Loader2, Tag } from 'lucide-react';
-import { Button } from '@/components/shared/ui';
+import { Button } from '@/components/shared/ui/Button'; // Corrected direct import
 
 interface Tag {
   id: string;
@@ -22,7 +21,7 @@ export default function AdminTagsPage() {
   const fetchTags = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/admin/tags'); // Using the correct non-content specific path
+      const res = await fetch('/api/admin/tags');
       const data = await res.json();
       if (data.success) {
         setTags(data.data);

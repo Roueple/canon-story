@@ -3,11 +3,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Input, Button, Badge, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/shared/ui';
 import { NovelCard } from '@/components/shared/NovelCard';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Search, Filter, X } from 'lucide-react';
 import { debounce } from '@/lib/utils';
 
@@ -125,7 +122,7 @@ export default function SearchPage() {
               {genres.map(genre => (
                 <Badge
                   key={genre.id}
-                  variant={filters.genres.includes(genre.id) ? 'default' : 'outline'}
+                  variant={filters.genres.includes(genre.id) ? 'primary' : 'secondary'}
                   className="cursor-pointer"
                   onClick={() => toggleGenre(genre.id)}
                 >
@@ -142,7 +139,7 @@ export default function SearchPage() {
               {tags.map(tag => (
                 <Badge
                   key={tag.id}
-                  variant={filters.tags.includes(tag.id) ? 'default' : 'outline'}
+                  variant={filters.tags.includes(tag.id) ? 'primary' : 'secondary'}
                   className="cursor-pointer"
                   onClick={() => toggleTag(tag.id)}
                 >
@@ -155,28 +152,18 @@ export default function SearchPage() {
           {/* Status and Sort */}
           <div className="flex gap-4">
             <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="ongoing">Ongoing</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="hiatus">Hiatus</SelectItem>
-              </SelectContent>
             </Select>
 
             <Select value={filters.sortBy} onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
                 <SelectItem value="relevance">Relevance</SelectItem>
                 <SelectItem value="views">Most Viewed</SelectItem>
                 <SelectItem value="rating">Highest Rated</SelectItem>
                 <SelectItem value="updated">Recently Updated</SelectItem>
                 <SelectItem value="created">Newest</SelectItem>
-              </SelectContent>
             </Select>
 
             <Button variant="outline" onClick={clearFilters}>

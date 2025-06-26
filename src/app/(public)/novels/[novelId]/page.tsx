@@ -1,52 +1,23 @@
-// src/app/(public)/novels/[novelId]/page.tsx
-import { prisma } from '@/lib/db';
+// src/app/(public)/novels/[slug]/page.tsx
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Book, Clock, Eye, Star, Tag, Calendar, BookOpen } from 'lucide-react';
+import { Book, Clock, Eye, Star, Calendar, BookOpen } from 'lucide-react';
+import { novelService } from '@/services/novelService';
 import { formatNumber, formatDate } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/Button';
 
-async function getNovelDetails(novelId: string) {
-    const novel = await prisma.novel.findFirst({
-        where: {
-            id: novelId,
-            isPublished: true,
-            isDeleted: false,
-        },
-        include: {
-            author: {
-                select: { displayName: true, username: true },
-            },
-            chapters: {
-                where: { isPublished: true, isDeleted: false },
-                orderBy: { chapterNumber: 'asc' },
-                select: { id: true, title: true, chapterNumber: true, status: true, wordCount: true }
-            },
-            genres: {
-                include: { genre: true }
-            },
-            tags: {
-                include: { tag: true }
-            }
-        },
-    });
-
+async function getNovelDetails(slug: string) {
+    const novel = await novelService.findBySlug(slug);
     if (!novel) {
         notFound();
     }
     return novel;
 }
 
-export default async function NovelHomepage({ 
-  params 
-}: { 
-  params: Promise<{ novelId: string }> // Add Promise wrapper
-}) {
-  const { novelId } = await params // Await params
-  
-  // Then use novelId instead of params.novelId
-  const novel = await getNovelDetails(novelId);
+export default async function NovelHomepage({ params }: { params: { slug: string } }) {
+    const { slug } = params;
+    const novel = await getNovelDetails(slug);
 
     const totalWords = novel.chapters.reduce((sum, chapter) => sum + chapter.wordCount, 0);
     const estimatedReadTime = Math.ceil(totalWords / 200); // Average reading speed
@@ -143,7 +114,7 @@ export default async function NovelHomepage({
                         {/* Action Buttons */}
                         <div className="flex gap-4">
                             {novel.chapters.length > 0 && (
-                                <Link href={`/novels/${novel.id}/chapters/${novel.chapters[0].id}`}>
+                                <Link href={`/novels/${novel.slug}/chapters/${novel.chapters[0].id}`}>
                                     <Button size="lg" className="gap-2">
                                         <BookOpen className="h-5 w-5" />
                                         Start Reading
@@ -164,7 +135,7 @@ export default async function NovelHomepage({
                             {novel.chapters.map((chapter) => (
                                 <li key={chapter.id} data-testid="chapter-item">
                                     <Link 
-                                        href={`/novels/${novel.id}/chapters/${chapter.id}`} 
+                                        href={`/novels/${novel.slug}/chapters/${chapter.id}`} 
                                         className="block p-4 hover:bg-muted transition-colors"
                                     >
                                         <div className="flex items-center justify-between">
