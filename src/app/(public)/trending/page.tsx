@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui';
 import { NovelCard } from '@/components/shared/NovelCard';
 import { TrendingUp, Clock, Star } from 'lucide-react';
 

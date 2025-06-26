@@ -3,9 +3,13 @@ import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api/utils';
 import { novelService } from '@/services/novelService';
 
-export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
+// The 'props' object contains the params, which might be a promise.
+export async function GET(req: NextRequest, props: { params: Promise<{ slug: string }> }) {
   try {
+    // Await the params promise to resolve before destructuring.
+    const params = await props.params;
     const { slug } = params;
+    
     if (!slug) {
       return errorResponse('Slug is required', 400);
     }
