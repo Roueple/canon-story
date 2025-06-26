@@ -35,12 +35,13 @@ async function NovelGrid({ searchQuery }: { searchQuery?: string }) {
   );
 }
 
-export default function BrowsePage({
-  searchParams,
+export default async function BrowsePage({
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { q?: string };
+  searchParams: Promise<{ q?: string }>;
 }) {
-  const searchQuery = searchParams.q;
+  const searchParams = await searchParamsPromise;
+  const searchQuery = searchParams?.q;
 
   return (
     <div className="container mx-auto px-4 py-8">
