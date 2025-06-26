@@ -65,8 +65,8 @@ export const trendingService = {
         recentViews,
         recentComments,
         recentRatings,
-        totalViews: novel.totalViews || 0,
-        averageRating: novel.averageRating || 0
+        totalViews: Number(novel.totalViews || 0),
+        averageRating: novel.averageRating?.toNumber() || 0,
       });
 
       return {
@@ -166,8 +166,12 @@ export const trendingService = {
   async getRecentComments(novelId: string, since: Date): Promise<number> {
     return await prisma.comment.count({
       where: {
-        novelId,
-        createdAt: { gte: since }
+        chapter: {                    // ← filter by the related Chapter
+          novelId: novelId
+        },
+        createdAt: {
+          gte: since
+        }
       }
     });
   },
