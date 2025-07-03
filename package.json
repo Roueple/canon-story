@@ -20,7 +20,7 @@
     "@clerk/nextjs": "^6.21.0",
     "@clerk/themes": "^2.2.49",
     "@hello-pangea/dnd": "^18.0.1",
-    "@prisma/client": "^6.10.1",
+    "@prisma/client": "^6.11.0",
     "@radix-ui/react-slot": "^1.2.3",
     "@tailwindcss/typography": "^0.5.16",
     "@types/lodash": "^4.17.18",
@@ -50,7 +50,7 @@
     "eslint-config-next": "latest",
     "node-fetch": "^3.3.2",
     "postcss": "latest",
-    "prisma": "^6.10.1",
+    "prisma": "^6.11.0",
     "tailwindcss": "latest",
     "ts-node": "latest",
     "typescript": "latest"
