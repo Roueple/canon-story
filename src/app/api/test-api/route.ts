@@ -1,6 +1,7 @@
 // src/app/api/test-api/route.ts
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { serializeForJSON } from '@/lib/serialization'
 
 export async function GET() {
   try {
@@ -10,7 +11,7 @@ export async function GET() {
       prisma.user.count({ where: { isDeleted: false } })
     ])
 
-    return NextResponse.json({
+    return NextResponse.json(serializeForJSON({
       success: true,
       message: 'API is working correctly',
       stats: {
@@ -35,7 +36,7 @@ export async function GET() {
           'GET /api/public/chapters/[id]'
         ]
       }
-    })
+    }))
   } catch (error) {
     return NextResponse.json({
       success: false,

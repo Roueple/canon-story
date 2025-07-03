@@ -1,61 +1,24 @@
-// 1. src/app/api/public/novels/[novelId]/chapters/[chapterId]/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+// src/app/api/public/novels/[novelId]/chapters/route.ts
+import { NextRequest } from 'next/server';
+import { successResponse, paginatedResponse, handleApiError, getPaginationParams } from '@/lib/api/utils';
+import { chapterService } from '@/services/chapterService';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ novelId: string; chapterId: string }> }
+  req: NextRequest,
+  { params }: { params: { novelId: string } }
 ) {
   try {
-    const { novelId, chapterId } = await params
-    
-    const currentChapter = await prisma.chapter.findFirst({
-      where: {
-        id: chapterId,
-        novelId: novelId,
-        publishedAt: { not: null }
-      },
-      include: {
-        novel: {
-          select: {
-            id: true,
-            title: true,
-            author: true
-          }
-        }
-      }
-    })
+    const { novelId } = params;
+    const { page, limit } = getPaginationParams(req.nextUrl.searchParams);
 
-    if (!currentChapter) {
-      return NextResponse.json({ error: 'Chapter not found' }, { status: 404 })
-    }
+    const { chapters, total } = await chapterService.findByNovelId(novelId, {
+      page,
+      limit,
+      includeUnpublished: false // Public API should not include drafts
+    });
 
-    const allChapters = await prisma.chapter.findMany({
-      where: {
-        novelId: novelId,
-        publishedAt: { not: null }
-      },
-      select: {
-        id: true,
-        chapterNumber: true
-      },
-      orderBy: { chapterNumber: 'asc' }
-    })
-
-    const currentIndex = allChapters.findIndex(ch => ch.id === chapterId)
-    const prevChapterId = currentIndex > 0 ? allChapters[currentIndex - 1].id : null
-    const nextChapterId = currentIndex < allChapters.length - 1 ? allChapters[currentIndex + 1].id : null
-    const allChapterIds = allChapters.map(ch => ch.id)
-
-    return NextResponse.json({
-      currentChapter,
-      prevChapterId,
-      nextChapterId,
-      totalChapters: allChapters.length,
-      allChapterIds
-    })
+    return paginatedResponse(chapters, page, limit, total);
   } catch (error) {
-    console.error('Error fetching chapter:', error)
-    return NextResponse.json({ error: 'Failed to fetch chapter' }, { status: 500 })
+    return handleApiError(error);
   }
 }

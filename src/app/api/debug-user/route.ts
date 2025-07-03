@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { currentUser } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/db'
+import { serializeForJSON } from '@/lib/serialization'
 
 export async function GET() {
   try {
@@ -28,7 +29,7 @@ export async function GET() {
       })
     }
 
-    return NextResponse.json({
+    return NextResponse.json(serializeForJSON({
       clerkUser: {
         id: user.id,
         email: user.primaryEmailAddress?.emailAddress,
@@ -48,7 +49,7 @@ export async function GET() {
         'Update role to admin in database using Prisma Studio',
         'Run: npm run db:studio'
       ] : []
-    })
+    }))
   } catch (error) {
     return NextResponse.json({ 
       error: 'Error checking user status',

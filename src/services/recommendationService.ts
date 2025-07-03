@@ -30,7 +30,7 @@ export const recommendationService = {
       where: { userId },
       select: {
         novelId: true,
-        lastChapterId: true,
+        chapterId: true,
         progressPercentage: true,
         novel: {
           include: {
@@ -95,6 +95,7 @@ export const recommendationService = {
         ]
       },
       include: {
+        author: { select: { id: true, displayName: true, username: true } },
         genres: { include: { genre: true } },
         tags: { include: { tag: true } },
         _count: {
@@ -132,8 +133,8 @@ export const recommendationService = {
       });
       
       // Boost for rating and views
-      score += (novel.averageRating || 0) * 0.5;
-      score += Math.log10((novel.totalViews || 0) + 1) * 0.3;
+      score += (novel.averageRating?.toNumber() || 0) * 0.5;
+      score += Math.log10((Number(novel.totalViews) || 0) + 1) * 0.3;
       
       return { ...novel, score };
     });
@@ -151,6 +152,7 @@ export const recommendationService = {
         isDeleted: false
       },
       include: {
+        author: { select: { id: true, displayName: true, username: true } },
         genres: { include: { genre: true } },
         tags: { include: { tag: true } },
         _count: {
@@ -168,7 +170,7 @@ export const recommendationService = {
       take: limit
     });
 
-    return novels;
+    return serializeForJSON(novels);
   },
 
   async getRelatedNovels(novelId: string, limit = 6) {
@@ -177,7 +179,8 @@ export const recommendationService = {
       where: { id: novelId },
       include: {
         genres: { select: { genreId: true } },
-        tags: { select: { tagId: true } }
+        tags: { select: { tagId: true } },
+        author: { select: { id: true, displayName: true, username: true } },
       }
     });
 
@@ -206,6 +209,7 @@ export const recommendationService = {
         ]
       },
       include: {
+        author: { select: { id: true, displayName: true, username: true } },
         _count: {
           select: {
             chapters: {

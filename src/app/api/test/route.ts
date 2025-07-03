@@ -1,5 +1,7 @@
+// src/app/api/test/route.ts
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { serializeForJSON } from '@/lib/serialization'
 
 export async function GET() {
   try {
@@ -32,7 +34,7 @@ export async function GET() {
       auditLogs: await prisma.auditLog.count()
     }
     
-    return NextResponse.json({
+    return NextResponse.json(serializeForJSON({
       success: true,
       message: 'Database connection successful',
       database: 'Neon PostgreSQL',
@@ -44,7 +46,7 @@ export async function GET() {
       },
       statistics: dbInfo,
       timestamp: new Date().toISOString()
-    })
+    }))
   } catch (error) {
     console.error('Database connection error:', error)
     return NextResponse.json(
