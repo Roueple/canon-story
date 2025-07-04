@@ -1,33 +1,67 @@
 // src/services/chapterService.ts
-
 import { prisma } from '@/lib/db';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { serializeForJSON } from '@/lib/serialization';
 import { Chapter, Prisma } from '@prisma/client';
-import { auditedSoftDelete } from './baseService';
+import { auditedSoftDelete, findByIdGeneric } from './baseService';
 
-// --- Data Transfer Object (DTO) Interfaces for Type Safety ---
 export interface ChapterCreateData {
   novelId: string;
   title: string;
   content: string;
-  chapterNumber: number; // Use standard number
-  displayOrder?: number;  // Use standard number
+  chapterNumber: number;
+  displayOrder?: number;
   status?: string;
   isPublished?: boolean;
+  isPremium?: boolean;
 }
 
 export type ChapterUpdateData = Partial<Omit<ChapterCreateData, 'novelId'>>;
 
 export const chapterService = {
-  // ... (findById and findByNovelId methods are unchanged)
+  /**
+   * Finds a single chapter by its ID.
+   * REFACTORED: Uses the generic findById function.
+   */
+  async findById(id: string, includeNovel = false): Promise<Chapter | null> {
+    const include = includeNovel ? { novel: true } : undefined;
+    return findByIdGeneric<Chapter>('chapter', id, include);
+  },
 
-  // FIX: Use a standard `number` for chapterNumber in the `where` clause.
+  /**
+   * Finds all chapters for a given novel with pagination.
+   */
+  async findByNovelId(novelId: string, options: { page?: number; limit?: number; includeUnpublished?: boolean }) {
+    const { page = 1, limit = 100, includeUnpublished = false } = options;
+    const where: Prisma.ChapterWhereInput = {
+      novelId,
+      isDeleted: false,
+    };
+    if (!includeUnpublished) {
+      where.isPublished = true;
+    }
+
+    const [chapters, total] = await prisma.$transaction([
+      prisma.chapter.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { displayOrder: 'asc' },
+      }),
+      prisma.chapter.count({ where }),
+    ]);
+
+    return { chapters: serializeForJSON(chapters), total };
+  },
+  
+  /**
+   * Finds a specific chapter by its slug and number.
+   */
   async findBySlugAndChapterNumber(novelSlug: string, chapterNumber: number): Promise<Chapter | null> {
     const chapter = await prisma.chapter.findFirst({
       where: {
         novel: { slug: novelSlug },
-        chapterNumber: chapterNumber, // Prisma expects a `number` here
+        chapterNumber: chapterNumber,
         isPublished: true,
         isDeleted: false
       },
@@ -38,7 +72,9 @@ export const chapterService = {
     return serializeForJSON(chapter);
   },
 
-  // FIX: Pass numbers directly to Prisma. Do not use `new Prisma.Decimal()`.
+  /**
+   * Creates a new chapter. Retains custom logic.
+   */
   async create(data: ChapterCreateData): Promise<Chapter> {
     const { novelId, title, content, chapterNumber, ...rest } = data;
     
@@ -51,7 +87,6 @@ export const chapterService = {
       select: { displayOrder: true }
     });
     
-    // Perform arithmetic with standard numbers.
     const displayOrder = lastChapter?.displayOrder 
       ? Number(lastChapter.displayOrder) + 1 
       : data.displayOrder ?? chapterNumber;
@@ -63,8 +98,8 @@ export const chapterService = {
         title,
         content,
         slug: generateSlug(title),
-        chapterNumber: chapterNumber, // Pass the number directly
-        displayOrder: displayOrder,   // Pass the number directly
+        chapterNumber: chapterNumber,
+        displayOrder: displayOrder,
         wordCount,
         estimatedReadTime,
       }
@@ -72,7 +107,9 @@ export const chapterService = {
     return serializeForJSON(newChapter);
   },
 
-  // FIX: Pass numbers directly to Prisma. Do not use `new Prisma.Decimal()`.
+  /**
+   * Updates an existing chapter. Retains custom logic.
+   */
   async update(id: string, data: ChapterUpdateData): Promise<Chapter> {
     const updateData: Prisma.ChapterUpdateInput = { ...data };
     
@@ -83,7 +120,6 @@ export const chapterService = {
       updateData.wordCount = data.content.split(/\s+/).length;
       updateData.estimatedReadTime = calculateReadingTime(updateData.wordCount);
     }
-    // Prisma's update input also expects a standard `number`.
     if (data.chapterNumber !== undefined) {
       updateData.chapterNumber = data.chapterNumber;
     }
@@ -97,7 +133,7 @@ export const chapterService = {
 
   /**
    * Soft-deletes a chapter and creates audit logs.
-   * This now works correctly because the `ModelName` type in baseService is fixed.
+   * REFACTORED: Uses the generic auditedSoftDelete function.
    */
   async softDelete(id: string, deletedBy: string | null, reason?: string): Promise<Chapter> {
     return auditedSoftDelete<Chapter>('chapter', id, deletedBy, reason);

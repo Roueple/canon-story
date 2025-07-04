@@ -1,29 +1,25 @@
 // src/services/novelService.ts
-
 import { prisma } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { serializeForJSON } from '@/lib/serialization';
 import { Novel, Prisma } from '@prisma/client';
-// Import all necessary functions from our single, unified base service
 import { auditedSoftDelete, findByIdGeneric } from './baseService'; 
 
-// --- Data Transfer Object (DTO) Interfaces for Type Safety ---
 export interface NovelCreateData {
   title: string;
   authorId: string;
   description?: string;
+  coverColor?: string;
+  coverImageUrl?: string;
   status?: string;
   isPublished?: boolean;
   isPremium?: boolean;
   genreIds?: string[];
   tagIds?: string[];
 }
-export type NovelUpdateData = Partial<NovelCreateData>;
+export type NovelUpdateData = Partial<Omit<NovelCreateData, 'authorId'>>;
 
 export const novelService = {
-  /**
-   * Finds all novels with pagination, filtering, and sorting.
-   */
   async findAll(options: {
     page?: number;
     limit?: number;
@@ -59,23 +55,23 @@ export const novelService = {
 
   /**
    * Finds a single novel by its ID with specific related data.
+   * REFACTORED: Uses the generic findById function.
    */
   async findById(id: string, includeDeleted = false): Promise<Novel | null> {
-    const novel = await prisma.novel.findFirst({
-      where: { id, ...(!includeDeleted && { isDeleted: false }) },
-      include: {
-        author: { select: { id: true, displayName: true, username: true } },
-        chapters: { where: { isDeleted: false }, orderBy: { displayOrder: 'asc' } },
-        genres: { select: { genre: { select: { id: true, name: true, slug: true } } } },
-        tags: { select: { tag: { select: { id: true, name: true } } } },
-      },
-    });
-    return serializeForJSON(novel);
+    const include = {
+      author: { select: { id: true, displayName: true, username: true } },
+      chapters: { where: { isDeleted: false }, orderBy: { displayOrder: 'asc' } },
+      genres: { select: { genre: { select: { id: true, name: true, slug: true } } } },
+      tags: { select: { tag: { select: { id: true, name: true } } } },
+    };
+    // Note: findByIdGeneric doesn't have an includeDeleted param, so we handle it here.
+    const novel = await findByIdGeneric<Novel>('novel', id, include);
+    if (!novel || (novel.isDeleted && !includeDeleted)) {
+        return null;
+    }
+    return novel;
   },
 
-  /**
-   * Finds a published novel by its unique slug.
-   */
   async findBySlug(slug: string): Promise<Novel | null> {
     const novel = await prisma.novel.findFirst({
       where: {
@@ -92,10 +88,15 @@ export const novelService = {
     });
     return serializeForJSON(novel);
   },
+  
+  async getIdFromSlug(slug: string): Promise<{id: string, title: string} | null> {
+    const novel = await prisma.novel.findUnique({
+      where: { slug },
+      select: { id: true, title: true }
+    });
+    return serializeForJSON(novel);
+  },
 
-  /**
-   * Creates a new novel with its relations.
-   */
   async create(data: NovelCreateData): Promise<Novel> {
     const { genreIds, tagIds, authorId, ...novelData } = data;
     const slug = await this.generateUniqueSlug(novelData.title);
@@ -117,9 +118,6 @@ export const novelService = {
     return serializeForJSON(novel);
   },
 
-  /**
-   * Updates an existing novel and its relations.
-   */
   async update(id: string, data: NovelUpdateData): Promise<Novel> {
     const { genreIds, tagIds, ...novelData } = data;
     const updatePayload: Prisma.NovelUpdateInput = { ...novelData };
@@ -143,14 +141,12 @@ export const novelService = {
 
   /**
    * Soft-deletes a novel and creates audit logs.
+   * REFACTORED: Uses the generic auditedSoftDelete function.
    */
   async softDelete(id: string, deletedBy: string | null, reason?: string): Promise<Novel> {
     return auditedSoftDelete<Novel>('novel', id, deletedBy, reason);
   },
 
-  /**
-   * A utility method to generate a unique slug for a novel title.
-   */
   async generateUniqueSlug(title: string, excludeId?: string): Promise<string> {
     let slug = slugify(title);
     let counter = 1;

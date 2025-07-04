@@ -13,525 +13,506 @@ async function writeFile(filePath, content) {
     }
 }
 
-async function removePath(targetPath) {
-    try {
-        const resolvedPath = path.resolve(process.cwd(), targetPath);
-        await fs.rm(resolvedPath, { recursive: true, force: true });
-        console.log(`🗑️  Removed: ${targetPath}`);
-    } catch (error) {
-        if (error.code !== 'ENOENT') { // Ignore "file not found" errors
-            console.error(`❌ Error removing ${targetPath}:`, error);
-        } else {
-            console.log(`- Path not found, skipping removal: ${targetPath}`);
-        }
-    }
-}
-
 // --- File Content Definitions ---
 
-const placeholderPageComponentContent = `
-// src/components/shared/PlaceholderPage.tsx
-import { ShieldAlert } from 'lucide-react';
-
-export function PlaceholderPage({ title = "Coming Soon", message = "This page is under construction and will be available soon." }: { title?: string, message?: string }) {
-  return (
-    <div className="container mx-auto px-4 py-16 text-center">
-      <ShieldAlert className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
-      <h1 className="text-3xl font-bold mb-2">{title}</h1>
-      <p className="text-lg text-muted-foreground">
-        {message}
-      </p>
-    </div>
-  );
-}
-`;
-
-const placeholderPageContent = (pageName) => `
-// src/app/(public)/${pageName.toLowerCase()}/page.tsx
-import { PlaceholderPage } from '@/components/shared/PlaceholderPage';
-
-export default function ${pageName}Page() {
-    return <PlaceholderPage />;
-}
-`;
-
-const bookCarouselComponentContent = `
-// src/components/discovery/BookCarousel.tsx
-import { NovelCard } from '@/components/shared/NovelCard';
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
-
-interface BookCarouselProps {
-  title: string;
-  novels: any[];
-  viewAllHref?: string;
-}
-
-export function BookCarousel({ title, novels, viewAllHref }: BookCarouselProps) {
-  if (!novels || novels.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="py-8">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-foreground">{title}</h2>
-        {viewAllHref && (
-          <Link href={viewAllHref} className="text-sm text-primary hover:underline flex items-center gap-1">
-            View All <ArrowRight className="h-4 w-4" />
-          </Link>
-        )}
-      </div>
-      <div className="relative">
-        <div className="flex space-x-4 overflow-x-auto pb-4 -mb-4 scrollbar-thin scrollbar-thumb-secondary scrollbar-track-transparent">
-          {novels.map(novel => (
-            <div key={novel.id} className="w-48 flex-shrink-0">
-              <NovelCard novel={novel} />
-            </div>
-          ))}
-           <div className="w-1 flex-shrink-0"></div>
-        </div>
-      </div>
-    </section>
-  );
-}
-`;
-
-const newLandingPageContent = `
-// src/app/(public)/page.tsx
-import { Suspense } from 'react';
-import Link from 'next/link';
+const chapterServiceContent = `
+// src/services/chapterService.ts
 import { prisma } from '@/lib/db';
+import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { serializeForJSON } from '@/lib/serialization';
-import { BookCarousel } from '@/components/discovery/BookCarousel';
-import { Button } from '@/components/shared/ui';
-import { LoadingSpinner } from '@/components/shared/ui';
-import { CheckCircle, BookOpen, MessageSquare, Search } from 'lucide-react';
+import { Chapter, Prisma } from '@prisma/client';
+import { auditedSoftDelete, findByIdGeneric } from './baseService';
 
-export const dynamic = 'force-dynamic';
-
-const novelCardInclude = {
-  author: { select: { displayName: true, username: true } },
-  genres: { include: { genre: true } },
-  _count: { select: { chapters: { where: { isPublished: true, isDeleted: false } } } },
-  coverImageUrl: true,
-  title: true,
-  slug: true,
-  id: true,
-  description: true,
-  totalViews: true,
-  averageRating: true,
-};
-
-async function getTrendingNovels() {
-  const novels = await prisma.novel.findMany({
-    where: { isPublished: true, isDeleted: false },
-    include: novelCardInclude,
-    orderBy: { totalViews: 'desc' },
-    take: 10
-  });
-  return serializeForJSON(novels);
+export interface ChapterCreateData {
+  novelId: string;
+  title: string;
+  content: string;
+  chapterNumber: number;
+  displayOrder?: number;
+  status?: string;
+  isPublished?: boolean;
+  isPremium?: boolean;
 }
 
-async function getHottestInFantasy() {
-    const fantasyGenre = await prisma.genre.findUnique({
-        where: { slug: 'fantasy' },
-        select: { id: true }
-    });
-    if (!fantasyGenre) return [];
+export type ChapterUpdateData = Partial<Omit<ChapterCreateData, 'novelId'>>;
 
-    const novels = await prisma.novel.findMany({
-        where: {
-            isPublished: true,
-            isDeleted: false,
-            genres: { some: { genreId: fantasyGenre.id } }
-        },
-        include: novelCardInclude,
-        orderBy: { totalViews: 'desc' },
-        take: 10,
-    });
-    return serializeForJSON(novels);
-}
+export const chapterService = {
+  /**
+   * Finds a single chapter by its ID.
+   * REFACTORED: Uses the generic findById function.
+   */
+  async findById(id: string, includeNovel = false): Promise<Chapter | null> {
+    const include = includeNovel ? { novel: true } : undefined;
+    return findByIdGeneric<Chapter>('chapter', id, include);
+  },
 
-async function getNewlyAddedNovels() {
-    const novels = await prisma.novel.findMany({
-        where: { isPublished: true, isDeleted: false },
-        include: novelCardInclude,
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-    });
-    return serializeForJSON(novels);
-}
+  /**
+   * Finds all chapters for a given novel with pagination.
+   */
+  async findByNovelId(novelId: string, options: { page?: number; limit?: number; includeUnpublished?: boolean }) {
+    const { page = 1, limit = 100, includeUnpublished = false } = options;
+    const where: Prisma.ChapterWhereInput = {
+      novelId,
+      isDeleted: false,
+    };
+    if (!includeUnpublished) {
+      where.isPublished = true;
+    }
 
-
-function HeroSection() {
-    return (
-        <section className="text-center py-20 bg-gradient-to-b from-card to-background">
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground">
-                Your Next Favorite Story Awaits.
-            </h1>
-            <p className="mt-4 max-w-2xl mx-auto text-lg text-secondary">
-                Discover thousands of web novels and original stories from every genre imaginable. New chapters added daily.
-            </p>
-            <div className="mt-8">
-                <Link href="/browse">
-                    <Button size="lg">Start Reading for Free</Button>
-                </Link>
-                <p className="mt-3 text-sm text-muted-foreground">No credit card required.</p>
-            </div>
-        </section>
-    );
-}
-
-function FeaturesSection() {
-    const features = [
-      { icon: Search, title: "Discover", description: "Find your next obsession with powerful search, curated collections, and personalized recommendations." },
-      { icon: BookOpen, title: "Read", description: "Immerse yourself in a superior, customizable reader with dark mode, font adjustments, and progress tracking." },
-      { icon: MessageSquare, title: "Engage", description: "Leave comments, review your favorite novels, and connect directly with authors and fellow fans." }
-    ];
-    return (
-      <section className="py-20 bg-card">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-12 text-center">
-            {features.map(feature => (
-              <div key={feature.title}>
-                <div className="mx-auto h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                    <feature.icon className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold text-card-foreground">{feature.title}</h3>
-                <p className="mt-2 text-secondary">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-}
-
-function FinalCtaSection() {
-    return (
-        <section className="py-20 text-center">
-            <h2 className="text-3xl font-bold text-foreground">Ready to Begin Your Next Adventure?</h2>
-            <p className="mt-2 text-lg text-secondary">Thousands of worlds are waiting to be discovered.</p>
-            <div className="mt-6">
-                <Link href="/browse">
-                    <Button size="lg" variant="secondary">Browse All Novels</Button>
-                </Link>
-            </div>
-        </section>
-    );
-}
-
-async function BookShowcase() {
-    const [trending, fantasy, recent] = await Promise.all([
-        getTrendingNovels(),
-        getHottestInFantasy(),
-        getNewlyAddedNovels()
+    const [chapters, total] = await prisma.$transaction([
+      prisma.chapter.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { displayOrder: 'asc' },
+      }),
+      prisma.chapter.count({ where }),
     ]);
 
-    return (
-        <div className="container mx-auto px-4 space-y-8">
-            <BookCarousel title="Trending Now" novels={trending} viewAllHref="/trending" />
-            <BookCarousel title="Hottest in Fantasy" novels={fantasy} viewAllHref="/genres/fantasy" />
-            <BookCarousel title="Newly Added" novels={recent} viewAllHref="/novels" />
-        </div>
-    );
-}
+    return { chapters: serializeForJSON(chapters), total };
+  },
+  
+  /**
+   * Finds a specific chapter by its slug and number.
+   */
+  async findBySlugAndChapterNumber(novelSlug: string, chapterNumber: number): Promise<Chapter | null> {
+    const chapter = await prisma.chapter.findFirst({
+      where: {
+        novel: { slug: novelSlug },
+        chapterNumber: chapterNumber,
+        isPublished: true,
+        isDeleted: false
+      },
+      include: {
+        novel: { select: { id: true, title: true, slug: true, authorId: true } },
+      }
+    });
+    return serializeForJSON(chapter);
+  },
 
-export default function LandingPage() {
-    return (
-        <div className="bg-background text-foreground">
-            <HeroSection />
-            <Suspense fallback={<div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>}>
-              <BookShowcase />
-            </Suspense>
-            <FeaturesSection />
-            <FinalCtaSection />
-        </div>
-    );
-}
+  /**
+   * Creates a new chapter. Retains custom logic.
+   */
+  async create(data: ChapterCreateData): Promise<Chapter> {
+    const { novelId, title, content, chapterNumber, ...rest } = data;
+    
+    const wordCount = content.split(/\\s+/).length;
+    const estimatedReadTime = calculateReadingTime(wordCount);
+    
+    const lastChapter = await prisma.chapter.findFirst({
+      where: { novelId },
+      orderBy: { displayOrder: 'desc' },
+      select: { displayOrder: true }
+    });
+    
+    const displayOrder = lastChapter?.displayOrder 
+      ? Number(lastChapter.displayOrder) + 1 
+      : data.displayOrder ?? chapterNumber;
+
+    const newChapter = await prisma.chapter.create({
+      data: {
+        ...rest,
+        novel: { connect: { id: novelId } },
+        title,
+        content,
+        slug: generateSlug(title),
+        chapterNumber: chapterNumber,
+        displayOrder: displayOrder,
+        wordCount,
+        estimatedReadTime,
+      }
+    });
+    return serializeForJSON(newChapter);
+  },
+
+  /**
+   * Updates an existing chapter. Retains custom logic.
+   */
+  async update(id: string, data: ChapterUpdateData): Promise<Chapter> {
+    const updateData: Prisma.ChapterUpdateInput = { ...data };
+    
+    if (data.title) {
+      updateData.slug = generateSlug(data.title);
+    }
+    if (data.content) {
+      updateData.wordCount = data.content.split(/\\s+/).length;
+      updateData.estimatedReadTime = calculateReadingTime(updateData.wordCount);
+    }
+    if (data.chapterNumber !== undefined) {
+      updateData.chapterNumber = data.chapterNumber;
+    }
+    if (data.displayOrder !== undefined) {
+      updateData.displayOrder = data.displayOrder;
+    }
+
+    const updatedChapter = await prisma.chapter.update({ where: { id }, data: updateData });
+    return serializeForJSON(updatedChapter);
+  },
+
+  /**
+   * Soft-deletes a chapter and creates audit logs.
+   * REFACTORED: Uses the generic auditedSoftDelete function.
+   */
+  async softDelete(id: string, deletedBy: string | null, reason?: string): Promise<Chapter> {
+    return auditedSoftDelete<Chapter>('chapter', id, deletedBy, reason);
+  },
+};
 `;
 
-const updatedHeaderContent = `
-// src/components/shared/layout/Header.tsx
-'use client'
+const novelServiceContent = `
+// src/services/novelService.ts
+import { prisma } from '@/lib/db';
+import { slugify } from '@/lib/utils';
+import { serializeForJSON } from '@/lib/serialization';
+import { Novel, Prisma } from '@prisma/client';
+import { auditedSoftDelete, findByIdGeneric } from './baseService'; 
 
-import Link from 'next/link'
-import { UserButton, useUser, SignInButton, SignedIn, SignedOut } from '@clerk/nextjs'
-import { BookOpen, Menu, Moon, Sun, BookOpenCheck } from 'lucide-react'
-import { useState } from 'react'
-import { useTheme } from '@/providers/theme-provider'
-import { Button } from '@/components/shared/ui'
-import { cn } from '@/lib/utils'
+export interface NovelCreateData {
+  title: string;
+  authorId: string;
+  description?: string;
+  coverColor?: string;
+  coverImageUrl?: string;
+  status?: string;
+  isPublished?: boolean;
+  isPremium?: boolean;
+  genreIds?: string[];
+  tagIds?: string[];
+}
+export type NovelUpdateData = Partial<Omit<NovelCreateData, 'authorId'>>;
 
-export function Header() {
-  const { user, isLoaded } = useUser()
-  const { theme, setTheme } = useTheme()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+export const novelService = {
+  async findAll(options: {
+    page?: number;
+    limit?: number;
+    authorId?: string;
+    status?: string;
+    isPublished?: boolean;
+    includeDeleted?: boolean;
+  } = {}) {
+    const { page = 1, limit = 20, authorId, status, isPublished, includeDeleted = false } = options;
+    
+    const where: Prisma.NovelWhereInput = {};
+    if (!includeDeleted) where.isDeleted = false;
+    if (authorId) where.authorId = authorId;
+    if (status) where.status = status;
+    if (isPublished !== undefined) where.isPublished = isPublished;
 
-  const themeIcons = {
-    light: Sun,
-    dark: Moon,
-    reading: BookOpenCheck
+    const [novels, total] = await prisma.$transaction([
+      prisma.novel.findMany({
+        where,
+        include: {
+          author: { select: { id: true, displayName: true, username: true } },
+          _count: { select: { chapters: { where: { isDeleted: false, isPublished: true } } } },
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+      }),
+      prisma.novel.count({ where }),
+    ]);
+
+    return { novels: serializeForJSON(novels), total };
+  },
+
+  /**
+   * Finds a single novel by its ID with specific related data.
+   * REFACTORED: Uses the generic findById function.
+   */
+  async findById(id: string, includeDeleted = false): Promise<Novel | null> {
+    const include = {
+      author: { select: { id: true, displayName: true, username: true } },
+      chapters: { where: { isDeleted: false }, orderBy: { displayOrder: 'asc' } },
+      genres: { select: { genre: { select: { id: true, name: true, slug: true } } } },
+      tags: { select: { tag: { select: { id: true, name: true } } } },
+    };
+    // Note: findByIdGeneric doesn't have an includeDeleted param, so we handle it here.
+    const novel = await findByIdGeneric<Novel>('novel', id, include);
+    if (!novel || (novel.isDeleted && !includeDeleted)) {
+        return null;
+    }
+    return novel;
+  },
+
+  async findBySlug(slug: string): Promise<Novel | null> {
+    const novel = await prisma.novel.findFirst({
+      where: {
+        slug,
+        isPublished: true,
+        isDeleted: false,
+      },
+      include: {
+        author: { select: { id: true, displayName: true, username: true } },
+        chapters: { where: { isPublished: true, isDeleted: false }, orderBy: { displayOrder: 'asc' } },
+        genres: { include: { genre: true } },
+        tags: { include: { tag: true } },
+      },
+    });
+    return serializeForJSON(novel);
+  },
+  
+  async getIdFromSlug(slug: string): Promise<{id: string, title: string} | null> {
+    const novel = await prisma.novel.findUnique({
+      where: { slug },
+      select: { id: true, title: true }
+    });
+    return serializeForJSON(novel);
+  },
+
+  async create(data: NovelCreateData): Promise<Novel> {
+    const { genreIds, tagIds, authorId, ...novelData } = data;
+    const slug = await this.generateUniqueSlug(novelData.title);
+
+    const createPayload: Prisma.NovelCreateInput = {
+      ...novelData,
+      slug,
+      author: { connect: { id: authorId } },
+    };
+
+    if (genreIds?.length) {
+      createPayload.genres = { create: genreIds.map((id) => ({ genre: { connect: { id } } })) };
+    }
+    if (tagIds?.length) {
+      createPayload.tags = { create: tagIds.map((id) => ({ tag: { connect: { id } } })) };
+    }
+
+    const novel = await prisma.novel.create({ data: createPayload });
+    return serializeForJSON(novel);
+  },
+
+  async update(id: string, data: NovelUpdateData): Promise<Novel> {
+    const { genreIds, tagIds, ...novelData } = data;
+    const updatePayload: Prisma.NovelUpdateInput = { ...novelData };
+
+    if (genreIds !== undefined) {
+      updatePayload.genres = {
+        deleteMany: {},
+        create: genreIds.map((genreId) => ({ genre: { connect: { id: genreId } } })),
+      };
+    }
+    if (tagIds !== undefined) {
+      updatePayload.tags = {
+        deleteMany: {},
+        create: tagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })),
+      };
+    }
+
+    const novel = await prisma.novel.update({ where: { id }, data: updatePayload });
+    return serializeForJSON(novel);
+  },
+
+  /**
+   * Soft-deletes a novel and creates audit logs.
+   * REFACTORED: Uses the generic auditedSoftDelete function.
+   */
+  async softDelete(id: string, deletedBy: string | null, reason?: string): Promise<Novel> {
+    return auditedSoftDelete<Novel>('novel', id, deletedBy, reason);
+  },
+
+  async generateUniqueSlug(title: string, excludeId?: string): Promise<string> {
+    let slug = slugify(title);
+    let counter = 1;
+    while (true) {
+      const where: Prisma.NovelWhereInput = { slug };
+      if (excludeId) {
+        where.id = { not: excludeId };
+      }
+      const existing = await prisma.novel.findFirst({ where: { slug } });
+      if (!existing) {
+        break;
+      }
+      slug = \`\${slugify(title)}-\${counter++}\`;
+    }
+    return slug;
+  },
+};
+`;
+
+const tagServiceContent = `
+// src/services/tagService.ts
+import { prisma } from '@/lib/db';
+import { serializeForJSON } from '@/lib/serialization';
+import { deleteGeneric, findByIdGeneric } from './baseService';
+import { Tag } from '@prisma/client';
+
+export const tagService = {
+  async findAll(options?: { type?: string; isActive?: boolean }) {
+    const where: any = {};
+    if (options?.type) where.type = options.type;
+    if (options?.isActive !== undefined) where.isActive = options.isActive;
+
+    const tags = await prisma.tag.findMany({
+      where,
+      include: { _count: { select: { novels: true } } },
+      orderBy: [{ usageCount: 'desc' }, { name: 'asc' }],
+    });
+    
+    return serializeForJSON(tags.map(tag => ({ ...tag, usageCount: tag._count.novels })));
+  },
+
+  /**
+   * Finds a single tag by its ID.
+   * REFACTORED: Uses the generic findById function.
+   */
+  async findById(id: string): Promise<Tag | null> {
+    const tag = await findByIdGeneric<Tag>('tag', id, { _count: { select: { novels: true } } });
+    if (tag) {
+        (tag as any).usageCount = (tag as any)._count.novels;
+    }
+    return tag;
+  },
+
+  async create(data: { name: string; type: string; color?: string }): Promise<Tag> {
+    const tag = await prisma.tag.create({
+      data: {
+        name: data.name.trim(),
+        type: data.type,
+        color: data.color || '#9CA3AF',
+      },
+    });
+    return serializeForJSON(tag);
+  },
+
+  async update(id: string, data: { name?: string; type?: string; color?: string; isActive?: boolean }): Promise<Tag> {
+    const tag = await prisma.tag.update({ where: { id }, data });
+    return serializeForJSON(tag);
+  },
+
+  /**
+   * Deletes a tag after checking dependencies.
+   * REFACTORED: Uses the generic delete function.
+   */
+  async delete(id: string): Promise<{ message: string }> {
+    const usageCount = await prisma.novelTag.count({ where: { tagId: id } });
+    if (usageCount > 0) {
+      throw new Error(\`Cannot delete tag: It is currently used by \${usageCount} novel(s).\`);
+    }
+    await deleteGeneric('tag', id);
+    return { message: "Tag deleted successfully" };
+  },
+};
+`;
+
+const genreServiceContent = `
+// src/services/genreService.ts
+import { prisma } from '@/lib/db';
+import { generateSlug } from '@/lib/utils';
+import { serializeForJSON } from '@/lib/serialization';
+import * as XLSX from 'xlsx';
+import { deleteGeneric, findByIdGeneric } from './baseService';
+import { Genre } from '@prisma/client';
+
+export const genreService = {
+  async findAll(options?: { isActive?: boolean }) {
+    const where: { isActive?: boolean } = {};
+    if (options?.isActive !== undefined) where.isActive = options.isActive;
+
+    const genres = await prisma.genre.findMany({
+      where,
+      include: { _count: { select: { novels: true } } },
+      orderBy: { sortOrder: 'asc' },
+    });
+    return serializeForJSON(genres);
+  },
+
+  /**
+   * Finds a single genre by its ID.
+   * REFACTORED: Uses the generic findById function.
+   */
+  async findById(id: string): Promise<Genre | null> {
+    return findByIdGeneric<Genre>('genre', id);
+  },
+
+  async create(data: { name: string; description?: string; color: string; }): Promise<Genre> {
+    const slug = generateSlug(data.name);
+    const newGenre = await prisma.genre.create({ data: { ...data, slug } });
+    return serializeForJSON(newGenre);
+  },
+
+  async update(id: string, data: { name?: string; description?: string; color?: string; }): Promise<Genre> {
+    const updateData: any = { ...data };
+    if (data.name) updateData.slug = generateSlug(data.name);
+    const updatedGenre = await prisma.genre.update({ where: { id }, data: updateData });
+    return serializeForJSON(updatedGenre);
+  },
+
+  /**
+   * Deletes a genre after checking dependencies.
+   * REFACTORED: Uses the generic delete function.
+   */
+  async delete(id: string): Promise<{ message: string }> {
+    const novelsCount = await prisma.novelGenre.count({ where: { genreId: id } });
+    if (novelsCount > 0) {
+      throw new Error(\`Cannot delete genre. It is currently assigned to \${novelsCount} novel(s).\`);
+    }
+    await deleteGeneric('genre', id);
+    return { message: 'Genre deleted successfully' };
+  },
+
+  async bulkCreate(genresData: Array<{ name: string; description?: string; color?: string; }>) {
+    const existingGenres = await prisma.genre.findMany({
+      where: { name: { in: genresData.map(g => g.name) } },
+      select: { name: true },
+    });
+    const existingNames = new Set(existingGenres.map(g => g.name.toLowerCase()));
+
+    const toCreate = genresData.filter(g => g.name && !existingNames.has(g.name.toLowerCase()));
+
+    if (toCreate.length > 0) {
+      await prisma.genre.createMany({
+        data: toCreate.map(g => ({
+          name: g.name,
+          description: g.description || '',
+          color: g.color || '#6B7280',
+          slug: generateSlug(g.name),
+          isActive: true,
+        })),
+        skipDuplicates: true,
+      });
+    }
+    
+    return { created: toCreate.length, skipped: genresData.length - toCreate.length };
+  },
+
+  generateBulkUploadTemplate(): Buffer {
+    const wb = XLSX.utils.book_new();
+    const instructions = [
+      ['Genre Bulk Upload Template Instructions'],
+      [''],
+      ['Sheet: "Genres" - Required Columns:'],
+      ['1. name: Text. Required.'],
+      ['2. description: Text. Optional.'],
+      ['3. color: Hex color code (e.g., #EF4444). Optional.'],
+    ];
+    const ws_instructions = XLSX.utils.aoa_to_sheet(instructions);
+    XLSX.utils.book_append_sheet(wb, ws_instructions, 'Instructions');
+    
+    const chapters_data = [['name', 'description', 'color']];
+    const ws_chapters = XLSX.utils.aoa_to_sheet(chapters_data);
+    ws_chapters['!cols'] = [{ wch: 30 }, { wch: 60 }, { wch: 15 }];
+    XLSX.utils.book_append_sheet(wb, ws_chapters, 'Genres');
+    
+    return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
   }
-
-  const ThemeIcon = themeIcons[theme]
-
-  const cycleTheme = () => {
-    const themes: Array<'light' | 'dark' | 'reading'> = ['light', 'dark', 'reading']
-    const currentIndex = themes.indexOf(theme)
-    const nextIndex = (currentIndex + 1) % themes.length
-    setTheme(themes[nextIndex])
-  }
-
-  const isAdminOrModerator = user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'moderator';
-
-  return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-card/95 backdrop-blur">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo and Navigation */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <BookOpen className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold text-card-foreground">
-                Canon Story
-              </span>
-            </Link>
-
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:ml-8 md:flex md:space-x-4">
-              <Link
-                href="/browse"
-                className="px-3 py-2 text-sm font-medium text-secondary hover:text-foreground"
-              >
-                Browse
-              </Link>
-              <Link
-                href="/genres"
-                className="px-3 py-2 text-sm font-medium text-secondary hover:text-foreground"
-              >
-                Genres
-              </Link>
-              <Link
-                href="/trending"
-                className="px-3 py-2 text-sm font-medium text-secondary hover:text-foreground"
-              >
-                Trending
-              </Link>
-              {isLoaded && isAdminOrModerator && (
-                <Link
-                  href="/admin"
-                  className="px-3 py-2 text-sm font-medium text-warning hover:text-warning/80"
-                >
-                  Admin
-                </Link>
-              )}
-            </nav>
-          </div>
-
-          {/* Right side actions */}
-          <div className="flex items-center space-x-4">
-            {/* Theme Toggle */}
-            <button
-              onClick={cycleTheme}
-              className="p-2 rounded-md hover:bg-muted transition-colors"
-              aria-label="Toggle theme"
-            >
-              <ThemeIcon className="h-5 w-5" />
-            </button>
-
-            {/* User Menu */}
-            {isLoaded && (
-              <>
-                <SignedIn>
-                  <UserButton 
-                    afterSignOutUrl="/"
-                    appearance={{
-                      elements: {
-                        avatarBox: "h-8 w-8"
-                      }
-                    }}
-                  />
-                </SignedIn>
-                <SignedOut>
-                  <SignInButton mode="modal">
-                    <Button size="sm">Sign In</Button>
-                  </SignInButton>
-                </SignedOut>
-              </>
-            )}
-
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-md hover:bg-muted"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <nav className="md:hidden py-4 space-y-2">
-            <Link
-              href="/browse"
-              className="block px-3 py-2 text-base font-medium text-secondary hover:text-foreground"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Browse
-            </Link>
-            <Link
-              href="/genres"
-              className="block px-3 py-2 text-base font-medium text-secondary hover:text-foreground"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Genres
-            </Link>
-            <Link
-              href="/trending"
-              className="block px-3 py-2 text-base font-medium text-secondary hover:text-foreground"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Trending
-            </Link>
-            {isLoaded && isAdminOrModerator && (
-              <Link
-                href="/admin"
-                className="block px-3 py-2 text-base font-medium text-warning hover:text-warning/80"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Admin Dashboard
-              </Link>
-            )}
-          </nav>
-        )}
-      </div>
-    </header>
-  )
-}
+};
 `;
-
-const updatedFooterContent = `
-// src/components/shared/layout/Footer.tsx
-import Link from 'next/link'
-import { BookOpen } from 'lucide-react'
-
-export function Footer() {
-  const currentYear = new Date().getFullYear()
-
-  return (
-    <footer className="mt-auto border-t border-border bg-card">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-8 md:grid-cols-4">
-          {/* Brand */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="h-6 w-6 text-primary" />
-              <span className="text-lg font-bold text-card-foreground">
-                Canon Story
-              </span>
-            </div>
-            <p className="text-sm text-secondary">
-              A modern novel reading platform with community features and gamification.
-            </p>
-          </div>
-
-          {/* Company */}
-          <div>
-            <h3 className="mb-4 text-sm font-semibold text-card-foreground">
-              Company
-            </h3>
-            <ul className="space-y-2 text-sm text-secondary">
-                <li><Link href="/about" className="hover:text-foreground">About Us</Link></li>
-                <li><Link href="/blog" className="hover:text-foreground">Blog</Link></li>
-                <li><Link href="/careers" className="hover:text-foreground">Careers</Link></li>
-                <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
-            </ul>
-          </div>
-
-          {/* Community */}
-          <div>
-            <h3 className="mb-4 text-sm font-semibold text-card-foreground">
-              Community
-            </h3>
-            <ul className="space-y-2 text-sm text-secondary">
-              <li><Link href="/community/forums" className="hover:text-foreground">Forums</Link></li>
-              <li><Link href="/community/events" className="hover:text-foreground">Events</Link></li>
-              <li><Link href="/subscription/plans" className="hover:text-foreground">Premium</Link></li>
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div>
-            <h3 className="mb-4 text-sm font-semibold text-card-foreground">
-              Help & Legal
-            </h3>
-            <ul className="space-y-2 text-sm text-secondary">
-              <li><Link href="/help" className="hover:text-foreground">Help Center</Link></li>
-              <li><Link href="/terms" className="hover:text-foreground">Terms of Service</Link></li>
-              <li><Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-8 border-t border-border pt-8">
-          <p className="text-center text-sm text-secondary">
-            © ${currentYear} Canon Story. All rights reserved. Built with safety-first architecture.
-          </p>
-        </div>
-      </div>
-    </footer>
-  )
-}
-`;
-
 
 // --- Main Execution ---
 async function main() {
-    console.log('🚀 Applying UI/UX fixes and refactoring landing page...');
+    console.log('🚀 Systematically refactoring service layer for consistency...');
 
-    // 1. Resolve route conflict and remove old landing pages
-    console.log('\n--- Removing conflicting/old landing pages ---');
-    await removePath('src/app/page.tsx');
-    await removePath('src/app/(public)/page.tsx');
-
-    // 2. Create new components
-    console.log('\n--- Creating new components ---');
-    await writeFile('src/components/shared/PlaceholderPage.tsx', placeholderPageComponentContent);
-    await writeFile('src/components/discovery/BookCarousel.tsx', bookCarouselComponentContent);
+    await writeFile('src/services/chapterService.ts', chapterServiceContent);
+    await writeFile('src/services/novelService.ts', novelServiceContent);
+    await writeFile('src/services/tagService.ts', tagServiceContent);
+    await writeFile('src/services/genreService.ts', genreServiceContent);
     
-    // 3. Create placeholder pages
-    console.log('\n--- Creating placeholder pages ---');
-    const placeholderPages = [
-        'leaderboards', 'community/forums', 'community/events', 'subscription/plans',
-        'help', 'terms', 'privacy', 'about', 'blog', 'careers', 'contact'
-    ];
-    for (const page of placeholderPages) {
-        const pageName = page.split('/').pop().replace(/-(\w)/g, (match, p1) => p1.toUpperCase());
-        const componentName = pageName.charAt(0).toUpperCase() + pageName.slice(1);
-        await writeFile(`src/app/(public)/${page}/page.tsx`, placeholderPageContent(componentName));
-    }
-
-    // 4. Update Header and Footer
-    console.log('\n--- Updating layout components ---');
-    await writeFile('src/components/shared/layout/Header.tsx', updatedHeaderContent);
-    await writeFile('src/components/shared/layout/Footer.tsx', updatedFooterContent);
-
-    // 5. Create the new landing page
-    console.log('\n--- Creating new landing page ---');
-    await writeFile('src/app/(public)/page.tsx', newLandingPageContent);
-    
-    console.log('\n\n✅ Fix script completed successfully!');
+    console.log('\n\n✅ Service layer refactoring complete!');
     console.log('Summary of changes:');
-    console.log('  - Removed conflicting landing pages.');
-    console.log('  - Created a new, professionally designed landing page in src/app/(public)/page.tsx.');
-    console.log('  - Updated Header to conditionally show an "Admin" link for admins/moderators.');
-    console.log('  - Updated Footer with new navigation links.');
-    console.log('  - Added multiple placeholder pages to prevent 404 errors.');
-    console.log('\nPlease restart your development server to see the changes.');
+    console.log('  - Refactored chapterService.ts to use baseService and added missing methods.');
+    console.log('  - Refactored novelService.ts to consistently use baseService.');
+    console.log('  - Refactored tagService.ts and genreService.ts to use baseService generics.');
+    console.log('  - The entire service layer now follows a consistent, DRY architecture.');
+    console.log('\nThe application is now ready for the final cleanup and verification phase.');
 }
 
 main().catch(console.error);
