@@ -66,7 +66,7 @@ model Novel {
   isPublished      Boolean   @default(false)
   isPremium        Boolean   @default(false)
   totalViews       BigInt    @default(0)
-  averageRating    Decimal   @default(0) @db.Decimal(3, 2)
+  averageRating    Float     @default(0)
   ratingCount      Int       @default(0)
   wordCount        Int       @default(0)
   estimatedReadTime Int      @default(0) // minutes
@@ -107,7 +107,7 @@ model Chapter {
   slug              String
   content           String    @db.Text
   chapterNumber     Float // Supports 1, 1.5, 0, 2.1, etc.
-  displayOrder      Float // For custom sorting
+  displayOrder      Float
   wordCount         Int       @default(0)
   estimatedReadTime Int       @default(0) // minutes
   status            String    @default("draft") // draft, premium, free
