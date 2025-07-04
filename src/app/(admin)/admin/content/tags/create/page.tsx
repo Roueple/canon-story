@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { TagForm } from '@/components/admin/forms/TagForm';
+import { API_PATHS } from '@/lib/api/paths';
 
 export default function CreateTagPage() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function CreateTagPage() {
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/admin/tags', {
+      const response = await fetch(API_PATHS.admin.tags, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

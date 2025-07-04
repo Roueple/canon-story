@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Edit, Loader2, Tag } from 'lucide-react';
 import { Button } from '@/components/shared/ui'; // FIX: Changed to use the barrel file import
+import { API_PATHS } from '@/lib/api/paths';
 
 interface Tag {
   id: string;
@@ -22,7 +23,7 @@ export default function AdminTagsPage() {
   const fetchTags = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/admin/tags');
+      const res = await fetch(API_PATHS.admin.tags);
       const data = await res.json();
       if (data.success) {
         setTags(data.data);

@@ -7,20 +7,28 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { TagForm } from '@/components/admin/forms/TagForm';
 import { LoadingSpinner, Button, DeleteConfirmation } from '@/components/shared/ui';
+import { API_PATHS } from '@/lib/api/paths';
+
+// Define the type for a tag object to inform TypeScript about its shape.
+type Tag = {
+   name: string;
+  type: string;
+  color: string;
+ };
 
 export default function EditTagPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
 
-  const [tag, setTag] = useState(null);
+  const [tag, setTag] = useState<Tag | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showDelete, setShowDelete] = useState(false);
 
   useEffect(() => {
     if (id) {
-      fetch(`/api/admin/tags/${id}`)
+      fetch(API_PATHS.admin.tagById(id))
         .then(res => res.json())
         .then(data => {
           if (data.success) setTag(data.data);
@@ -33,7 +41,7 @@ export default function EditTagPage() {
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch(`/api/admin/tags/${id}`, {
+      const response = await fetch(API_PATHS.admin.tagById(id), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -51,7 +59,7 @@ export default function EditTagPage() {
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch(`/api/admin/tags/${id}`, { method: 'DELETE' });
+      const response = await fetch(API_PATHS.admin.tagById(id), { method: 'DELETE' });
       if (!response.ok) throw new Error((await response.json()).error || 'Failed to delete tag.');
       router.push('/admin/content/tags');
     } catch (err: any) {
@@ -62,8 +70,12 @@ export default function EditTagPage() {
     }
   };
 
-  if (!tag && !error) return <div className="flex justify-center p-12"><LoadingSpinner /></div>;
-  if (error && !tag) return <div className="text-red-400">{error}</div>;
+  if (!tag) {
+    if (error) {
+      return <div className="text-red-400">{error}</div>;
+    }
+    return <div className="flex justify-center p-12"><LoadingSpinner /></div>;
+  }
 
   return (
     <div>

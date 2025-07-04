@@ -8,17 +8,11 @@ import { Search } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
-async function NovelGrid({ searchQuery }: { searchQuery?: string }) {
+async function NovelGrid() {
+
   const { novels } = await novelService.findAll({ isPublished: true, limit: 100 });
   
-  const filteredNovels = searchQuery 
-    ? novels.filter(novel => 
-        novel.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (novel.description && novel.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : novels;
-
-  if (filteredNovels.length === 0) {
+  if (novels.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">No novels found.</p>
@@ -28,7 +22,7 @@ async function NovelGrid({ searchQuery }: { searchQuery?: string }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {filteredNovels.map((novel) => (
+      {novels.map((novel) => (
         <NovelCard key={novel.id} novel={novel} />
       ))}
     </div>
@@ -36,25 +30,19 @@ async function NovelGrid({ searchQuery }: { searchQuery?: string }) {
 }
 
 export default async function BrowsePage({
-  searchParams: searchParamsPromise,
-}: {
-  searchParams: Promise<{ q?: string }>;
 }) {
-  const searchParams = await searchParamsPromise;
-  const searchQuery = searchParams?.q;
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">Browse Novels</h1>
-        <form action="/browse" method="get" className="max-w-md">
+        <h1 className="text-3xl font-bold mb-4">Browse All Novels</h1>
+        <form action="/search" method="get" className="max-w-md">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
             <Input
               type="search"
               name="q"
-              defaultValue={searchQuery}
-              placeholder="Search novels..."
+              placeholder="Search all novels..."
               className="pl-10"
             />
           </div>
@@ -66,7 +54,7 @@ export default async function BrowsePage({
           <LoadingSpinner size="lg" />
         </div>
       }>
-        <NovelGrid searchQuery={searchQuery} />
+        <NovelGrid />
       </Suspense>
     </div>
   );
