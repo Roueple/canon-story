@@ -75,8 +75,8 @@ export const chapterService = {
     const newChapter = await prisma.chapter.create({
       data: {
         ...data,
-        chapterNumber: new Prisma.Decimal(data.chapterNumber),
-        displayOrder: new Prisma.Decimal(displayOrder),
+        chapterNumber: data.chapterNumber,
+        displayOrder: displayOrder,
         slug,
         wordCount,
         estimatedReadTime,
@@ -94,8 +94,8 @@ export const chapterService = {
       updateData.wordCount = data.content.split(/\s+/).length;
       updateData.estimatedReadTime = calculateReadingTime(updateData.wordCount);
     }
-    if (data.chapterNumber) updateData.chapterNumber = new Prisma.Decimal(data.chapterNumber);
-    if (data.displayOrder) updateData.displayOrder = new Prisma.Decimal(data.displayOrder);
+    if (data.chapterNumber) updateData.chapterNumber = data.chapterNumber;
+    if (data.displayOrder) updateData.displayOrder = data.displayOrder;
 
     const updatedChapter = await prisma.chapter.update({ where: { id }, data: updateData });
     return serializePrismaData(updatedChapter);

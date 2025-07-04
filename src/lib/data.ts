@@ -58,7 +58,7 @@ export async function getNovelBySlug(slug: string) {
 }
 
 export async function getChapterByNumber(novelSlug: string, chapterNumberStr: string) {
-    const chapterNumber = new Prisma.Decimal(chapterNumberStr);
+    const chapterNumber = parseFloat(chapterNumberStr);
     const chapter = await prisma.chapter.findFirst({
         where: {
             novel: { slug: novelSlug, isPublished: true, isDeleted: false },

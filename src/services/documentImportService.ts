@@ -70,7 +70,7 @@ export const documentImportService = {
     const existingChapter = await prisma.chapter.findFirst({
       where: {
         novelId,
-        chapterNumber: new Prisma.Decimal(chapterInfo.chapterNumber),
+        chapterNumber: chapterInfo.chapterNumber,
         isDeleted: false
       }
     });
@@ -177,7 +177,7 @@ export const documentImportService = {
     if (chapters.length === 0) {
       return { chapters: [], conflicts: [] };
     }
-    const chapterNumbers = chapters.map(ch => new Prisma.Decimal(ch.chapterNumber));
+    const chapterNumbers = chapters.map(ch => ch.chapterNumber);
     const existingChapters = await prisma.chapter.findMany({
       where: {
         novelId,
@@ -222,7 +222,7 @@ export const documentImportService = {
         await prisma.chapter.create({
           data: {
             novelId,
-            chapterNumber: new Prisma.Decimal(chapter.chapterNumber),
+            chapterNumber: chapter.chapterNumber,
             title: chapter.title,
             slug,
             content: chapter.content,
@@ -231,7 +231,7 @@ export const documentImportService = {
             status: chapterStatus,
             isPublished: chapter.isPublished ?? false,
             isPremium: chapter.isPremium ?? false,
-            displayOrder: new Prisma.Decimal(nextDisplayOrder), // Assign incremental display order
+            displayOrder: nextDisplayOrder, // Assign incremental display order
             publishedAt: (chapter.isPublished ?? false) ? new Date() : null,
             importedFrom: `bulk-excel:${importRecordId}`,
             importedAt: new Date(),

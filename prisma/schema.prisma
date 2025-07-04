@@ -106,8 +106,8 @@ model Chapter {
   title             String
   slug              String
   content           String    @db.Text
-  chapterNumber     Decimal   @db.Decimal(10, 2) // Supports 1, 1.5, 0, 2.1, etc.
-  displayOrder      Decimal   @db.Decimal(10, 2) // For custom sorting
+  chapterNumber     Float // Supports 1, 1.5, 0, 2.1, etc.
+  displayOrder      Float // For custom sorting
   wordCount         Int       @default(0)
   estimatedReadTime Int       @default(0) // minutes
   status            String    @default("draft") // draft, premium, free

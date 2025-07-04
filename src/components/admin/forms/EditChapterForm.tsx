@@ -68,7 +68,7 @@ export function EditChapterForm({ chapter }: EditChapterFormProps) {
         initialData={{
           title: chapter.title,
           content: chapter.content,
-          chapterNumber: Number(chapter.chapterNumber),
+          chapterNumber: chapter.chapterNumber,
           status: chapter.status,
           isPublished: chapter.isPublished
         }}

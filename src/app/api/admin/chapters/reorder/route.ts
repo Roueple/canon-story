@@ -27,7 +27,7 @@ export const POST = createAdminRoute(async (req) => {
       chapterOrder.map(update =>
         prisma.chapter.update({
           where: { id: update.id, novelId: novelId }, // Ensure chapter belongs to the novel
-          data: { displayOrder: new Prisma.Decimal(update.displayOrder) }
+          data: { displayOrder: update.displayOrder }
         })
       )
     );
