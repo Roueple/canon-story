@@ -7,6 +7,7 @@ import { NovelCard } from '@/components/shared/NovelCard';
 import { Button } from '@/components/shared/ui';
 import { LoadingSpinner } from '@/components/shared/ui';
 import { Search, Book, MessageSquare, Star, Shield, Tv, Users, CheckCircle, BookOpen } from 'lucide-react';
+import { TrendingSlideshow } from '@/components/discovery/TrendingSlideshow';
 
 const novelCardInclude = {
   author: { select: { displayName: true, username: true } },
@@ -72,43 +73,24 @@ async function getNewlyAdded(limit = 6) {
   return serializeForJSON(novels);
 }
 
-async function HeroSection() {
-  const stats = await getStats();
+async function SlideshowSection() {
+  const trendingNovels = await getTrendingNovels(10); // Fetch 10 novels for the slideshow
   return (
-    <section className="relative bg-gradient-to-b from-primary/5 to-background py-20 sm:py-32 text-center overflow-hidden">
-      <div className="absolute inset-0 bg-grid-slate-900/[0.04] bg-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] dark:bg-bottom mask-image-hero"></div>
-      <div className="container mx-auto px-4 relative">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground">
-          Your Next Favorite Story Awaits.
-        </h1>
-        <p className="mt-6 max-w-3xl mx-auto text-lg text-secondary">
-          Discover thousands of web novels and original stories from every genre imaginable. New chapters added daily.
-        </p>
-        <div className="mt-8 flex justify-center">
-          <Link href="/browse">
-            <Button size="lg" className="gap-2">
-              <BookOpen className="h-5 w-5" />
-              Start Reading for Free
-            </Button>
-          </Link>
-        </div>
-        <p className="mt-4 text-sm text-secondary">
-          Join {stats.users.toLocaleString()}+ happy readers today.
-        </p>
+    <section className="relative mb-8 sm:mb-12">
+      <div className="container mx-auto px-4 pt-8">
+        <TrendingSlideshow novels={trendingNovels} />
       </div>
     </section>
   );
 }
 
 async function BookShowcaseSection() {
-  const [trending, fantasy, newlyAdded] = await Promise.all([
-    getTrendingNovels(6),
+  const [fantasy, newlyAdded] = await Promise.all([
     getHottestInFantasy(6),
     getNewlyAdded(6)
   ]);
 
   const showcases = [
-    { title: "Trending Now", novels: trending },
     { title: "Hottest in Fantasy", novels: fantasy },
     { title: "Newly Added", novels: newlyAdded }
   ];
@@ -267,7 +249,13 @@ function FinalCtaSection() {
 export default function HomePage() {
   return (
     <div className="bg-background text-foreground">
-      <HeroSection />
+      <Suspense fallback={
+        <div className="h-[400px] md:h-[500px] w-full flex items-center justify-center bg-muted">
+          <LoadingSpinner size="lg" />
+        </div>
+      }>
+        <SlideshowSection />
+      </Suspense>
       <Suspense fallback={
         <div className="py-24 flex justify-center"><LoadingSpinner size="lg" /></div>
       }>
