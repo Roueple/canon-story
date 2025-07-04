@@ -93,3 +93,8 @@ API Routes: Use successResponse and paginatedResponse.
 Services: All data-returning methods must call serializeForJSON before returning.
 Server Components: Rely on services to provide pre-serialized data. If fetching data directly, manually use serializeForJSON before passing props to Client Components.
 Following this pattern universally eliminates a whole class of critical runtime errors and makes the codebase more stable and predictable.
+
+
+You are absolutely right to point that out, and I apologize for the oversight. Those errors are a classic result of a strict TypeScript configuration (specifically, the noImplicitAny rule), which is a very good thing to have enabled. It forces us to be explicit about our data types, preventing potential bugs.
+The error "Parameter '...' implicitly has an 'any' type" means that TypeScript couldn't figure out the type of the genre and tag objects inside the .map() function, so it defaulted to any, which your configuration correctly flagged as an error.
+The fix is simple: we just need to explicitly tell TypeScript what the shape of those objects is.
