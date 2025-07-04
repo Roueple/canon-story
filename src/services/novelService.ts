@@ -3,9 +3,27 @@
 import { prisma } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { serializeForJSON } from '@/lib/serialization';
-import { Prisma } from '@prisma/client';
+import { Novel, Prisma } from '@prisma/client';
+// Import all necessary functions from our single, unified base service
+import { auditedSoftDelete, findByIdGeneric } from './baseService'; 
+
+// --- Data Transfer Object (DTO) Interfaces for Type Safety ---
+export interface NovelCreateData {
+  title: string;
+  authorId: string;
+  description?: string;
+  status?: string;
+  isPublished?: boolean;
+  isPremium?: boolean;
+  genreIds?: string[];
+  tagIds?: string[];
+}
+export type NovelUpdateData = Partial<NovelCreateData>;
 
 export const novelService = {
+  /**
+   * Finds all novels with pagination, filtering, and sorting.
+   */
   async findAll(options: {
     page?: number;
     limit?: number;
@@ -15,134 +33,138 @@ export const novelService = {
     includeDeleted?: boolean;
   } = {}) {
     const { page = 1, limit = 20, authorId, status, isPublished, includeDeleted = false } = options;
-    const where: any = {};
+    
+    const where: Prisma.NovelWhereInput = {};
     if (!includeDeleted) where.isDeleted = false;
     if (authorId) where.authorId = authorId;
     if (status) where.status = status;
     if (isPublished !== undefined) where.isPublished = isPublished;
 
-    const [novels, total] = await Promise.all([
+    const [novels, total] = await prisma.$transaction([
       prisma.novel.findMany({
         where,
         include: {
           author: { select: { id: true, displayName: true, username: true } },
-          _count: { select: { chapters: { where: { isDeleted: false } } } }
+          _count: { select: { chapters: { where: { isDeleted: false, isPublished: true } } } },
         },
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { updatedAt: 'desc' }
+        orderBy: { updatedAt: 'desc' },
       }),
-      prisma.novel.count({ where })
+      prisma.novel.count({ where }),
     ]);
 
     return { novels: serializeForJSON(novels), total };
   },
 
-  async findById(id: string, includeDeleted = false) {
+  /**
+   * Finds a single novel by its ID with specific related data.
+   */
+  async findById(id: string, includeDeleted = false): Promise<Novel | null> {
     const novel = await prisma.novel.findFirst({
       where: { id, ...(!includeDeleted && { isDeleted: false }) },
       include: {
         author: { select: { id: true, displayName: true, username: true } },
         chapters: { where: { isDeleted: false }, orderBy: { displayOrder: 'asc' } },
-        genres: { select: { genre: { select: { id: true, name: true } } } },
-        tags: { select: { tag: { select: { id: true, name: true } } } }
-      }
+        genres: { select: { genre: { select: { id: true, name: true, slug: true } } } },
+        tags: { select: { tag: { select: { id: true, name: true } } } },
+      },
     });
     return serializeForJSON(novel);
   },
 
-  async findBySlug(slug: string) {
-    const novel = await prisma.novel.findUnique({
-      where: { slug },
+  /**
+   * Finds a published novel by its unique slug.
+   */
+  async findBySlug(slug: string): Promise<Novel | null> {
+    const novel = await prisma.novel.findFirst({
+      where: {
+        slug,
+        isPublished: true,
+        isDeleted: false,
+      },
       include: {
         author: { select: { id: true, displayName: true, username: true } },
-        chapters: { where: { isPublished: true, isDeleted: false }, orderBy: { chapterNumber: 'asc' } },
+        chapters: { where: { isPublished: true, isDeleted: false }, orderBy: { displayOrder: 'asc' } },
         genres: { include: { genre: true } },
-        tags: { include: { tag: true } }
-      }
-    });
-    if (!novel || !novel.isPublished || novel.isDeleted) {
-      return null;
-    }
-    return serializeForJSON(novel);
-  },
-
-  async getIdFromSlug(slug: string) {
-    const novel = await prisma.novel.findUnique({
-      where: { slug },
-      select: { id: true, title: true }
+        tags: { include: { tag: true } },
+      },
     });
     return serializeForJSON(novel);
   },
 
-  async create(data: any) {
-    const { genreIds, tagIds, ...novelData } = data;
+  /**
+   * Creates a new novel with its relations.
+   */
+  async create(data: NovelCreateData): Promise<Novel> {
+    const { genreIds, tagIds, authorId, ...novelData } = data;
     const slug = await this.generateUniqueSlug(novelData.title);
 
     const createPayload: Prisma.NovelCreateInput = {
       ...novelData,
-      author: { connect: { id: novelData.authorId } },
       slug,
+      author: { connect: { id: authorId } },
     };
 
-    if (genreIds && Array.isArray(genreIds) && genreIds.length > 0) {
-      createPayload.genres = {
-        create: genreIds.map((id: string) => ({ genreId: id })),
-      };
+    if (genreIds?.length) {
+      createPayload.genres = { create: genreIds.map((id) => ({ genre: { connect: { id } } })) };
     }
-    if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
-      createPayload.tags = {
-        create: tagIds.map((id: string) => ({ tagId: id })),
-      };
+    if (tagIds?.length) {
+      createPayload.tags = { create: tagIds.map((id) => ({ tag: { connect: { id } } })) };
     }
-    
+
     const novel = await prisma.novel.create({ data: createPayload });
     return serializeForJSON(novel);
   },
 
-  async update(id: string, data: any) {
+  /**
+   * Updates an existing novel and its relations.
+   */
+  async update(id: string, data: NovelUpdateData): Promise<Novel> {
     const { genreIds, tagIds, ...novelData } = data;
     const updatePayload: Prisma.NovelUpdateInput = { ...novelData };
 
     if (genreIds !== undefined) {
       updatePayload.genres = {
         deleteMany: {},
-        create: (genreIds as string[]).map((genreId: string) => ({ genreId: genreId })),
+        create: genreIds.map((genreId) => ({ genre: { connect: { id: genreId } } })),
       };
     }
     if (tagIds !== undefined) {
       updatePayload.tags = {
         deleteMany: {},
-        create: (tagIds as string[]).map((tagId: string) => ({ tagId: tagId })),
+        create: tagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })),
       };
     }
-    
-    const novel = await prisma.novel.update({ 
-      where: { id }, 
-      data: updatePayload 
-    });
-    
+
+    const novel = await prisma.novel.update({ where: { id }, data: updatePayload });
     return serializeForJSON(novel);
   },
 
-  async softDelete(id: string, deletedBy: string) {
-    const result = await prisma.novel.update({
-      where: { id },
-      data: { isDeleted: true, deletedAt: new Date(), deletedBy }
-    });
-    return serializeForJSON(result);
+  /**
+   * Soft-deletes a novel and creates audit logs.
+   */
+  async softDelete(id: string, deletedBy: string | null, reason?: string): Promise<Novel> {
+    return auditedSoftDelete<Novel>('novel', id, deletedBy, reason);
   },
 
+  /**
+   * A utility method to generate a unique slug for a novel title.
+   */
   async generateUniqueSlug(title: string, excludeId?: string): Promise<string> {
     let slug = slugify(title);
     let counter = 1;
     while (true) {
-      const where: any = { slug };
-      if (excludeId) where.id = { not: excludeId };
-      const existing = await prisma.novel.findFirst({ where });
-      if (!existing) break;
+      const where: Prisma.NovelWhereInput = { slug };
+      if (excludeId) {
+        where.id = { not: excludeId };
+      }
+      const existing = await prisma.novel.findFirst({ where: { slug } });
+      if (!existing) {
+        break;
+      }
       slug = `${slugify(title)}-${counter++}`;
     }
     return slug;
-  }
+  },
 };
