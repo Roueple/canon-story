@@ -1,38 +1,63 @@
 // src/services/baseService.ts
-
 import { prisma } from '@/lib/db';
 import { serializeForJSON } from '@/lib/serialization';
 import { Prisma } from '@prisma/client';
 
-/**
- * A robust, dynamically-generated type representing all valid Prisma model names in lowercase,
- * matching the properties on the `prisma` client (e.g., 'user', 'novel').
- * This is the correct and most direct way to derive this type.
- */
+// This is the definitive, type-safe way to get model names
 type ModelName = Uncapitalize<Prisma.ModelName>;
 
-// --- SIMPLE GENERIC FUNCTIONS (NON-AUDITED) ---
+// --- CORRECTED & SIMPLIFIED GENERIC FUNCTIONS ---
+
+/**
+ * Finds a single record by its ID, with optional additional 'where' clauses.
+ * Uses 'findFirst' for flexibility.
+ */
 export async function findByIdGeneric<T>(
   modelName: ModelName,
   id: string,
-  include?: any
+  options: {
+    include?: any;
+    where?: any; // Allows for additional filters like { isDeleted: false }
+  } = {}
 ): Promise<T | null> {
   const model = (prisma as any)[modelName];
-  const result = await model.findUnique({ where: { id }, include });
+  // CORRECTED: Use findFirst for flexible where clauses
+  const result = await model.findFirst({
+    where: {
+      id,
+      ...options.where,
+    },
+    include: options.include,
+  });
   return serializeForJSON(result) as T | null;
 }
+
+// This function was already correct and doesn't need changes.
+export async function findAllGeneric<T>(
+    modelName: ModelName,
+    options: {
+      where?: any;
+      include?: any;
+      orderBy?: any;
+      skip?: number;
+      take?: number;
+    } = {}
+  ): Promise<{ data: T[]; total: number }> {
+    const model = (prisma as any)[modelName];
+    const [data, total] = await prisma.$transaction([
+      model.findMany(options),
+      model.count({ where: options.where }),
+    ]);
+    return { data: serializeForJSON(data) as T[], total };
+}
+
 
 export async function deleteGeneric(modelName: ModelName, id: string): Promise<void> {
   const model = (prisma as any)[modelName];
   await model.delete({ where: { id } });
 }
 
-// --- ADVANCED AUDITED FUNCTIONS ---
-
-/**
- * Performs a soft delete and simultaneously creates corresponding log entries
- * in a single database transaction. This is the recommended soft-delete function.
- */
+// --- AUDITED SOFT DELETE (Unchanged) ---
 export async function auditedSoftDelete<T extends { id: string }>(
   modelName: ModelName,
   id: string,

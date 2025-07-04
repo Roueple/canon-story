@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { serializeForJSON } from '@/lib/serialization';
 import { Novel, Prisma } from '@prisma/client';
-import { auditedSoftDelete, findByIdGeneric } from './baseService'; 
+import { auditedSoftDelete, findByIdGeneric, findAllGeneric } from './baseService'; 
 
 export interface NovelCreateData {
   title: string;
@@ -36,8 +36,7 @@ export const novelService = {
     if (status) where.status = status;
     if (isPublished !== undefined) where.isPublished = isPublished;
 
-    const [novels, total] = await prisma.$transaction([
-      prisma.novel.findMany({
+    const { data: novels, total } = await findAllGeneric<Novel>('novel', {
         where,
         include: {
           author: { select: { id: true, displayName: true, username: true } },
@@ -46,17 +45,12 @@ export const novelService = {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { updatedAt: 'desc' },
-      }),
-      prisma.novel.count({ where }),
-    ]);
+      }
+    );
 
-    return { novels: serializeForJSON(novels), total };
+    return { novels, total };
   },
 
-  /**
-   * Finds a single novel by its ID with specific related data.
-   * REFACTORED: Uses the generic findById function.
-   */
   async findById(id: string, includeDeleted = false): Promise<Novel | null> {
     const include = {
       author: { select: { id: true, displayName: true, username: true } },
@@ -64,12 +58,10 @@ export const novelService = {
       genres: { select: { genre: { select: { id: true, name: true, slug: true } } } },
       tags: { select: { tag: { select: { id: true, name: true } } } },
     };
-    // Note: findByIdGeneric doesn't have an includeDeleted param, so we handle it here.
-    const novel = await findByIdGeneric<Novel>('novel', id, include);
-    if (!novel || (novel.isDeleted && !includeDeleted)) {
-        return null;
-    }
-    return novel;
+    
+    // The where clause is now handled by the generic function, making this much cleaner.
+    const where = includeDeleted ? undefined : { isDeleted: false };
+    return findByIdGeneric<Novel>('novel', id, { include, where });
   },
 
   async findBySlug(slug: string): Promise<Novel | null> {
@@ -139,10 +131,6 @@ export const novelService = {
     return serializeForJSON(novel);
   },
 
-  /**
-   * Soft-deletes a novel and creates audit logs.
-   * REFACTORED: Uses the generic auditedSoftDelete function.
-   */
   async softDelete(id: string, deletedBy: string | null, reason?: string): Promise<Novel> {
     return auditedSoftDelete<Novel>('novel', id, deletedBy, reason);
   },

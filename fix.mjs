@@ -15,6 +15,129 @@ async function writeFile(filePath, content) {
 
 // --- File Content Definitions ---
 
+const baseServiceContent = `
+// src/services/baseService.ts
+import { prisma } from '@/lib/db';
+import { serializeForJSON } from '@/lib/serialization';
+import { Prisma } from '@prisma/client';
+
+// This is the definitive, type-safe way to get model names
+type ModelName = Uncapitalize<Prisma.ModelName>;
+
+// --- CORRECTED & SIMPLIFIED GENERIC FUNCTIONS ---
+
+/**
+ * Finds a single record by its ID, with optional additional 'where' clauses.
+ * Uses 'findFirst' for flexibility.
+ */
+export async function findByIdGeneric<T>(
+  modelName: ModelName,
+  id: string,
+  options: {
+    include?: any;
+    where?: any; // Allows for additional filters like { isDeleted: false }
+  } = {}
+): Promise<T | null> {
+  const model = (prisma as any)[modelName];
+  // CORRECTED: Use findFirst for flexible where clauses
+  const result = await model.findFirst({
+    where: {
+      id,
+      ...options.where,
+    },
+    include: options.include,
+  });
+  return serializeForJSON(result) as T | null;
+}
+
+// This function was already correct and doesn't need changes.
+export async function findAllGeneric<T>(
+    modelName: ModelName,
+    options: {
+      where?: any;
+      include?: any;
+      orderBy?: any;
+      skip?: number;
+      take?: number;
+    } = {}
+  ): Promise<{ data: T[]; total: number }> {
+    const model = (prisma as any)[modelName];
+    const [data, total] = await prisma.$transaction([
+      model.findMany(options),
+      model.count({ where: options.where }),
+    ]);
+    return { data: serializeForJSON(data) as T[], total };
+}
+
+
+export async function deleteGeneric(modelName: ModelName, id: string): Promise<void> {
+  const model = (prisma as any)[modelName];
+  await model.delete({ where: { id } });
+}
+
+// --- AUDITED SOFT DELETE (Unchanged) ---
+export async function auditedSoftDelete<T extends { id: string }>(
+  modelName: ModelName,
+  id: string,
+  deletedBy: string | null,
+  reason?: string
+): Promise<T> {
+  const model = (prisma as any)[modelName];
+
+  const [updatedRecord] = await prisma.$transaction(async (tx) => {
+    const transactionModel = (tx as any)[modelName];
+    const recordToLog = await transactionModel.findUnique({ where: { id } });
+    if (!recordToLog) {
+      throw new Error(\`Record with ID \${id} not found in model \${modelName}.\`);
+    }
+
+    const dataToUpdate: any = {
+      isDeleted: true,
+      deletedAt: new Date(),
+      deletedBy: deletedBy,
+    };
+    
+    if (recordToLog.hasOwnProperty('isPublished')) {
+      dataToUpdate.isPublished = false;
+    }
+
+    const result = await transactionModel.update({
+      where: { id },
+      data: dataToUpdate,
+    });
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); 
+
+    await tx.deletionLog.create({
+      data: {
+        userId: deletedBy,
+        modelName: modelName,
+        recordId: id,
+        recordData: serializeForJSON(recordToLog),
+        reason: reason,
+        expiresAt: expiresAt,
+      },
+    });
+
+    await tx.auditLog.create({
+        data: {
+            userId: deletedBy,
+            action: 'soft-delete',
+            modelName: modelName,
+            recordId: id,
+            oldData: serializeForJSON(recordToLog),
+            newData: serializeForJSON(result),
+        }
+    })
+
+    return [result];
+  });
+
+  return serializeForJSON(updatedRecord) as T;
+}
+`;
+
 const chapterServiceContent = `
 // src/services/chapterService.ts
 import { prisma } from '@/lib/db';
@@ -43,7 +166,8 @@ export const chapterService = {
    */
   async findById(id: string, includeNovel = false): Promise<Chapter | null> {
     const include = includeNovel ? { novel: true } : undefined;
-    return findByIdGeneric<Chapter>('chapter', id, include);
+    // -- CORRECTED: Pass 'include' inside the options object.
+    return findByIdGeneric<Chapter>('chapter', id, { include });
   },
 
   /**
@@ -159,360 +283,142 @@ export const chapterService = {
 };
 `;
 
-const novelServiceContent = `
-// src/services/novelService.ts
-import { prisma } from '@/lib/db';
-import { slugify } from '@/lib/utils';
-import { serializeForJSON } from '@/lib/serialization';
-import { Novel, Prisma } from '@prisma/client';
-import { auditedSoftDelete, findByIdGeneric } from './baseService'; 
+const editChapterPageContent = `
+// src/app/(admin)/admin/novels/[id]/chapters/[chapterId]/edit/page.tsx
+'use client';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter, useParams } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
+import { ChapterForm } from '@/components/admin/forms/ChapterForm';
+import { DeleteConfirmation, Button, LoadingSpinner } from '@/components/shared/ui';
 
-export interface NovelCreateData {
-  title: string;
-  authorId: string;
-  description?: string;
-  coverColor?: string;
-  coverImageUrl?: string;
-  status?: string;
-  isPublished?: boolean;
-  isPremium?: boolean;
-  genreIds?: string[];
-  tagIds?: string[];
+// ++ Define an interface for the chapter data to ensure type safety
+interface ChapterData {
+    id: string;
+    novelId: string;
+    title: string;
+    // Add other fields that are used by ChapterForm
+    content: string;
+    chapterNumber: number;
+    status: string;
+    isPublished: boolean;
 }
-export type NovelUpdateData = Partial<Omit<NovelCreateData, 'authorId'>>;
 
-export const novelService = {
-  async findAll(options: {
-    page?: number;
-    limit?: number;
-    authorId?: string;
-    status?: string;
-    isPublished?: boolean;
-    includeDeleted?: boolean;
-  } = {}) {
-    const { page = 1, limit = 20, authorId, status, isPublished, includeDeleted = false } = options;
+export default function EditChapterPage() {
+    const router = useRouter();
+    const params = useParams();
+    const novelId = params.id as string;
+    const chapterId = params.chapterId as string;
+
+    // ++ Initialize state with the correct type annotation
+    const [chapter, setChapter] = useState<ChapterData | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [showDelete, setShowDelete] = useState(false);
+
+    useEffect(() => {
+        if (chapterId) {
+            setIsLoading(true); // Set loading while fetching
+            fetch(\`/api/admin/chapters/\${chapterId}\`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) setChapter(data.data);
+                    else setError('Chapter not found.');
+                })
+                .finally(() => setIsLoading(false)); // Stop loading
+        }
+    }, [chapterId]);
     
-    const where: Prisma.NovelWhereInput = {};
-    if (!includeDeleted) where.isDeleted = false;
-    if (authorId) where.authorId = authorId;
-    if (status) where.status = status;
-    if (isPublished !== undefined) where.isPublished = isPublished;
-
-    const [novels, total] = await prisma.$transaction([
-      prisma.novel.findMany({
-        where,
-        include: {
-          author: { select: { id: true, displayName: true, username: true } },
-          _count: { select: { chapters: { where: { isDeleted: false, isPublished: true } } } },
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { updatedAt: 'desc' },
-      }),
-      prisma.novel.count({ where }),
-    ]);
-
-    return { novels: serializeForJSON(novels), total };
-  },
-
-  /**
-   * Finds a single novel by its ID with specific related data.
-   * REFACTORED: Uses the generic findById function.
-   */
-  async findById(id: string, includeDeleted = false): Promise<Novel | null> {
-    const include = {
-      author: { select: { id: true, displayName: true, username: true } },
-      chapters: { where: { isDeleted: false }, orderBy: { displayOrder: 'asc' } },
-      genres: { select: { genre: { select: { id: true, name: true, slug: true } } } },
-      tags: { select: { tag: { select: { id: true, name: true } } } },
-    };
-    // Note: findByIdGeneric doesn't have an includeDeleted param, so we handle it here.
-    const novel = await findByIdGeneric<Novel>('novel', id, include);
-    if (!novel || (novel.isDeleted && !includeDeleted)) {
-        return null;
-    }
-    return novel;
-  },
-
-  async findBySlug(slug: string): Promise<Novel | null> {
-    const novel = await prisma.novel.findFirst({
-      where: {
-        slug,
-        isPublished: true,
-        isDeleted: false,
-      },
-      include: {
-        author: { select: { id: true, displayName: true, username: true } },
-        chapters: { where: { isPublished: true, isDeleted: false }, orderBy: { displayOrder: 'asc' } },
-        genres: { include: { genre: true } },
-        tags: { include: { tag: true } },
-      },
-    });
-    return serializeForJSON(novel);
-  },
-  
-  async getIdFromSlug(slug: string): Promise<{id: string, title: string} | null> {
-    const novel = await prisma.novel.findUnique({
-      where: { slug },
-      select: { id: true, title: true }
-    });
-    return serializeForJSON(novel);
-  },
-
-  async create(data: NovelCreateData): Promise<Novel> {
-    const { genreIds, tagIds, authorId, ...novelData } = data;
-    const slug = await this.generateUniqueSlug(novelData.title);
-
-    const createPayload: Prisma.NovelCreateInput = {
-      ...novelData,
-      slug,
-      author: { connect: { id: authorId } },
+    const handleSubmit = async (data: any) => {
+        setIsLoading(true);
+        setError('');
+        try {
+            const response = await fetch(\`/api/admin/chapters/\${chapterId}\`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) throw new Error((await response.json()).error);
+            router.push(\`/admin/novels/\${novelId}/chapters\`);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    if (genreIds?.length) {
-      createPayload.genres = { create: genreIds.map((id) => ({ genre: { connect: { id } } })) };
-    }
-    if (tagIds?.length) {
-      createPayload.tags = { create: tagIds.map((id) => ({ tag: { connect: { id } } })) };
-    }
+    const handleDelete = async () => {
+        setIsLoading(true);
+        setError('');
+        try {
+            const response = await fetch(\`/api/admin/chapters/\${chapterId}\`, { method: 'DELETE' });
+            if (!response.ok) throw new Error((await response.json()).error);
+            router.push(\`/admin/novels/\${novelId}/chapters\`);
+        } catch (err: any) {
+            setError(err.message);
+            setShowDelete(false);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-    const novel = await prisma.novel.create({ data: createPayload });
-    return serializeForJSON(novel);
-  },
+    // ++ Improved loading and error states
+    if (isLoading && !chapter) return <div className="flex justify-center p-12"><LoadingSpinner /></div>;
+    if (error) return <div className="text-red-400 p-6">{error}</div>;
+    if (!chapter) return null; // Or a "not found" message
 
-  async update(id: string, data: NovelUpdateData): Promise<Novel> {
-    const { genreIds, tagIds, ...novelData } = data;
-    const updatePayload: Prisma.NovelUpdateInput = { ...novelData };
-
-    if (genreIds !== undefined) {
-      updatePayload.genres = {
-        deleteMany: {},
-        create: genreIds.map((genreId) => ({ genre: { connect: { id: genreId } } })),
-      };
-    }
-    if (tagIds !== undefined) {
-      updatePayload.tags = {
-        deleteMany: {},
-        create: tagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })),
-      };
-    }
-
-    const novel = await prisma.novel.update({ where: { id }, data: updatePayload });
-    return serializeForJSON(novel);
-  },
-
-  /**
-   * Soft-deletes a novel and creates audit logs.
-   * REFACTORED: Uses the generic auditedSoftDelete function.
-   */
-  async softDelete(id: string, deletedBy: string | null, reason?: string): Promise<Novel> {
-    return auditedSoftDelete<Novel>('novel', id, deletedBy, reason);
-  },
-
-  async generateUniqueSlug(title: string, excludeId?: string): Promise<string> {
-    let slug = slugify(title);
-    let counter = 1;
-    while (true) {
-      const where: Prisma.NovelWhereInput = { slug };
-      if (excludeId) {
-        where.id = { not: excludeId };
-      }
-      const existing = await prisma.novel.findFirst({ where: { slug } });
-      if (!existing) {
-        break;
-      }
-      slug = \`\${slugify(title)}-\${counter++}\`;
-    }
-    return slug;
-  },
-};
+    return (
+        <div>
+          <Link href={\`/admin/novels/\${novelId}/chapters\`} className="inline-flex items-center text-gray-400 hover:text-white mb-6">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Chapters
+          </Link>
+          <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
+            <h1 className="text-2xl font-bold text-white mb-6">Edit Chapter</h1>
+            <ChapterForm
+                novelId={novelId}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+                error={error}
+                initialData={chapter}
+            />
+             <div className="mt-8 pt-6 border-t border-gray-700">
+                <h3 className="text-lg font-medium text-red-400">Danger Zone</h3>
+                <p className="text-sm text-gray-400 mb-4">Deleting a chapter will soft-delete it, making it invisible to the public but recoverable.</p>
+                <Button variant="danger" onClick={() => setShowDelete(true)} disabled={isLoading}>
+                    Delete Chapter
+                </Button>
+            </div>
+          </div>
+          {showDelete && (
+              <DeleteConfirmation
+                  title="Delete Chapter"
+                  // -- Use optional chaining for safety
+                  message={\`Are you sure you want to delete "\${chapter?.title}"?\`}
+                  onConfirm={handleDelete}
+                  onCancel={() => setShowDelete(false)}
+                  confirmText="DELETE"
+              />
+          )}
+        </div>
+    );
+}
 `;
 
-const tagServiceContent = `
-// src/services/tagService.ts
-import { prisma } from '@/lib/db';
-import { serializeForJSON } from '@/lib/serialization';
-import { deleteGeneric, findByIdGeneric } from './baseService';
-import { Tag } from '@prisma/client';
-
-export const tagService = {
-  async findAll(options?: { type?: string; isActive?: boolean }) {
-    const where: any = {};
-    if (options?.type) where.type = options.type;
-    if (options?.isActive !== undefined) where.isActive = options.isActive;
-
-    const tags = await prisma.tag.findMany({
-      where,
-      include: { _count: { select: { novels: true } } },
-      orderBy: [{ usageCount: 'desc' }, { name: 'asc' }],
-    });
-    
-    return serializeForJSON(tags.map(tag => ({ ...tag, usageCount: tag._count.novels })));
-  },
-
-  /**
-   * Finds a single tag by its ID.
-   * REFACTORED: Uses the generic findById function.
-   */
-  async findById(id: string): Promise<Tag | null> {
-    const tag = await findByIdGeneric<Tag>('tag', id, { _count: { select: { novels: true } } });
-    if (tag) {
-        (tag as any).usageCount = (tag as any)._count.novels;
-    }
-    return tag;
-  },
-
-  async create(data: { name: string; type: string; color?: string }): Promise<Tag> {
-    const tag = await prisma.tag.create({
-      data: {
-        name: data.name.trim(),
-        type: data.type,
-        color: data.color || '#9CA3AF',
-      },
-    });
-    return serializeForJSON(tag);
-  },
-
-  async update(id: string, data: { name?: string; type?: string; color?: string; isActive?: boolean }): Promise<Tag> {
-    const tag = await prisma.tag.update({ where: { id }, data });
-    return serializeForJSON(tag);
-  },
-
-  /**
-   * Deletes a tag after checking dependencies.
-   * REFACTORED: Uses the generic delete function.
-   */
-  async delete(id: string): Promise<{ message: string }> {
-    const usageCount = await prisma.novelTag.count({ where: { tagId: id } });
-    if (usageCount > 0) {
-      throw new Error(\`Cannot delete tag: It is currently used by \${usageCount} novel(s).\`);
-    }
-    await deleteGeneric('tag', id);
-    return { message: "Tag deleted successfully" };
-  },
-};
-`;
-
-const genreServiceContent = `
-// src/services/genreService.ts
-import { prisma } from '@/lib/db';
-import { generateSlug } from '@/lib/utils';
-import { serializeForJSON } from '@/lib/serialization';
-import * as XLSX from 'xlsx';
-import { deleteGeneric, findByIdGeneric } from './baseService';
-import { Genre } from '@prisma/client';
-
-export const genreService = {
-  async findAll(options?: { isActive?: boolean }) {
-    const where: { isActive?: boolean } = {};
-    if (options?.isActive !== undefined) where.isActive = options.isActive;
-
-    const genres = await prisma.genre.findMany({
-      where,
-      include: { _count: { select: { novels: true } } },
-      orderBy: { sortOrder: 'asc' },
-    });
-    return serializeForJSON(genres);
-  },
-
-  /**
-   * Finds a single genre by its ID.
-   * REFACTORED: Uses the generic findById function.
-   */
-  async findById(id: string): Promise<Genre | null> {
-    return findByIdGeneric<Genre>('genre', id);
-  },
-
-  async create(data: { name: string; description?: string; color: string; }): Promise<Genre> {
-    const slug = generateSlug(data.name);
-    const newGenre = await prisma.genre.create({ data: { ...data, slug } });
-    return serializeForJSON(newGenre);
-  },
-
-  async update(id: string, data: { name?: string; description?: string; color?: string; }): Promise<Genre> {
-    const updateData: any = { ...data };
-    if (data.name) updateData.slug = generateSlug(data.name);
-    const updatedGenre = await prisma.genre.update({ where: { id }, data: updateData });
-    return serializeForJSON(updatedGenre);
-  },
-
-  /**
-   * Deletes a genre after checking dependencies.
-   * REFACTORED: Uses the generic delete function.
-   */
-  async delete(id: string): Promise<{ message: string }> {
-    const novelsCount = await prisma.novelGenre.count({ where: { genreId: id } });
-    if (novelsCount > 0) {
-      throw new Error(\`Cannot delete genre. It is currently assigned to \${novelsCount} novel(s).\`);
-    }
-    await deleteGeneric('genre', id);
-    return { message: 'Genre deleted successfully' };
-  },
-
-  async bulkCreate(genresData: Array<{ name: string; description?: string; color?: string; }>) {
-    const existingGenres = await prisma.genre.findMany({
-      where: { name: { in: genresData.map(g => g.name) } },
-      select: { name: true },
-    });
-    const existingNames = new Set(existingGenres.map(g => g.name.toLowerCase()));
-
-    const toCreate = genresData.filter(g => g.name && !existingNames.has(g.name.toLowerCase()));
-
-    if (toCreate.length > 0) {
-      await prisma.genre.createMany({
-        data: toCreate.map(g => ({
-          name: g.name,
-          description: g.description || '',
-          color: g.color || '#6B7280',
-          slug: generateSlug(g.name),
-          isActive: true,
-        })),
-        skipDuplicates: true,
-      });
-    }
-    
-    return { created: toCreate.length, skipped: genresData.length - toCreate.length };
-  },
-
-  generateBulkUploadTemplate(): Buffer {
-    const wb = XLSX.utils.book_new();
-    const instructions = [
-      ['Genre Bulk Upload Template Instructions'],
-      [''],
-      ['Sheet: "Genres" - Required Columns:'],
-      ['1. name: Text. Required.'],
-      ['2. description: Text. Optional.'],
-      ['3. color: Hex color code (e.g., #EF4444). Optional.'],
-    ];
-    const ws_instructions = XLSX.utils.aoa_to_sheet(instructions);
-    XLSX.utils.book_append_sheet(wb, ws_instructions, 'Instructions');
-    
-    const chapters_data = [['name', 'description', 'color']];
-    const ws_chapters = XLSX.utils.aoa_to_sheet(chapters_data);
-    ws_chapters['!cols'] = [{ wch: 30 }, { wch: 60 }, { wch: 15 }];
-    XLSX.utils.book_append_sheet(wb, ws_chapters, 'Genres');
-    
-    return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
-  }
-};
-`;
-
-// --- Main Execution ---
 async function main() {
-    console.log('🚀 Systematically refactoring service layer for consistency...');
+    console.log('🚀 Applying definitive fixes for TypeScript errors...');
 
+    await writeFile('src/services/baseService.ts', baseServiceContent);
     await writeFile('src/services/chapterService.ts', chapterServiceContent);
-    await writeFile('src/services/novelService.ts', novelServiceContent);
-    await writeFile('src/services/tagService.ts', tagServiceContent);
-    await writeFile('src/services/genreService.ts', genreServiceContent);
+    await writeFile('src/app/(admin)/admin/novels/[id]/chapters/[chapterId]/edit/page.tsx', editChapterPageContent);
     
-    console.log('\n\n✅ Service layer refactoring complete!');
-    console.log('Summary of changes:');
-    console.log('  - Refactored chapterService.ts to use baseService and added missing methods.');
-    console.log('  - Refactored novelService.ts to consistently use baseService.');
-    console.log('  - Refactored tagService.ts and genreService.ts to use baseService generics.');
-    console.log('  - The entire service layer now follows a consistent, DRY architecture.');
-    console.log('\nThe application is now ready for the final cleanup and verification phase.');
+    console.log('\n✅ Patches applied successfully.');
+    console.log('Summary of fixes:');
+    console.log('  - Corrected `baseService.ts` to use `findFirst` for flexible queries.');
+    console.log('  - Fixed the `findByIdGeneric` call signature in `chapterService.ts`.');
+    console.log('  - Patched `edit/page.tsx` to handle state typing correctly, resolving the `type never` error.');
+    console.log('\nAll reported errors should now be resolved. You can proceed with the final part of Step 4.');
 }
 
 main().catch(console.error);

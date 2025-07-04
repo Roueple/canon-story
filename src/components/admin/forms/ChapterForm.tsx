@@ -2,56 +2,65 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button, Input, LoadingSpinner } from '@/components/shared/ui'
+import { Button, Input } from '@/components/shared/ui'
 import { RichTextEditor } from '@/components/admin/RichTextEditor'
 
 interface ChapterFormProps {
-  novelId: string
-  onSubmit: (data: any) => Promise<void>
-  isLoading: boolean
-  error?: string
+  novelId: string;
+  onSubmit: (data: any) => Promise<void>;
+  isLoading: boolean;
+  error?: string;
   initialData?: {
-    title: string
-    content: string
-    chapterNumber: number
-    status: string
-    isPublished: boolean
-  }
+    title: string;
+    content: string;
+    chapterNumber: number;
+    status: string;
+    isPublished: boolean;
+  } | null;
 }
 
 const statusOptions = [
   { value: 'draft', label: 'Draft' },
   { value: 'premium', label: 'Premium' },
-  { value: 'free', label: 'Free' }
-]
+  { value: 'free', label: 'Free' },
+];
 
-export function ChapterForm({ 
-  novelId, 
-  onSubmit, 
-  isLoading, 
-  error, 
-  initialData 
+export function ChapterForm({
+  novelId,
+  onSubmit,
+  isLoading,
+  error,
+  initialData,
 }: ChapterFormProps) {
+  // Determine if we are in "edit" mode by checking if initialData is provided
+  const isEditMode = !!initialData;
+
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     content: initialData?.content || '',
-    chapterNumber: initialData?.chapterNumber || 1,
+    chapterNumber: initialData?.chapterNumber ?? 1,
     status: initialData?.status || 'draft',
-    isPublished: initialData?.isPublished || false
-  })
+    isPublished: initialData?.isPublished || false,
+  });
 
-  const [wordCount, setWordCount] = useState(0)
+  const [wordCount, setWordCount] = useState(0);
 
+  // Corrected useEffect to accurately calculate word count from HTML content
   useEffect(() => {
-    // Calculate word count
-    const words = formData.content.trim().split(/\s+/).filter(word => word.length > 0)
-    setWordCount(words.length)
-  }, [formData.content])
+    // Create a temporary div to parse the HTML and get the text content
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = formData.content;
+    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+    
+    // Calculate word count from the plain text
+    const words = textContent.trim().split(/\s+/).filter(word => word.length > 0);
+    setWordCount(words.length);
+  }, [formData.content]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    await onSubmit(formData)
-  }
+    e.preventDefault();
+    await onSubmit(formData);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -70,10 +79,12 @@ export function ChapterForm({
             type="number"
             step="0.1"
             value={formData.chapterNumber}
-            onChange={(e) => setFormData({ 
-              ...formData, 
-              chapterNumber: parseFloat(e.target.value) || 0 
-            })}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                chapterNumber: parseFloat(e.target.value) || 0,
+              })
+            }
             placeholder="e.g., 1, 1.5, 0"
             required
             className="bg-gray-700 border-gray-600 text-white"
@@ -89,7 +100,9 @@ export function ChapterForm({
           </label>
           <select
             value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, status: e.target.value })
+            }
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             {statusOptions.map((option) => (
@@ -135,7 +148,9 @@ export function ChapterForm({
           type="checkbox"
           id="isPublished"
           checked={formData.isPublished}
-          onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
+          onChange={(e) =>
+            setFormData({ ...formData, isPublished: e.target.checked })
+          }
           className="h-4 w-4 rounded text-primary bg-gray-700 border-gray-600 focus:ring-primary"
         />
         <label htmlFor="isPublished" className="text-sm text-gray-300">
@@ -153,9 +168,9 @@ export function ChapterForm({
           Cancel
         </Button>
         <Button type="submit" isLoading={isLoading}>
-          {initialData ? 'Update Chapter' : 'Create Chapter'}
+          {isEditMode ? 'Update Chapter' : 'Create Chapter'}
         </Button>
       </div>
     </form>
-  )
+  );
 }

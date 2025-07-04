@@ -25,7 +25,8 @@ export const chapterService = {
    */
   async findById(id: string, includeNovel = false): Promise<Chapter | null> {
     const include = includeNovel ? { novel: true } : undefined;
-    return findByIdGeneric<Chapter>('chapter', id, include);
+    // -- CORRECTED: Pass 'include' inside the options object.
+    return findByIdGeneric<Chapter>('chapter', id, { include });
   },
 
   /**
