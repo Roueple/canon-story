@@ -42,7 +42,7 @@ export default async function AdminNovelsPage() {
       {novels.length > 0 ? (
         <div className="grid gap-4">
           {novels.map((novel) => (
-            <div key={novel.id} className="bg-gray-800 rounded-lg border border-gray-700 p-6 hover:border-gray-600 transition-colors">
+            <div key={novel.id} className="bg-card rounded-lg border border-border p-6 hover:border-border transition-colors">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">
                   {/* Cover Image */}
@@ -134,7 +134,7 @@ export default async function AdminNovelsPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-12 text-center">
+        <div className="bg-card rounded-lg border border-border p-12 text-center">
           <h2 className="text-xl font-semibold text-white mb-2">No novels yet</h2>
           <p className="text-gray-400 mb-6">Get started by creating your first novel</p>
           <Link href="/admin/novels/create">

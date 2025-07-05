@@ -7,8 +7,7 @@ import {
   Input, 
   Card, 
   CardHeader, 
-  CardContent, 
-  CardFooter,
+  CardContent,
   Modal,
   Badge,
   LoadingSpinner,
@@ -21,7 +20,6 @@ import { useTheme } from '@/providers/theme-provider'
 export default function UITestPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [progress, setProgress] = useState(65)
   const { theme } = useTheme()

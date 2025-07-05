@@ -9,7 +9,6 @@ import {
   Users, 
   Settings, 
   BarChart3,
-  FileText,
   Home,
   Globe,
   Tags,
@@ -53,8 +52,8 @@ export function AdminSidebar({ role }: AdminSidebarProps) {
           className={cn(
             'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
             isActive
-              ? 'bg-gray-700 text-white'
-              : 'text-gray-300 hover:text-white hover:bg-gray-700'
+              ? 'bg-muted text-foreground'
+              : 'text-secondary hover:text-foreground hover:bg-muted'
           )}
         >
           <item.icon className="h-5 w-5" />
@@ -65,11 +64,11 @@ export function AdminSidebar({ role }: AdminSidebarProps) {
   }
 
   return (
-    <aside className="w-64 min-h-screen bg-gray-800 border-r border-gray-700">
+    <aside className="w-64 min-h-screen bg-background border-r border-border">
       <nav className="p-4 space-y-4">
         <Link
           href="/"
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-gray-300 hover:text-white hover:bg-gray-700 mb-2 border border-gray-600"
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-foreground hover:text-white hover:bg-muted mb-2 border border-border"
         >
           <Globe className="h-5 w-5" />
           <span>Go to Homepage</span>
@@ -78,12 +77,12 @@ export function AdminSidebar({ role }: AdminSidebarProps) {
         <div>{renderNav(mainNav)}</div>
 
         <div>
-          <h3 className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">Content</h3>
+          <h3 className="px-3 text-xs font-semibold text-foreground uppercase tracking-wider mb-2 mt-4">Content</h3>
           {renderNav(contentNav)}
         </div>
         
         <div>
-          <h3 className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">System</h3>
+          <h3 className="px-3 text-xs font-semibold text-foreground uppercase tracking-wider mb-2 mt-4">System</h3>
           {renderNav(settingsNav)}
         </div>
       </nav>

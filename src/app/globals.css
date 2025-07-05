@@ -255,6 +255,109 @@ body:has(.auto-scrolling) {
   }
 }
 
+.admin-button-glow {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  background-color: #000000; /* Pure black background */
+  color: #ffffff; /* White text */
+  border: 1px solid #3B82F6; /* Blue border for visibility */
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.5), 0 0 10px rgba(59, 130, 246, 0.3); /* Subtle blue glow */
+}
+
+.admin-button-glow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(59, 130, 246, 0.6), /* Blue shine with transparency */
+    transparent
+  );
+  animation: shine 1.5s infinite; /* Faster shine effect */
+  z-index: -1;
+}
+
+.admin-button-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* Darker overlay */
+  mix-blend-mode: overlay;
+  z-index: -1;
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.admin-button-glow:hover::before {
+  animation-play-state: running; /* Keep shining on hover */
+}
+
+.admin-button-glow:hover {
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.8), 0 0 20px rgba(59, 130, 246, 0.6); /* Stronger glow on hover */
+}
+
+/* Pure black theme for .dark */
+.dark {
+  --background: #1A1A1A; /* Black matte background - slightly lighter than pure black */
+  --foreground: #E0E0E0; /* Light gray for text */
+  --primary: #BB86FC; /* A vibrant purple for primary actions */
+  --secondary: #888888; /* Medium gray for secondary text */
+  --accent: #03DAC6; /* A teal accent color */
+  --success: #00C853; /* Green for success */
+  --warning: #FFD600; /* Yellow for warning */
+  --error: #FF1744; /* Red for error */
+  --border: #333333; /* Dark gray border */
+  --muted: #212121; /* Slightly lighter black for muted elements */
+  --card: #212121; /* Dark gray for cards - distinct from background */
+  --cardForeground: #E0E0E0; /* Light gray for card text */
+}
+
+/* Admin theme - pure black with distinct elements */
+.admin-theme {
+  --background: #000000; /* Pure black background */
+  --foreground: #F0F0F0; /* Slightly off-white for text */
+  --primary: #6200EE; /* A deeper purple for primary actions */
+  --secondary: #AAAAAA; /* Lighter gray for secondary text */
+  --accent: #00BFA5; /* A darker teal accent color */
+  --success: #00AA4F; /* Darker green for success */
+  --warning: #FFC400; /* Darker yellow for warning */
+  --error: #D50000; /* Darker red for error */
+  --border: #444444; /* More visible border for elements */
+  --muted: #0A0A0A; /* Very dark gray for muted elements */
+  --card: #212121; /* Very dark gray for cards - distinct from pure black background */
+  --cardForeground: #F0F0F0; /* Slightly off-white for card text */
+}
+
+/* Apply admin theme to specific elements */
+.admin-layout .bg-gray-800 {
+  background-color: var(--background);
+}
+
+.admin-layout .bg-gray-900 {
+  background-color: var(--muted);
+}
+
+.admin-layout .text-gray-400 {
+  color: var(--foreground);
+}
+
+.admin-layout .border-gray-700 {
+  border-color: var(--border);
+}
+
+
 /* Anti-Copy/Paste Class */
 .no-select {
   -webkit-touch-callout: none; /* iOS Safari */

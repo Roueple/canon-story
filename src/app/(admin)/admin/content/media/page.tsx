@@ -13,12 +13,12 @@ export default function MediaManagementPage() {
                 <h1 className="text-3xl font-bold text-white">Media Library</h1>
                 <p className="text-gray-400 mt-2">Upload and manage all site images.</p>
             </div>
-            <Card className="border-gray-700 bg-gray-800">
-                <CardHeader className="border-gray-700"><h2 className="text-xl font-semibold text-white">Upload New Images</h2></CardHeader>
+            <Card className="border-border bg-card">
+                <CardHeader className="border-border"><h2 className="text-xl font-semibold text-foreground">Upload New Images</h2></CardHeader>
                 <CardContent><ImageUploader onUploadSuccess={() => setRefreshKey(k => k + 1)} /></CardContent>
             </Card>
-            <Card className="border-gray-700 bg-gray-800">
-                <CardHeader className="border-gray-700"><h2 className="text-xl font-semibold text-white">Image Library</h2></CardHeader>
+            <Card className="border-border bg-card">
+                <CardHeader className="border-border"><h2 className="text-xl font-semibold text-foreground">Image Library</h2></CardHeader>
                 <CardContent><MediaLibrary refreshKey={refreshKey} /></CardContent>
             </Card>
         </div>

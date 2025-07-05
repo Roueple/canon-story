@@ -58,30 +58,30 @@ export default function AdminTagsPage() {
 
       {error && <div className="text-red-400">{error}</div>}
 
-      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-x-auto">
+      <div className="bg-card rounded-lg border border-border overflow-x-auto">
         <table className="w-full min-w-[600px]">
-          <thead className="bg-gray-900">
+          <thead className="bg-muted">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Tag</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Usage</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Tag</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Usage</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-700">
+          <tbody className="divide-y divide-border">
             {isLoading ? (
-              <tr><td colSpan={4} className="text-center py-12"><Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" /></td></tr>
+              <tr><td colSpan={4} className="text-center py-12"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></td></tr>
             ) : tags.length > 0 ? (
               tags.map((tag) => (
                 <tr key={tag.id}>
                   <td className="px-6 py-4">
                     <span className="flex items-center gap-2">
                       <Tag className="h-4 w-4" style={{ color: tag.color }} />
-                      <span className="font-medium text-white">{tag.name}</span>
+                      <span className="font-medium text-foreground">{tag.name}</span>
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-400 capitalize">{tag.type}</td>
-                  <td className="px-6 py-4 text-gray-300">{tag.usageCount}</td>
+                  <td className="px-6 py-4 text-muted-foreground capitalize">{tag.type}</td>
+                  <td className="px-6 py-4 text-foreground">{tag.usageCount}</td>
                   <td className="px-6 py-4 text-right">
                     <Link href={`/admin/content/tags/${tag.id}`}>
                       <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
@@ -90,7 +90,7 @@ export default function AdminTagsPage() {
                 </tr>
               ))
             ) : (
-              <tr><td colSpan={4} className="text-center py-12 text-gray-400">No tags found.</td></tr>
+              <tr><td colSpan={4} className="text-center py-12 text-muted-foreground">No tags found.</td></tr>
             )}
           </tbody>
         </table>

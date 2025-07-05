@@ -20,18 +20,18 @@ export const themes = {
   dark: {
     name: 'Dark',
     colors: {
-      background: '#111827',
-      foreground: '#F9FAFB',
-      primary: '#3B82F6',
-      secondary: '#9CA3AF',
-      accent: '#60A5FA',
-      success: '#10B981',
-      warning: '#F59E0B',
-      error: '#EF4444',
-      border: '#374151',
-      muted: '#1F2937',
-      card: '#1F2937',
-      cardForeground: '#F9FAFB',
+      background: '#1A1A1A', // Dark grey-black
+      foreground: '#E0E0E0', // Light grey for text
+      primary: '#60A5FA', // A slightly lighter blue for primary actions
+      secondary: '#A0A0A0', // Medium grey for secondary elements
+      accent: '#81C784', // A soft green for accents
+      success: '#4CAF50', // Green for success
+      warning: '#FFC107', // Amber for warning
+      error: '#FF5252', // Red for error
+      border: '#424242', // Darker grey for borders
+      muted: '#2C2C2C', // Muted background elements
+      card: '#212121', // Even darker grey for cards/boxes
+      cardForeground: '#E0E0E0', // Light grey for card text
     }
   },
   reading: {

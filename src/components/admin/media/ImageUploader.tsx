@@ -6,12 +6,14 @@ import { UploadCloud, AlertCircle } from 'lucide-react'
 import { ProgressBar } from '@/components/shared/ui'
 
 interface ImageUploaderProps {
-  onUploadSuccess: (media: any) => void
+  onUploadSuccess: (media: any) => void;
+  novelId?: string; // Optional novel ID for categorization
 }
 
-export function ImageUploader({ onUploadSuccess }: ImageUploaderProps) {
+export function ImageUploader({ onUploadSuccess, novelId }: ImageUploaderProps) {
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({})
   const [error, setError] = useState<string | null>(null)
+  const [category, setCategory] = useState<string>(''); // New state for category
 
   const uploadFile = async (file: File) => {
     setError(null);
@@ -60,6 +62,8 @@ export function ImageUploader({ onUploadSuccess }: ImageUploaderProps) {
               height: cloudinaryResponse.height,
               url: cloudinaryResponse.secure_url,
               thumbnailUrl,
+              category: category || undefined, // Pass category if not empty
+              novelId: novelId || undefined,     // Pass novelId if provided
             })
           });
           const newMediaFile = await dbResponse.json();
@@ -94,6 +98,17 @@ export function ImageUploader({ onUploadSuccess }: ImageUploaderProps) {
           <p className="text-lg font-semibold text-gray-300">Drag & drop images here, or click to select</p>
           <p className="text-sm text-gray-500">Multiple files are accepted.</p>
         </div>
+      </div>
+      <div className="mt-4">
+        <label htmlFor="image-category" className="block text-sm font-medium text-gray-300">Category (Optional)</label>
+        <input
+          type="text"
+          id="image-category"
+          className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          placeholder="e.g., Character Art, Cover, Chapter 1"
+        />
       </div>
       {error && <p className="mt-2 text-error flex items-center gap-2"><AlertCircle size={16}/> {error}</p>}
       <div className="mt-4 space-y-2">

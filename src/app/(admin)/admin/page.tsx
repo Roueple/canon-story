@@ -80,73 +80,73 @@ export default async function AdminDashboard() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-        <p className="text-gray-400">Welcome to Canon Story Admin Panel</p>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-secondary">Welcome to Canon Story Admin Panel</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => (
-          <div key={card.title} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <div key={card.title} className="bg-card rounded-lg p-6 border border-border">
             <div className="flex items-center justify-between mb-4">
               <div className={`p-3 rounded-lg ${card.color}`}>
-                <card.icon className="h-6 w-6 text-white" />
+                <card.icon className="h-6 w-6 text-primary" />
               </div>
-              <Activity className="h-5 w-5 text-gray-500" />
+              <Activity className="h-5 w-5 text-secondary" />
             </div>
-            <h3 className="text-sm font-medium text-gray-400">{card.title}</h3>
-            <p className="text-2xl font-bold text-white mt-1">{card.value}</p>
-            <p className="text-sm text-gray-500 mt-1">{card.subValue}</p>
+            <h3 className="text-sm font-medium text-secondary">{card.title}</h3>
+            <p className="text-2xl font-bold text-foreground mt-1">{card.value}</p>
+            <p className="text-sm text-secondary mt-1">{card.subValue}</p>
           </div>
         ))}
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-8 bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
+      <div className="mt-8 bg-card rounded-lg p-6 border border-border">
+        <h2 className="text-xl font-bold text-foreground mb-4">Quick Actions</h2>
         <div className="grid gap-4 md:grid-cols-3">
           <a
             href="/admin/novels/create"
-            className="flex items-center gap-3 p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-3 p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
           >
-            <BookOpen className="h-5 w-5 text-purple-400" />
-            <span className="text-white">Create Novel</span>
+            <BookOpen className="h-5 w-5 text-primary" />
+            <span className="text-foreground">Create Novel</span>
           </a>
           <a
             href="/admin/users"
-            className="flex items-center gap-3 p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-3 p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
           >
-            <Users className="h-5 w-5 text-blue-400" />
-            <span className="text-white">Manage Users</span>
+            <Users className="h-5 w-5 text-primary" />
+            <span className="text-foreground">Manage Users</span>
           </a>
           <a
             href="/admin/analytics"
-            className="flex items-center gap-3 p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-3 p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
           >
-            <TrendingUp className="h-5 w-5 text-green-400" />
-            <span className="text-white">View Analytics</span>
+            <TrendingUp className="h-5 w-5 text-primary" />
+            <span className="text-foreground">View Analytics</span>
           </a>
         </div>
       </div>
 
       {/* Safety Status */}
-      <div className="mt-8 bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h2 className="text-xl font-bold text-white mb-4">System Safety Status</h2>
+      <div className="mt-8 bg-card rounded-lg p-6 border border-border">
+        <h2 className="text-xl font-bold text-foreground mb-4">System Safety Status</h2>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-gray-400">Soft Delete Protection</span>
-            <span className="text-green-400 font-medium">✓ Active</span>
+            <span className="text-secondary">Soft Delete Protection</span>
+            <span className="text-success font-medium">✓ Active</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-400">Cascade Delete Protection</span>
-            <span className="text-green-400 font-medium">✓ Enabled</span>
+            <span className="text-secondary">Cascade Delete Protection</span>
+            <span className="text-success font-medium">✓ Enabled</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-400">Audit Logging</span>
-            <span className="text-green-400 font-medium">✓ Recording</span>
+            <span className="text-secondary">Audit Logging</span>
+            <span className="text-success font-medium">✓ Recording</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-400">Backup System</span>
-            <span className="text-yellow-400 font-medium">⚠ Manual (Neon Branching)</span>
+            <span className="text-secondary">Backup System</span>
+            <span className="text-warning font-medium">⚠ Manual (Neon Branching)</span>
           </div>
         </div>
       </div>

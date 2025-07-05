@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { UserButton, useUser, SignInButton, SignedIn, SignedOut } from '@clerk/nextjs'
-import { BookOpen, Menu, Moon, Sun, BookOpenCheck } from 'lucide-react'
+import { BookOpen, Menu, Moon, Sun, BookOpenCheck, Globe } from 'lucide-react'
 import { useState } from 'react'
 import { useTheme } from '@/providers/theme-provider'
 import { Button } from '@/components/shared/ui'
@@ -65,11 +65,11 @@ export function Header() {
                 Trending
               </Link>
               {isAdmin && (
-                <Link
-                  href="/admin"
-                  className="px-3 py-2 text-sm font-medium text-green-400 hover:text-green-300"
-                >
-                  Admin
+                <Link href="/admin">
+                  <Button variant="primary" size="sm" className="admin-button-glow">
+                    <Globe className="h-5 w-5 mr-1" />
+                    Admin
+                  </Button>
                 </Link>
               )}
             </nav>
@@ -147,6 +147,7 @@ export function Header() {
                 className="block px-3 py-2 text-base font-medium text-green-400 hover:text-green-300"
                 onClick={() => setMobileMenuOpen(false)}
               >
+                <Globe className="h-5 w-5 mr-2" />
                 Admin Dashboard
               </Link>
             )}

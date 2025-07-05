@@ -43,7 +43,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen admin-theme bg-background text-foreground">
       <AdminHeader
         user={{
           firstName: user.firstName,

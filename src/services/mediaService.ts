@@ -30,6 +30,8 @@ export const mediaService = {
     url: string;
     thumbnailUrl: string;
     uploadedBy: string;
+    category?: string; // New: Optional category for the media file
+    novelId?: string;   // New: Optional novelId to link media to a novel
   }) {
     const mediaFile = await prisma.mediaFile.create({
       data: {
@@ -43,18 +45,22 @@ export const mediaService = {
         cdnUrl: data.url,
         thumbnailUrl: data.thumbnailUrl,
         uploadedBy: data.uploadedBy,
+        category: data.category, // Save the new category
+        novelId: data.novelId,   // Save the new novelId
       }
     });
     return serializePrismaData(mediaFile);
   },
 
-  async findAll(options: { page?: number; limit?: number; search?: string }) {
-    const { page = 1, limit = 12, search } = options;
+  async findAll(options: { page?: number; limit?: number; search?: string; novelId?: string; category?: string; }) {
+    const { page = 1, limit = 12, search, novelId, category } = options;
     const skip = (page - 1) * limit;
 
-    const where = {
+    const where: any = {
       isDeleted: false,
       ...(search && { originalName: { contains: search, mode: 'insensitive' } }),
+      ...(novelId && { novelId }),
+      ...(category && { category }),
     };
 
     const [mediaFiles, total] = await Promise.all([
@@ -63,6 +69,24 @@ export const mediaService = {
     ]);
 
     return { mediaFiles: serializePrismaData(mediaFiles), total };
+  },
+
+  async findUniqueCategoriesByNovel(novelId: string) {
+    const categories = await prisma.mediaFile.findMany({
+      where: {
+        novelId: novelId,
+        isDeleted: false,
+        category: { not: null } // Only include media with a category
+      },
+      distinct: ['category'],
+      select: {
+        category: true
+      },
+      orderBy: {
+        category: 'asc'
+      }
+    });
+    return categories.map(c => c.category).filter(Boolean) as string[];
   },
 
   async delete(id: string) {

@@ -55,64 +55,108 @@ export function TrendingSlideshow({ novels }: TrendingSlideshowProps) {
 
   return (
     <div className="h-[50vh] md:h-[500px] w-full relative group">
-      <Link href={`/novels/${currentNovel.slug}`} className="w-full h-full block" aria-label={`Read ${currentNovel.title}`}>
+      {/* Mobile View: Single prominent novel */}
+      <Link href={`/novels/${currentNovel.slug}`} className="w-full h-full block md:hidden" aria-label={`Read ${currentNovel.title}`}>
         <div className="w-full h-full rounded-lg overflow-hidden relative bg-black">
-          {/* 
-            This is the two-layer image solution for vertical covers.
-            1. Background: Blurred, scaled-up version of the cover.
-            2. Foreground: Clean, contained version of the cover.
-          */}
           {currentNovel.coverImageUrl ? (
             <>
-              {/* Layer 1: Blurred Background Image */}
               <Image
                 src={currentNovel.coverImageUrl}
-                alt="" // Decorative, so alt text is empty
+                alt=""
                 fill
                 className="object-cover transition-opacity duration-500 ease-in-out transform scale-110 blur-2xl"
                 aria-hidden="true"
-                quality={25} // Lower quality for blurred background is fine
+                quality={25}
               />
-              {/* Darkening overlay for better text contrast */}
               <div className="absolute inset-0 bg-black/50" aria-hidden="true"></div>
-
-              {/* Layer 2: Centered, Contained Foreground Image */}
-              <div className="absolute inset-0 flex justify-center items-center p-4 md:p-8">
-                <div className="relative w-full h-full max-w-[250px] md:max-w-[300px]">
+              <div className="absolute inset-0 flex justify-center items-center p-4">
+                <div className="relative w-full h-full max-w-[250px]">
                    <Image
                     src={currentNovel.coverImageUrl}
                     alt={currentNovel.title}
                     fill
                     className="object-contain drop-shadow-2xl"
-                    priority={currentIndex === 0} // Prioritize loading the first image
+                    priority={currentIndex === 0}
                   />
                 </div>
               </div>
             </>
           ) : (
-            // Fallback for novels without a cover image
             <div
               className="w-full h-full transition-all duration-500"
               style={{ backgroundColor: currentNovel.coverColor }}
               aria-hidden="true"
             />
           )}
-
-          {/* Text content overlay, optimized for mobile */}
-          <div className="absolute bottom-0 left-0 p-4 md:p-8">
-            <h2 className="text-white text-2xl md:text-4xl font-bold drop-shadow-lg max-w-xl">
+          <div className="absolute bottom-0 left-0 p-4">
+            <h2 className="text-white text-2xl font-bold drop-shadow-lg max-w-xl">
               {currentNovel.title}
             </h2>
           </div>
         </div>
       </Link>
+
+      {/* Desktop View: Three novels side-by-side */}
+      <div className="hidden md:flex w-full h-full items-center justify-center relative">
+        {novels.length > 1 && (
+          <div className="absolute inset-0 bg-black/50" style={{ 
+            backgroundImage: currentNovel.coverImageUrl ? `url(${currentNovel.coverImageUrl})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(40px)',
+            transform: 'scale(1.1)',
+            zIndex: -1
+          }} />
+        )}
+        <div className="flex items-center justify-center h-full w-full gap-4">
+          {novels.map((novel, index) => {
+            const isCurrent = index === currentIndex;
+            const isPrev = index === (currentIndex - 1 + novels.length) % novels.length;
+            const isNext = index === (currentIndex + 1) % novels.length;
+
+            if (!isCurrent && !isPrev && !isNext) return null; // Only render visible novels
+
+            return (
+              <Link 
+                key={novel.id} 
+                href={`/novels/${novel.slug}`} 
+                className={cn(
+                  "relative h-[80%] aspect-[3/4] rounded-lg overflow-hidden transition-all duration-300 ease-in-out",
+                  isCurrent ? "w-[30%] z-10 shadow-lg" : "w-[20%] opacity-70 hover:opacity-100",
+                  isPrev ? "-translate-x-1/2" : "",
+                  isNext ? "translate-x-1/2" : ""
+                )}
+              >
+                {novel.coverImageUrl ? (
+                  <Image
+                    src={novel.coverImageUrl}
+                    alt={novel.title}
+                    fill
+                    className="object-cover"
+                    sizes="20vw"
+                    priority={isCurrent}
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full"
+                    style={{ backgroundColor: novel.coverColor }}
+                  />
+                )}
+                <div className="absolute inset-0 bg-black/30 flex items-end p-3">
+                  <h3 className="text-white text-lg font-semibold line-clamp-2">{novel.title}</h3>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
       
       {/* Left Arrow */}
-      <button onClick={goToPrevious} aria-label="Previous slide" className="hidden group-hover:block absolute top-1/2 -translate-y-1/2 left-3 md:left-5 text-2xl rounded-full p-2 bg-black/40 text-white cursor-pointer hover:bg-black/60 transition-colors z-10">
+      <button onClick={goToPrevious} aria-label="Previous slide" className="absolute top-1/2 -translate-y-1/2 left-3 md:left-5 text-2xl rounded-full p-2 bg-black/40 text-white cursor-pointer hover:bg-black/60 transition-colors z-10">
         <ChevronLeft size={30} />
       </button>
       {/* Right Arrow */}
-      <button onClick={goToNext} aria-label="Next slide" className="hidden group-hover:block absolute top-1/2 -translate-y-1/2 right-3 md:right-5 text-2xl rounded-full p-2 bg-black/40 text-white cursor-pointer hover:bg-black/60 transition-colors z-10">
+      <button onClick={goToNext} aria-label="Next slide" className="absolute top-1/2 -translate-y-1/2 right-3 md:right-5 text-2xl rounded-full p-2 bg-black/40 text-white cursor-pointer hover:bg-black/60 transition-colors z-10">
         <ChevronRight size={30} />
       </button>
       

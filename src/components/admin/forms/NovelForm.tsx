@@ -166,8 +166,8 @@ export function NovelForm({ novel, genres, tags }: NovelFormProps) {
           {/* Left Column: Cover Image & Color */}
           <div className="md:col-span-1 space-y-4">
             <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Cover Image</label>
-                <div className="aspect-[2/3] relative w-full rounded-lg bg-gray-700 border-2 border-dashed border-gray-600 flex items-center justify-center">
+                <label className="block text-sm font-medium text-foreground mb-2">Cover Image</label>
+                <div className="aspect-[2/3] relative w-full rounded-lg bg-card border-2 border-dashed border-border flex items-center justify-center">
                 {formData.coverImageUrl ? (
                     <>
                     <Image src={formData.coverImageUrl} alt="Cover" fill className="object-cover rounded-md" />
@@ -177,8 +177,8 @@ export function NovelForm({ novel, genres, tags }: NovelFormProps) {
                     </>
                 ) : (
                     <div className="text-center p-4">
-                    <ImageIcon className="h-10 w-10 text-gray-500 mx-auto" />
-                    <p className="text-xs text-gray-400 mt-2">No Image Selected</p>
+                    <ImageIcon className="h-10 w-10 text-muted-foreground mx-auto" />
+                    <p className="text-xs text-muted-foreground mt-2">No Image Selected</p>
                     </div>
                 )}
                 </div>
@@ -187,7 +187,7 @@ export function NovelForm({ novel, genres, tags }: NovelFormProps) {
                 </Button>
             </div>
             <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Cover Color Fallback</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Cover Color Fallback</label>
                 <ColorPicker colors={colorOptions} value={formData.coverColor} onChange={(color) => setFormData({ ...formData, coverColor: color })} />
             </div>
           </div>
@@ -195,29 +195,29 @@ export function NovelForm({ novel, genres, tags }: NovelFormProps) {
           {/* Right Column: Main Details */}
           <div className="md:col-span-2 space-y-6">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">Title *</label>
-              <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Enter novel title" required className="bg-gray-700 border-gray-600 text-white" />
+              <label htmlFor="title" className="block text-sm font-medium text-foreground mb-2">Title *</label>
+              <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Enter novel title" required className="bg-card border-border text-foreground" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Genres</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Genres</label>
               <MultiSelect options={genres} selected={formData.genreIds} onChange={(selected) => setFormData({ ...formData, genreIds: selected })} placeholder="Select genres..." />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Tags</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Tags</label>
               <MultiSelect options={tags} selected={formData.tagIds} onChange={(selected) => setFormData({ ...formData, tagIds: selected })} placeholder="Select tags..." />
             </div>
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">Description</label>
-              <textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Enter novel description" rows={8} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md focus:ring-primary" />
+              <label htmlFor="description" className="block text-sm font-medium text-foreground mb-2">Description</label>
+              <textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Enter novel description" rows={8} className="w-full px-3 py-2 bg-card border border-border text-foreground rounded-md focus:ring-primary" />
             </div>
           </div>
         </div>
 
         {/* Status and Publishing Options */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-border">
            <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-300 mb-2">Status</label>
-            <select id="status" value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as NovelStatus })} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md">
+            <label htmlFor="status" className="block text-sm font-medium text-foreground mb-2">Status</label>
+            <select id="status" value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as NovelStatus })} className="w-full px-3 py-2 bg-card border border-border text-foreground rounded-md">
               {statusOptions.map(option => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
@@ -225,20 +225,20 @@ export function NovelForm({ novel, genres, tags }: NovelFormProps) {
           </div>
           <div className="flex items-end">
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" checked={formData.isPublished} onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })} className="h-4 w-4 rounded text-primary bg-gray-700 border-gray-600 focus:ring-primary" />
-              <span className="text-sm text-gray-300">Publish this novel</span>
+              <input type="checkbox" checked={formData.isPublished} onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })} className="h-4 w-4 rounded text-primary bg-card border-border focus:ring-primary" />
+              <span className="text-sm text-foreground">Publish this novel</span>
             </label>
           </div>
            <div className="flex items-end">
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" checked={formData.isPremium} onChange={(e) => setFormData({ ...formData, isPremium: e.target.checked })} className="h-4 w-4 rounded text-primary bg-gray-700 border-gray-600 focus:ring-primary" />
-              <span className="text-sm text-gray-300">Mark as Premium</span>
+              <input type="checkbox" checked={formData.isPremium} onChange={(e) => setFormData({ ...formData, isPremium: e.target.checked })} className="h-4 w-4 rounded text-primary bg-card border-border focus:ring-primary" />
+              <span className="text-sm text-foreground">Mark as Premium</span>
             </label>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-3 pt-6 border-t border-gray-700">
+        <div className="flex justify-end gap-3 pt-6 border-t border-border">
           <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>Cancel</Button>
           <Button type="submit" isLoading={isLoading}>{isEditMode ? 'Update Novel' : 'Create Novel'}</Button>
         </div>
@@ -246,10 +246,10 @@ export function NovelForm({ novel, genres, tags }: NovelFormProps) {
 
       {/* Danger Zone for Editing */}
       {isEditMode && (
-        <div className="mt-12 pt-6 border-t border-red-500/30">
-          <h3 className="text-lg font-medium text-red-400">Danger Zone</h3>
-          <p className="text-sm text-gray-400 mt-1 mb-4">Deleting a novel will soft-delete it. The data remains recoverable from the admin panel.</p>
-          <Button variant="danger" onClick={() => setShowDelete(true)} disabled={isLoading}>Delete Novel</Button>
+        <div className="mt-12 pt-6 border-t border-error/30">
+          <h3 className="text-lg font-medium text-error">Danger Zone</h3>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">Deleting a novel will soft-delete it. The data remains recoverable from the admin panel.</p>
+          <Button type="button" variant="danger" onClick={() => setShowDelete(true)} disabled={isLoading}>Delete Novel</Button>
         </div>
       )}
 

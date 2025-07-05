@@ -94,6 +94,7 @@ model Novel {
   readingProgress  UserReadingProgress[]
   readingListItems ReadingListItem[]
   documentImports  DocumentImport[]
+  mediaFiles       MediaFile[]
 
   @@index([status, isPublished, isDeleted])
   @@index([authorId])
@@ -396,7 +397,9 @@ model MediaFile {
   lastUsedAt   DateTime?
   isOptimized  Boolean   @default(false)
   optimizedAt  DateTime?
-  
+  category     String?   // New field for categorization, e.g., "cover", "chapter-images", "character-art"
+  novelId      String?   // New field to link media to a specific novel
+
   // Soft delete
   isDeleted    Boolean   @default(false)
   deletedAt    DateTime?
@@ -405,11 +408,13 @@ model MediaFile {
 
   // Relations
   uploader     User?          @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+  novel        Novel?         @relation(fields: [novelId], references: [id], onDelete: SetNull) // Link to Novel
   chapterMedia ChapterMedia[]
 
   @@index([mimeType, isDeleted])
   @@index([uploadedBy])
   @@index([usageCount])
+  @@index([novelId, category]) // New index for efficient filtering by novel and category
 }
 
 model ChapterMedia {

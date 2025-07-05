@@ -44,28 +44,28 @@ export function GenreForm({ onSubmit, isLoading, error, initialData }: GenreForm
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Name *</label>
+        <label className="block text-sm font-medium text-foreground mb-2">Name *</label>
         <Input
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="e.g., Fantasy"
           required
-          className="bg-gray-700 border-gray-600 text-white"
+          className="bg-card border-border text-foreground"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+        <label className="block text-sm font-medium text-foreground mb-2">Description</label>
         <textarea
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           rows={3}
-          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md"
+          className="w-full px-3 py-2 bg-card border border-border text-foreground rounded-md"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Color</label>
+        <label className="block text-sm font-medium text-foreground mb-2">Color</label>
         <ColorPicker
           colors={colorOptions}
           value={formData.color}
@@ -73,7 +73,7 @@ export function GenreForm({ onSubmit, isLoading, error, initialData }: GenreForm
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+      <div className="flex justify-end gap-3 pt-4 border-t border-border">
         <Button
           type="button"
           variant="outline"

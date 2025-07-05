@@ -1,0 +1,2376 @@
+# Canon Story - Complete Business Requirements Document
+## A Comprehensive Novel Reading Platform with Advanced Gamification
+
+### Version 2.0 - Complete System Specification
+
+---
+
+## 1. Project Overview
+
+### 1.1 Project Name
+Canon Story - A Modern Web-Based Novel Reading Platform with Community Gamification
+
+### 1.2 Project Vision
+Create a user-friendly, mobile-first platform for publishing and reading novels with an emphasis on excellent reading experience, community engagement, gamification, social features, and comprehensive author analytics.
+
+### 1.3 Project Scope
+Develop a full-stack web application that allows authors to publish novels chapter by chapter, provides readers with an optimized and engaging reading experience, implements comprehensive gamification systems, and includes advanced content discovery and social features.
+
+### 1.4 Project Stakeholders
+- **Primary Author**: Content creator and platform administrator
+- **Readers**: End users consuming content and participating in community
+- **Development Team**: Technical implementation team
+- **Community**: Engaged user base participating in social features
+
+---
+
+## 2. Business Objectives
+
+### 2.1 Primary Goals
+1. **Content Management**: Enable easy publishing and management of novels and chapters
+2. **Reader Engagement**: Provide excellent reading experience with community and gamification features
+3. **Community Building**: Create strong user engagement through social features and customization
+4. **Analytics**: Track comprehensive readership, engagement, and business metrics
+5. **Growth**: Build a highly engaged community around quality content
+6. **Revenue**: Generate sustainable income through premium subscriptions and engagement
+
+### 2.2 Success Metrics
+- **User Engagement**: Average time spent reading per session, daily active users
+- **Content Performance**: Views per chapter, completion rates, reading streaks
+- **Community Growth**: Number of registered users, comments, social interactions
+- **Gamification Success**: Achievement unlock rates, customization usage, leaderboard participation
+- **Retention**: Return user percentage, reading streaks, subscription renewal rates
+- **Revenue**: Subscription conversion rates, premium user engagement, revenue per user
+
+---
+
+## 3. Functional Requirements
+
+### 3.1 User Management
+
+#### 3.1.1 Authentication System
+**FR-001**: Users can register using email address  
+**FR-002**: Users can sign in using Gmail OAuth  
+**FR-003**: Users can sign in using email/password  
+**FR-004**: System maintains user sessions with progress synchronization  
+**FR-005**: Users can sign out from all devices  
+**FR-006**: Password reset functionality via Clerk  
+**FR-007**: Two-factor authentication for admin accounts  
+**FR-008**: Account deletion with GDPR compliance  
+
+#### 3.1.2 User Roles & Permissions
+**FR-009**: Multiple user roles: Admin, Moderator, Premium Reader, Reader  
+**FR-010**: Admin has full platform configuration access  
+**FR-011**: Moderators have content moderation and community management access  
+**FR-012**: Premium readers have enhanced features and content access  
+**FR-013**: Readers have read, comment, and social interaction permissions  
+**FR-014**: Role-based access control for all features with granular permissions  
+
+### 3.2 Content Management & Discovery
+
+#### 3.2.1 Novel Management
+**FR-015**: Admin can create new novels with comprehensive metadata  
+**FR-016**: Each novel has: title, description, cover color/theme, genre, tags, status  
+**FR-017**: Admin can edit novel details and metadata  
+**FR-018**: Novels display total view counts, ratings, and engagement metrics  
+**FR-019**: Novels show published vs total chapter counts with progress indicators  
+**FR-020**: Novel completion status (Ongoing, Completed, Hiatus, Dropped)  
+**FR-021**: SEO-optimized URLs and meta descriptions per novel  
+
+#### 3.2.2 Chapter Management  
+**FR-022**: Admin can create new chapters with rich content editor supporting images and media  
+**FR-023**: Chapters have: title, content, flexible chapter number (0, 1.5, 2.1, etc.), publication status, premium flag  
+**FR-024**: Admin can publish/unpublish chapters with scheduling  
+**FR-025**: Chapter content supports formatted text, HTML, images, and embedded media  
+**FR-026**: Chapters can be published gradually over time with automation  
+**FR-027**: Chapter ordering by flexible numbering system with custom sorting  
+**FR-028**: Chapter version control and edit history with content comparison  
+**FR-029**: Beta reader system for pre-publication feedback  
+**FR-030**: DOCX document import and conversion to chapter format  
+**FR-031**: Bulk chapter upload from multiple DOCX files (up to 50 files per batch)  
+**FR-032**: Image upload and management system with automatic optimization  
+**FR-033**: Chapter content supports inline images with captions and styling  
+**FR-034**: Media library management for reusable assets across chapters  
+
+#### 3.2.3 Content Discovery System
+**FR-035**: Genre/category classification system with admin configuration  
+**FR-036**: Advanced search functionality across novels, chapters, and authors  
+**FR-037**: Filtering by genre, status, popularity, date, rating, length  
+**FR-038**: Trending/Popular content algorithm based on views and engagement  
+**FR-039**: "Recently Updated" feed showing novels with new chapters  
+**FR-040**: Content tagging system (themes, warnings, genres)  
+**FR-041**: Recommendation engine based on reading history and preferences  
+**FR-042**: "Continue Reading" widget on homepage  
+**FR-043**: Full-text search with auto-complete and suggestions  
+
+### 3.3 Reading Experience
+
+#### 3.3.1 Content Browsing
+**FR-044**: Homepage displays novels with advanced filtering and sorting  
+**FR-045**: Novel detail page shows chapter listing with flexible numbering support  
+**FR-046**: Published chapters are accessible based on user permissions  
+**FR-047**: Unpublished chapters are visible only to admin/authorized users  
+**FR-048**: Premium chapter previews for non-premium users  
+
+#### 3.3.2 Reading Interface
+**FR-049**: Clean, distraction-free reading interface with media support  
+**FR-050**: Three theme options: Light, Dark, Reading (warm) with admin customization  
+**FR-051**: Adjustable font size (12px to 24px) with user preferences  
+**FR-052**: Optimal typography for long-form reading  
+**FR-053**: Chapter navigation (Previous/Next) with keyboard shortcuts  
+**FR-054**: Back to novel/home navigation with breadcrumbs  
+**FR-055**: Reading progress tracking with percentage completion  
+**FR-056**: Bookmark system for saving favorite chapters/positions  
+**FR-057**: Reading time estimates and speed tracking  
+**FR-058**: Auto-scroll functionality with speed control  
+**FR-059**: Image viewing with zoom and caption display  
+**FR-060**: Responsive image layout for mobile devices  
+**FR-061**: System UI elements for immersive reading (status panels, character info, world-building elements)  
+
+#### 3.3.3 Reading Progress & History
+**FR-054**: Cross-device reading position synchronization  
+**FR-055**: Reading history with timestamps and resumable positions  
+**FR-056**: Personal reading lists/collections creation and management  
+**FR-057**: Reading streaks tracking with rewards  
+**FR-058**: Novel completion tracking and certificates  
+**FR-059**: Reading statistics and personal analytics  
+
+#### 3.3.4 Mobile Experience
+**FR-060**: Fully responsive design optimized for all devices  
+**FR-061**: Mobile-first approach with touch-friendly interface  
+**FR-062**: Progressive Web App (PWA) capabilities  
+**FR-063**: Offline reading functionality for downloaded chapters  
+**FR-064**: Push notification support for updates and engagement  
+
+### 3.4 Social Features & Community
+
+#### 3.4.1 User Profiles & Social System
+**FR-065**: Comprehensive user profiles with reading statistics and achievements  
+**FR-066**: Follow/unfollow authors and other readers  
+**FR-067**: User activity feeds and social timelines  
+**FR-068**: Friend system with mutual connections  
+**FR-069**: Private messaging between users (optional)  
+**FR-070**: Social sharing of reading progress and achievements  
+
+#### 3.4.2 Rating & Review System
+**FR-071**: Novel rating system (1-5 stars) separate from comments  
+**FR-072**: Detailed review system with spoiler tags and moderation  
+**FR-073**: Review helpfulness voting and ranking  
+**FR-074**: Author response system for reviews  
+**FR-075**: Aggregate rating displays and sorting  
+
+#### 3.4.3 Comment System
+**FR-076**: Readers can comment on chapters with rich text support  
+**FR-077**: Comments require user authentication  
+**FR-078**: Display comment count per chapter with engagement metrics  
+**FR-079**: Comments show user name, timestamp, and user customizations  
+**FR-080**: Comments display in chronological order with sorting options  
+**FR-081**: Real-time comment posting and updates  
+**FR-082**: Comment threading and reply system  
+**FR-083**: Comment moderation tools and reporting system  
+**FR-084**: Comment reactions (like, heart, laugh, etc.)  
+
+#### 3.4.4 Community Features
+**FR-085**: Discussion forums beyond chapter comments  
+**FR-086**: Author announcement system to followers  
+**FR-087**: Reading challenges and community events  
+**FR-088**: User-generated content and community contests  
+**FR-089**: Community moderation tools and reporting system  
+
+### 3.5 Gamification & User Engagement
+
+#### 3.5.1 Achievement System
+**FR-090**: Comprehensive achievement system with multiple categories  
+**FR-091**: Reading achievements (chapters read, novels completed, speed reading)  
+**FR-092**: Social achievements (comments, likes, community engagement)  
+**FR-093**: Special achievements (early adopter, streaks, milestones)  
+**FR-094**: Premium achievements for subscribers  
+**FR-095**: Hidden/secret achievements for discovery  
+**FR-096**: Achievement progress tracking and notifications  
+**FR-097**: Achievement rarity system (common, rare, legendary)  
+
+#### 3.5.2 User Progression System
+**FR-098**: Experience Points (XP) system for all user activities  
+**FR-099**: User level progression with increasing XP requirements  
+**FR-100**: Level-based customization unlocks and privileges  
+**FR-101**: XP multipliers for premium subscribers and events  
+**FR-102**: Daily/weekly/monthly XP bonus systems  
+**FR-103**: Reading streak rewards and multipliers  
+
+#### 3.5.3 Customization System
+**FR-104**: User title system based on achievements and activities  
+**FR-105**: Custom username colors with unlockable palettes  
+**FR-106**: Profile border customization with patterns and animations  
+**FR-107**: Custom avatar frames and decorative elements  
+**FR-108**: Animated profile effects for premium achievements  
+**FR-109**: Comment styling based on user tier and preferences  
+**FR-110**: Seasonal customization themes and limited-time cosmetics  
+
+#### 3.5.4 Leaderboard Systems
+**FR-111**: Multiple leaderboard categories (XP, reading, social, achievements)  
+**FR-112**: Daily, weekly, monthly, and all-time leaderboards  
+**FR-113**: Premium-only leaderboards for subscribers  
+**FR-114**: Hall of Fame for top performers  
+**FR-115**: Leaderboard reset cycles and seasonal competitions  
+
+### 3.6 Premium Subscription System
+
+#### 3.6.1 Subscription Management
+**FR-116**: Admin configurable subscription pricing (monthly/yearly rates)  
+**FR-117**: Admin configurable free trial periods (duration in days)  
+**FR-118**: Admin can toggle subscription types (monthly only, yearly only, both)  
+**FR-119**: Users can subscribe via Stripe payment processing  
+**FR-120**: Users can view subscription status and billing history  
+**FR-121**: System automatically handles subscription renewals  
+**FR-122**: Premium access scope configurable (all novels vs per-novel)  
+**FR-123**: Subscription tier system with different benefit levels  
+
+#### 3.6.2 Premium Content Access
+**FR-124**: Premium chapters marked distinctly from free chapters  
+**FR-125**: Non-premium users see premium chapter previews/teasers  
+**FR-126**: Premium users get immediate access to all premium chapters  
+**FR-127**: Premium chapter unlocking configurable per novel  
+**FR-128**: Premium subscribers can download novels as PDF for offline reading  
+**FR-129**: Premium-only features (early access, exclusive content, enhanced customization)  
+**FR-130**: Premium XP bonuses and exclusive achievements  
+
+### 3.7 Automated Release System
+
+#### 3.7.1 Release Configuration
+**FR-131**: Admin can set premium release schedule per novel (chapters/day, times)  
+**FR-132**: Admin can set free release schedule per novel (chapters/day, times)  
+**FR-133**: Admin can configure premium-to-free conversion delay per novel  
+**FR-134**: System automatically releases chapters based on schedule  
+**FR-135**: Admin can override automatic releases manually  
+**FR-136**: Release schedules support timezone configuration  
+**FR-137**: Bulk chapter upload and scheduling system  
+
+#### 3.7.2 Content Pipeline
+**FR-138**: Chapters have status: Draft, Premium, Free  
+**FR-139**: Automated status transitions based on schedule  
+**FR-140**: Admin dashboard shows upcoming releases  
+**FR-141**: Release notification system for followers  
+**FR-142**: Content preview system for scheduled releases  
+
+### 3.8 Payment Processing & PDF Generation
+
+#### 3.8.1 Stripe Integration
+**FR-143**: Secure credit/debit card processing via Stripe  
+**FR-144**: Support for Apple Pay and Google Pay  
+**FR-145**: Subscription management through Stripe Customer Portal  
+**FR-146**: Webhook handling for subscription events  
+**FR-147**: Configurable refund policy enforcement  
+**FR-148**: Multiple currency support for international users  
+
+#### 3.8.2 PDF Generation System
+**FR-149**: Premium users can generate PDF downloads of complete novels  
+**FR-150**: PDF includes cover, table of contents, and all chapters  
+**FR-151**: Custom PDF styling and formatting options  
+**FR-152**: Download history tracking for admin analytics  
+**FR-153**: PDF generation queue system for large novels  
+
+### 3.9 Analytics & Tracking
+
+#### 3.9.1 View Tracking & Engagement
+**FR-154**: Track individual chapter views with user attribution  
+**FR-155**: Aggregate views at novel level with trend analysis  
+**FR-156**: Prevent duplicate view counting per user session  
+**FR-157**: Anonymous view tracking supported  
+**FR-158**: Real-time view count updates  
+**FR-159**: Reading time tracking and analytics  
+**FR-160**: User engagement heatmaps and behavior analysis  
+
+#### 3.9.2 Advanced Analytics
+**FR-161**: User behavior tracking (scroll patterns, reading speed, drop-off points)  
+**FR-162**: A/B testing framework for pricing and features  
+**FR-163**: Cohort analysis for user retention  
+**FR-164**: Conversion funnel analytics (visitor → reader → subscriber)  
+**FR-165**: Content performance analytics and recommendations  
+**FR-166**: Revenue analytics and subscription metrics  
+
+#### 3.9.3 Milestone Notifications
+**FR-167**: Configurable notification thresholds for chapter/novel milestones  
+**FR-168**: Admin dashboard shows recent milestones and achievements  
+**FR-169**: Automated celebration notifications for users and authors  
+**FR-170**: Community milestone announcements  
+
+### 3.11 Document Import & Media Management
+
+#### 3.11.1 DOCX Import System
+**FR-201**: Admin can upload DOCX files and convert them to chapter format  
+**FR-202**: DOCX import preserves text formatting (bold, italic, headings, lists)  
+**FR-203**: DOCX import extracts and processes embedded images  
+**FR-204**: Bulk DOCX upload supporting up to 50 files per batch  
+**FR-205**: Import queue system to prevent performance degradation  
+**FR-206**: Import progress tracking with real-time status updates  
+**FR-207**: Import preview before final chapter creation  
+**FR-208**: Error handling and validation for corrupted or invalid files  
+**FR-209**: Automatic chapter numbering assignment during bulk import  
+**FR-210**: Import history and audit trail for admin reference  
+
+#### 3.11.2 Media Management System
+**FR-211**: Image upload with drag-and-drop interface  
+**FR-212**: Automatic image optimization (WebP, compression, resizing)  
+**FR-213**: Image library with search and categorization  
+**FR-214**: Bulk image upload and management  
+**FR-215**: Image storage with CDN integration for global delivery  
+**FR-216**: Image metadata management (alt text, captions, attribution)  
+**FR-217**: Responsive image delivery based on device and connection  
+**FR-218**: Image version control and replacement capabilities  
+**FR-219**: Image usage tracking across chapters and novels  
+**FR-220**: Image deletion protection (prevent deletion if in use)  
+
+#### 3.11.3 Chapter Content Enhancement
+**FR-221**: Rich text editor with image insertion and positioning  
+**FR-222**: Image styling options (size, alignment, borders, effects)  
+**FR-223**: Image caption system with formatting support  
+**FR-224**: Image galleries and slideshow functionality  
+**FR-225**: Inline media embedding (audio, video) for premium features  
+**FR-226**: System UI components for immersive reading experiences  
+**FR-227**: Character info panels and world-building elements  
+**FR-228**: Interactive story elements (choices, polls, quizzes)  
+**FR-229**: Chapter content templates for consistent formatting  
+**FR-230**: Content blocks system for reusable elements
+
+### 3.12 Administrative System
+
+#### 3.12.1 Admin Dashboard & Overview
+**FR-231**: Comprehensive dashboard with key metrics overview  
+**FR-232**: Real-time statistics (users, views, comments, revenue)  
+**FR-233**: Recent notifications and activity panel  
+**FR-234**: Novel and chapter performance metrics  
+**FR-235**: Subscription revenue and user conversion analytics  
+**FR-236**: Premium vs free user engagement metrics  
+**FR-237**: Release schedule overview and upcoming releases  
+**FR-238**: System health monitoring and alerts  
+**FR-239**: Document import status and queue monitoring  
+**FR-240**: Media library usage and storage analytics  
+
+#### 3.12.2 Content Management Interface
+**FR-241**: Novel creation and editing interface with rich editor  
+**FR-242**: Chapter creation and editing interface with media support  
+**FR-243**: Bulk chapter management and operations  
+**FR-244**: Publish/unpublish chapter controls with scheduling  
+**FR-245**: Content moderation tools and workflow  
+**FR-246**: SEO optimization tools and meta management  
+**FR-247**: DOCX import interface with batch processing  
+**FR-248**: Media library management with bulk operations  
+**FR-249**: Chapter template creation and management  
+**FR-250**: Content versioning and rollback capabilities  
+
+#### 3.12.3 Document & Media Administration
+**FR-251**: DOCX import configuration (file size limits, allowed formats)  
+**FR-252**: Bulk upload limits and performance monitoring  
+**FR-253**: Import queue management and priority setting  
+**FR-254**: Media storage quota management and alerts  
+**FR-255**: Image optimization settings configuration  
+**FR-256**: CDN integration management and monitoring  
+**FR-257**: Media backup and recovery procedures  
+**FR-258**: Content migration tools for existing data  
+**FR-259**: File format support configuration  
+**FR-260**: Import/export analytics and reporting  
+
+#### 3.10.3 User & Community Management
+**FR-185**: User management interface with role assignment  
+**FR-186**: Community moderation tools and content review  
+**FR-187**: User behavior analytics and engagement tracking  
+**FR-188**: Ban/suspend user functionality with reason logging  
+**FR-189**: User-generated content moderation queue  
+
+#### 3.10.4 System Configuration
+**FR-190**: Subscription pricing configuration interface  
+**FR-191**: Release schedule configuration per novel  
+**FR-192**: Premium content management and status controls  
+**FR-193**: Payment and subscription management dashboard  
+**FR-194**: Gamification system configuration (achievements, XP, rewards)  
+**FR-195**: Customization catalog management (colors, effects, titles)  
+**FR-196**: Leaderboard configuration and reset management  
+**FR-197**: Theme and UI customization for the platform  
+**FR-198**: Email template and notification configuration  
+**FR-199**: API rate limiting and security configuration  
+**FR-200**: Backup and data export functionality  
+
+#### 3.10.5 Gamification Administration
+**FR-201**: Achievement creation and modification interface  
+**FR-202**: XP values and progression curve configuration  
+**FR-203**: Customization item creation and unlock condition setup  
+**FR-204**: Leaderboard management and manual adjustments  
+**FR-205**: User progression monitoring and manual interventions  
+**FR-206**: Event and special promotion configuration  
+**FR-207**: Achievement and customization analytics dashboard  
+**FR-208**: User engagement pattern analysis tools  
+
+---
+
+## 4. Non-Functional Requirements
+
+### 4.1 Performance Requirements
+**NFR-001**: Page load time < 3 seconds on mobile devices  
+**NFR-002**: Database query response time < 500ms for 95% of requests  
+**NFR-003**: Support for 1000+ concurrent users  
+**NFR-004**: Image optimization for covers and UI elements  
+**NFR-005**: CDN integration for global content delivery  
+**NFR-006**: Progressive loading for large content  
+**NFR-007**: Efficient caching strategies for popular content  
+
+### 4.2 Usability Requirements
+**NFR-008**: Intuitive navigation with minimal learning curve  
+**NFR-009**: Accessible design (WCAG 2.1 AA compliance)  
+**NFR-010**: Consistent UI/UX across all devices and browsers  
+**NFR-011**: Error messages are clear and actionable  
+**NFR-012**: Multi-language support foundation  
+**NFR-013**: Keyboard navigation support  
+
+### 4.3 Reliability Requirements
+**NFR-014**: System uptime of 99.5%+  
+**NFR-015**: Automated data backup and recovery procedures  
+**NFR-016**: Graceful error handling and fallback mechanisms  
+**NFR-017**: Session persistence across devices  
+**NFR-018**: Data consistency and integrity validation  
+
+### 4.4 Security Requirements
+**NFR-019**: Secure authentication via Clerk with 2FA support  
+**NFR-020**: HTTPS encryption for all traffic  
+**NFR-021**: Input validation and sanitization for all user inputs  
+**NFR-022**: Protection against common web vulnerabilities (OWASP Top 10)  
+**NFR-023**: Rate limiting and DDoS protection  
+**NFR-024**: Content protection against unauthorized copying  
+**NFR-025**: GDPR compliance with data export/deletion  
+
+### 4.5 Progressive Web App Requirements
+**NFR-026**: Offline reading capability for downloaded chapters  
+**NFR-027**: Push notification support for engagement  
+**NFR-028**: App-like experience with home screen installation  
+**NFR-029**: Background sync for reading progress and bookmarks  
+**NFR-030**: Service worker implementation for offline functionality  
+
+---
+
+## 5. Technical Architecture
+
+### 5.1 Enhanced Technology Stack
+
+#### 5.1.1 Frontend
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript (strict mode)
+- **Styling**: Tailwind CSS with custom theme system
+- **UI Components**: Lucide React icons, custom component library
+- **State Management**: React hooks (useState, useReducer, useContext)
+- **Payment UI**: Stripe Elements React components
+- **PWA**: Service workers for offline functionality
+- **Analytics**: Custom analytics integration
+
+#### 5.1.2 Backend
+- **Runtime**: Node.js (via Next.js)
+- **Database**: PostgreSQL with connection pooling
+- **ORM**: Prisma with advanced query optimization
+- **Authentication**: Clerk with role-based access control
+- **API**: Next.js API Routes with middleware
+- **Payment Processing**: Stripe SDK with webhook handling
+- **PDF Generation**: Puppeteer for high-quality PDF creation
+- **Document Processing**: Mammoth.js for DOCX parsing and conversion
+- **Image Processing**: Sharp for optimization, resizing, and format conversion
+- **Media Storage**: Cloudinary or AWS S3 with CDN integration
+- **Queue System**: Bull Queue with Redis for background processing
+- **Scheduling**: Node-cron for automated releases
+- **Search**: PostgreSQL full-text search with indexing
+- **Caching**: Redis for session and data caching
+
+#### 5.1.3 Deployment & Infrastructure
+- **Frontend Hosting**: Vercel with Edge Functions
+- **Database Hosting**: Railway or Supabase with automated backups
+- **CDN**: Vercel Edge Network for global content delivery
+- **Domain**: Custom domain with automatic HTTPS
+- **Monitoring**: Application performance monitoring and error tracking
+- **Security**: DDoS protection and security headers
+
+### 5.2 Code Architecture Requirements
+
+#### 5.2.1 Modularity & Reusability
+**TR-001**: All components must be reusable and configurable via props  
+**TR-002**: Business logic separated from UI components  
+**TR-003**: Custom hooks for shared functionality  
+**TR-004**: Utility functions in dedicated modules  
+**TR-005**: Type definitions in shared type files  
+**TR-006**: Constants and configurations centralized  
+
+#### 5.2.2 Feature Segregation
+**TR-007**: Admin features isolated in /admin routes and components  
+**TR-008**: Public features in public routes and components  
+**TR-009**: Shared components in /components/shared  
+**TR-010**: Admin-specific components in /components/admin  
+**TR-011**: Reader-specific components in /components/reader  
+**TR-012**: Separate API route groups for admin vs public endpoints  
+**TR-013**: Gamification features properly segregated with admin controls  
+
+#### 5.2.3 Folder Structure Standards
+**TR-014**: Feature-based folder organization  
+**TR-015**: Clear separation between client and server code  
+**TR-016**: Shared utilities and types in dedicated folders  
+**TR-017**: Environment-specific configurations  
+**TR-018**: Test files co-located with source files  
+
+### 5.3 Comprehensive Folder Structure
+
+```
+canon-story/
+├── src/
+│   ├── app/
+│   │   ├── (public)/                    # Public routes group
+│   │   │   ├── page.tsx                 # Homepage with discovery
+│   │   │   ├── search/
+│   │   │   │   └── page.tsx             # Advanced search interface
+│   │   │   ├── genres/
+│   │   │   │   ├── page.tsx             # Genre listing
+│   │   │   │   └── [genre]/
+│   │   │   │       └── page.tsx         # Genre-specific novels
+│   │   │   ├── trending/
+│   │   │   │   └── page.tsx             # Trending content
+│   │   │   ├── subscription/
+│   │   │   │   ├── page.tsx             # Subscription management
+│   │   │   │   ├── plans/
+│   │   │   │   │   └── page.tsx         # Subscription plans
+│   │   │   │   ├── success/
+│   │   │   │   │   └── page.tsx         # Payment success
+│   │   │   │   └── cancel/
+│   │   │   │       └── page.tsx         # Payment cancelled
+│   │   │   ├── profile/
+│   │   │   │   ├── [userId]/
+│   │   │   │   │   ├── page.tsx         # User profile
+│   │   │   │   │   ├── achievements/
+│   │   │   │   │   │   └── page.tsx     # Achievement gallery
+│   │   │   │   │   ├── reading-lists/
+│   │   │   │   │   │   └── page.tsx     # Personal reading lists
+│   │   │   │   │   └── statistics/
+│   │   │   │   │       └── page.tsx     # Reading statistics
+│   │   │   │   └── settings/
+│   │   │   │       ├── page.tsx         # Profile settings
+│   │   │   │       ├── customization/
+│   │   │   │       │   └── page.tsx     # Customization panel
+│   │   │   │       └── preferences/
+│   │   │   │           └── page.tsx     # Reading preferences
+│   │   │   ├── leaderboards/
+│   │   │   │   ├── page.tsx             # Leaderboard hub
+│   │   │   │   ├── reading/
+│   │   │   │   │   └── page.tsx         # Reading leaderboards
+│   │   │   │   ├── social/
+│   │   │   │   │   └── page.tsx         # Social leaderboards
+│   │   │   │   └── achievements/
+│   │   │   │       └── page.tsx         # Achievement leaderboards
+│   │   │   ├── community/
+│   │   │   │   ├── page.tsx             # Community hub
+│   │   │   │   ├── forums/
+│   │   │   │   │   └── page.tsx         # Discussion forums
+│   │   │   │   └── events/
+│   │   │   │       └── page.tsx         # Community events
+│   │   │   ├── novels/
+│   │   │   │   ├── page.tsx             # Novel browser
+│   │   │   │   └── [novelId]/
+│   │   │   │       ├── page.tsx         # Novel detail
+│   │   │   │       ├── reviews/
+│   │   │   │       │   └── page.tsx     # Novel reviews
+│   │   │   │       └── chapters/
+│   │   │   │           └── [chapterId]/
+│   │   │   │               └── page.tsx # Chapter reader
+│   │   │   └── layout.tsx               # Public layout
+│   │   ├── (admin)/                     # Admin routes group
+│   │   │   ├── admin/
+│   │   │   │   ├── page.tsx             # Admin dashboard
+│   │   │   │   ├── novels/
+│   │   │   │   │   ├── page.tsx         # Novel management
+│   │   │   │   │   ├── create/
+│   │   │   │   │   │   └── page.tsx     # Create novel
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       ├── page.tsx     # Edit novel
+│   │   │   │   │       ├── schedule/
+│   │   │   │   │       │   └── page.tsx # Release schedule
+│   │   │   │   │       ├── analytics/
+│   │   │   │   │       │   └── page.tsx # Novel analytics
+│   │   │   │   │       └── chapters/
+│   │   │   │   │           ├── page.tsx # Chapter management
+│   │   │   │   │           └── create/
+│   │   │   │   │               └── page.tsx # Create chapter
+│   │   │   │   ├── users/
+│   │   │   │   │   ├── page.tsx         # User management
+│   │   │   │   │   ├── [userId]/
+│   │   │   │   │   │   └── page.tsx     # User details
+│   │   │   │   │   ├── moderation/
+│   │   │   │   │   │   └── page.tsx     # Moderation queue
+│   │   │   │   │   └── roles/
+│   │   │   │   │       └── page.tsx     # Role management
+│   │   │   │   ├── gamification/
+│   │   │   │   │   ├── page.tsx         # Gamification dashboard
+│   │   │   │   │   ├── achievements/
+│   │   │   │   │   │   ├── page.tsx     # Achievement management
+│   │   │   │   │   │   └── create/
+│   │   │   │   │   │       └── page.tsx # Create achievement
+│   │   │   │   │   ├── customization/
+│   │   │   │   │   │   ├── page.tsx     # Customization catalog
+│   │   │   │   │   │   ├── colors/
+│   │   │   │   │   │   │   └── page.tsx # Color management
+│   │   │   │   │   │   ├── borders/
+│   │   │   │   │   │   │   └── page.tsx # Border management
+│   │   │   │   │   │   └── effects/
+│   │   │   │   │   │       └── page.tsx # Effect management
+│   │   │   │   │   ├── leaderboards/
+│   │   │   │   │   │   └── page.tsx     # Leaderboard config
+│   │   │   │   │   └── events/
+│   │   │   │   │       └── page.tsx     # Event management
+│   │   │   │   ├── subscriptions/
+│   │   │   │   │   ├── page.tsx         # Subscription management
+│   │   │   │   │   ├── plans/
+│   │   │   │   │   │   └── page.tsx     # Subscription plans
+│   │   │   │   │   ├── revenue/
+│   │   │   │   │   │   └── page.tsx     # Revenue analytics
+│   │   │   │   │   └── billing/
+│   │   │   │   │       └── page.tsx     # Billing management
+│   │   │   │   ├── content/
+│   │   │   │   │   ├── page.tsx         # Content overview
+│   │   │   │   │   ├── moderation/
+│   │   │   │   │   │   └── page.tsx     # Content moderation
+│   │   │   │   │   ├── genres/
+│   │   │   │   │   │   └── page.tsx     # Genre management
+│   │   │   │   │   └── tags/
+│   │   │   │   │       └── page.tsx     # Tag management
+│   │   │   │   ├── analytics/
+│   │   │   │   │   ├── page.tsx         # Analytics dashboard
+│   │   │   │   │   ├── engagement/
+│   │   │   │   │   │   └── page.tsx     # Engagement analytics
+│   │   │   │   │   ├── revenue/
+│   │   │   │   │   │   └── page.tsx     # Revenue analytics
+│   │   │   │   │   └── performance/
+│   │   │   │   │       └── page.tsx     # Performance metrics
+│   │   │   │   └── settings/
+│   │   │   │       ├── page.tsx         # Platform settings
+│   │   │   │       ├── themes/
+│   │   │   │       │   └── page.tsx     # Theme configuration
+│   │   │   │       ├── notifications/
+│   │   │   │       │   └── page.tsx     # Notification config
+│   │   │   │       └── integrations/
+│   │   │   │           └── page.tsx     # Third-party integrations
+│   │   │   └── layout.tsx               # Admin layout
+│   │   ├── api/
+│   │   │   ├── public/                  # Public API endpoints
+│   │   │   │   ├── novels/
+│   │   │   │   │   ├── route.ts         # GET novels with filters
+│   │   │   │   │   ├── trending/
+│   │   │   │   │   │   └── route.ts     # GET trending novels
+│   │   │   │   │   ├── search/
+│   │   │   │   │   │   └── route.ts     # POST search query
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       ├── route.ts     # GET novel details
+│   │   │   │   │       ├── chapters/
+│   │   │   │   │       │   └── route.ts # GET chapters
+│   │   │   │   │       ├── reviews/
+│   │   │   │   │       │   └── route.ts # GET/POST reviews
+│   │   │   │   │       └── pdf/
+│   │   │   │   │           └── route.ts # Generate/download PDF
+│   │   │   │   ├── chapters/
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       ├── route.ts     # GET chapter
+│   │   │   │   │       ├── views/
+│   │   │   │   │       │   └── route.ts # POST view tracking
+│   │   │   │   │       └── comments/
+│   │   │   │   │           └── route.ts # GET/POST comments
+│   │   │   │   ├── users/
+│   │   │   │   │   ├── profile/
+│   │   │   │   │   │   └── route.ts     # GET/PUT user profile
+│   │   │   │   │   ├── progress/
+│   │   │   │   │   │   └── route.ts     # GET/POST reading progress
+│   │   │   │   │   ├── bookmarks/
+│   │   │   │   │   │   └── route.ts     # GET/POST bookmarks
+│   │   │   │   │   ├── achievements/
+│   │   │   │   │   │   └── route.ts     # GET user achievements
+│   │   │   │   │   ├── customization/
+│   │   │   │   │   │   └── route.ts     # GET/PUT user customization
+│   │   │   │   │   └── [userId]/
+│   │   │   │   │       └── route.ts     # GET public profile
+│   │   │   │   ├── gamification/
+│   │   │   │   │   ├── achievements/
+│   │   │   │   │   │   └── route.ts     # GET available achievements
+│   │   │   │   │   ├── leaderboards/
+│   │   │   │   │   │   └── route.ts     # GET leaderboards
+│   │   │   │   │   └── progress/
+│   │   │   │   │       └── route.ts     # POST XP/achievement progress
+│   │   │   │   ├── subscription/
+│   │   │   │   │   ├── status/
+│   │   │   │   │   │   └── route.ts     # GET subscription status
+│   │   │   │   │   ├── plans/
+│   │   │   │   │   │   └── route.ts     # GET available plans
+│   │   │   │   │   ├── create/
+│   │   │   │   │   │   └── route.ts     # POST create subscription
+│   │   │   │   │   └── cancel/
+│   │   │   │   │       └── route.ts     # POST cancel subscription
+│   │   │   │   └── genres/
+│   │   │   │       └── route.ts         # GET available genres
+│   │   │   ├── admin/                   # Admin API endpoints
+│   │   │   │   ├── novels/
+│   │   │   │   │   ├── route.ts         # POST/PUT novels
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       ├── route.ts     # PUT/DELETE novel
+│   │   │   │   │       ├── chapters/
+│   │   │   │   │       │   └── route.ts # POST/PUT chapters
+│   │   │   │   │       ├── schedule/
+│   │   │   │   │       │   └── route.ts # GET/PUT release schedule
+│   │   │   │   │       └── analytics/
+│   │   │   │   │           └── route.ts # GET novel analytics
+│   │   │   │   ├── users/
+│   │   │   │   │   ├── route.ts         # GET user list
+│   │   │   │   │   ├── [userId]/
+│   │   │   │   │   │   ├── route.ts     # GET/PUT user details
+│   │   │   │   │   │   ├── ban/
+│   │   │   │   │   │   │   └── route.ts # POST ban user
+│   │   │   │   │   │   └── progress/
+│   │   │   │   │   │       └── route.ts # PUT manual progress adjustment
+│   │   │   │   │   └── moderation/
+│   │   │   │   │       └── route.ts     # GET moderation queue
+│   │   │   │   ├── gamification/
+│   │   │   │   │   ├── achievements/
+│   │   │   │   │   │   ├── route.ts     # GET/POST/PUT achievements
+│   │   │   │   │   │   └── [id]/
+│   │   │   │   │   │       └── route.ts # PUT/DELETE achievement
+│   │   │   │   │   ├── customization/
+│   │   │   │   │   │   ├── route.ts     # GET/POST customization items
+│   │   │   │   │   │   └── [id]/
+│   │   │   │   │   │       └── route.ts # PUT/DELETE customization
+│   │   │   │   │   ├── leaderboards/
+│   │   │   │   │   │   └── route.ts     # GET/PUT leaderboard config
+│   │   │   │   │   └── events/
+│   │   │   │   │       └── route.ts     # GET/POST special events
+│   │   │   │   ├── subscriptions/
+│   │   │   │   │   ├── route.ts         # GET all subscriptions
+│   │   │   │   │   ├── plans/
+│   │   │   │   │   │   └── route.ts     # GET/POST subscription plans
+│   │   │   │   │   └── revenue/
+│   │   │   │   │       └── route.ts     # GET revenue analytics
+│   │   │   │   ├── content/
+│   │   │   │   │   ├── genres/
+│   │   │   │   │   │   └── route.ts     # GET/POST/PUT genres
+│   │   │   │   │   ├── tags/
+│   │   │   │   │   │   └── route.ts     # GET/POST/PUT tags
+│   │   │   │   │   └── moderation/
+│   │   │   │   │       └── route.ts     # GET/PUT content moderation
+│   │   │   │   ├── analytics/
+│   │   │   │   │   ├── route.ts         # GET comprehensive analytics
+│   │   │   │   │   ├── engagement/
+│   │   │   │   │   │   └── route.ts     # GET engagement metrics
+│   │   │   │   │   └── performance/
+│   │   │   │   │       └── route.ts     # GET performance metrics
+│   │   │   │   └── settings/
+│   │   │   │       ├── route.ts         # GET/PUT platform settings
+│   │   │   │       ├── themes/
+│   │   │   │       │   └── route.ts     # GET/PUT theme config
+│   │   │   │       └── notifications/
+│   │   │   │           └── route.ts     # GET/PUT notification config
+│   │   │   └── webhooks/
+│   │   │       ├── clerk/
+│   │   │       │   └── route.ts         # Clerk user management
+│   │   │       └── stripe/
+│   │   │           └── route.ts         # Stripe payment events
+│   │   └── layout.tsx                   # Root layout
+│   ├── components/
+│   │   ├── shared/                      # Shared components
+│   │   │   ├── ui/                      # Base UI components
+│   │   │   │   ├── Button.tsx
+│   │   │   │   ├── Input.tsx
+│   │   │   │   ├── Modal.tsx
+│   │   │   │   ├── Card.tsx
+│   │   │   │   ├── Badge.tsx
+│   │   │   │   ├── ProgressBar.tsx
+│   │   │   │   ├── Tooltip.tsx
+│   │   │   │   ├── LoadingSpinner.tsx
+│   │   │   │   └── index.ts             # Barrel exports
+│   │   │   ├── layout/                  # Layout components
+│   │   │   │   ├── Header.tsx
+│   │   │   │   ├── Footer.tsx
+│   │   │   │   ├── Navigation.tsx
+│   │   │   │   ├── Sidebar.tsx
+│   │   │   │   ├── Breadcrumbs.tsx
+│   │   │   │   └── ThemeProvider.tsx
+│   │   │   ├── forms/                   # Form components
+│   │   │   │   ├── FormField.tsx
+│   │   │   │   ├── TextArea.tsx
+│   │   │   │   ├── Select.tsx
+│   │   │   │   ├── Checkbox.tsx
+│   │   │   │   ├── RadioGroup.tsx
+│   │   │   │   └── ValidationMessage.tsx
+│   │   │   └── gamification/            # Shared gamification UI
+│   │   │       ├── XPBar.tsx
+│   │   │       ├── LevelBadge.tsx
+│   │   │       ├── AchievementBadge.tsx
+│   │   │       ├── UserTitle.tsx
+│   │   │       └── CustomizationPreview.tsx
+│   │   ├── discovery/                   # Content discovery
+│   │   │   ├── SearchBar.tsx
+│   │   │   ├── AdvancedSearch.tsx
+│   │   │   ├── GenreFilter.tsx
+│   │   │   ├── SortOptions.tsx
+│   │   │   ├── TrendingNovels.tsx
+│   │   │   ├── RecentlyUpdated.tsx
+│   │   │   ├── RecommendationEngine.tsx
+│   │   │   └── NovelGrid.tsx
+│   │   ├── social/                      # Social features
+│   │   │   ├── UserProfile.tsx
+│   │   │   ├── ProfileCard.tsx
+│   │   │   ├── FollowButton.tsx
+│   │   │   ├── FollowersList.tsx
+│   │   │   ├── RatingSystem.tsx
+│   │   │   ├── ReviewSection.tsx
+│   │   │   ├── ReviewCard.tsx
+│   │   │   ├── ReadingLists.tsx
+│   │   │   ├── ReadingListCard.tsx
+│   │   │   ├── UserStats.tsx
+│   │   │   ├── ActivityFeed.tsx
+│   │   │   └── SocialShare.tsx
+│   │   ├── gamification/                # Gamification UI
+│   │   │   ├── AchievementGallery.tsx
+│   │   │   ├── AchievementCard.tsx
+│   │   │   ├── ProgressTracker.tsx
+│   │   │   ├── Leaderboard.tsx
+│   │   │   ├── LeaderboardCard.tsx
+│   │   │   ├── CustomizationPanel.tsx
+│   │   │   ├── ColorPicker.tsx
+│   │   │   ├── BorderSelector.tsx
+│   │   │   ├── EffectPreview.tsx
+│   │   │   ├── TitleManager.tsx
+│   │   │   ├── XPNotification.tsx
+│   │   │   └── MilestoneAnimation.tsx
+│   │   ├── reader/                      # Reader-specific components
+│   │   │   ├── NovelCard.tsx
+│   │   │   ├── NovelDetail.tsx
+│   │   │   ├── ChapterReader.tsx
+│   │   │   ├── ChapterList.tsx
+│   │   │   ├── EnhancedChapterReader.tsx    # NEW: With media support
+│   │   │   ├── ImageViewer.tsx              # NEW: Image zoom and caption
+│   │   │   ├── SystemUIElements.tsx         # NEW: Immersive UI components
+│   │   │   ├── InteractiveContent.tsx       # NEW: Polls, choices, etc.
+│   │   │   ├── CommentSection.tsx
+│   │   │   ├── CommentCard.tsx
+│   │   │   ├── ReadingControls.tsx
+│   │   │   ├── ThemeSelector.tsx
+│   │   │   ├── FontController.tsx
+│   │   │   ├── ChapterNavigation.tsx
+│   │   │   ├── ProgressIndicator.tsx
+│   │   │   ├── BookmarkManager.tsx
+│   │   │   ├── ReadingHistory.tsx
+│   │   │   ├── PremiumBadge.tsx
+│   │   │   ├── SubscriptionPrompt.tsx
+│   │   │   ├── PDFDownload.tsx
+│   │   │   └── OfflineReader.tsx
+│   │   └── admin/                       # Admin-specific components
+│   │       ├── Dashboard.tsx
+│   │       ├── MetricsOverview.tsx
+│   │       ├── NovelManagement.tsx
+│   │       ├── ChapterManagement.tsx
+│   │       ├── UserManagement.tsx
+│   │       ├── AnalyticsDashboard.tsx
+│   │       ├── NotificationPanel.tsx
+│   │       ├── SubscriptionManagement.tsx
+│   │       ├── RevenueAnalytics.tsx
+│   │       ├── ReleaseScheduler.tsx
+│   │       ├── ContentModeration.tsx
+│   │       ├── gamification/
+│   │       │   ├── GamificationDashboard.tsx
+│   │       │   ├── AchievementManager.tsx
+│   │       │   ├── CustomizationCatalog.tsx
+│   │       │   ├── LeaderboardConfig.tsx
+│   │       │   ├── EventManager.tsx
+│   │       │   ├── UserProgressMonitor.tsx
+│   │       │   └── EngagementAnalytics.tsx
+│   │       ├── media/
+│   │       │   ├── MediaLibrary.tsx
+│   │       │   ├── ImageUploader.tsx
+│   │       │   ├── BulkUploader.tsx
+│   │       │   ├── MediaOptimizer.tsx
+│   │       │   ├── ImportQueue.tsx
+│   │       │   └── DocumentImporter.tsx
+│   │       ├── forms/
+│   │       │   ├── NovelForm.tsx
+│   │       │   ├── ChapterForm.tsx
+│   │       │   ├── UserForm.tsx
+│   │       │   ├── SettingsForm.tsx
+│   │       │   ├── SubscriptionPlanForm.tsx
+│   │       │   ├── ReleaseScheduleForm.tsx
+│   │       │   ├── AchievementForm.tsx
+│   │       │   ├── CustomizationForm.tsx
+│   │       │   ├── EventForm.tsx
+│   │       │   ├── MediaSettingsForm.tsx
+│   │       │   └── ImportConfigForm.tsx
+│   │       └── tables/
+│   │           ├── ChaptersTable.tsx
+│   │           ├── UsersTable.tsx
+│   │           ├── SubscriptionsTable.tsx
+│   │           ├── AchievementsTable.tsx
+│   │           ├── CustomizationsTable.tsx
+│   │           ├── MediaTable.tsx
+│   │           ├── ImportHistoryTable.tsx
+│   │           └── AnalyticsTable.tsx
+│   ├── lib/                             # Shared utilities
+│   │   ├── db.ts                        # Database client
+│   │   ├── auth.ts                      # Auth utilities
+│   │   ├── utils.ts                     # General utilities
+│   │   ├── constants.ts                 # App constants
+│   │   ├── validators.ts                # Data validation
+│   │   ├── formatters.ts                # Data formatters
+│   │   ├── search.ts                    # Search utilities
+│   │   └── gamification.ts              # Gamification logic
+│   ├── services/                        # Business logic layer
+│   │   ├── novelService.ts
+│   │   ├── userService.ts
+│   │   ├── searchService.ts
+│   │   ├── recommendationService.ts
+│   │   ├── analyticsService.ts
+│   │   ├── notificationService.ts
+│   │   ├── gamificationService.ts
+│   │   ├── achievementService.ts
+│   │   ├── customizationService.ts
+│   │   ├── subscriptionService.ts
+│   │   ├── documentImportService.ts         # NEW: DOCX processing
+│   │   ├── mediaProcessingService.ts        # NEW: Image optimization
+│   │   ├── queueService.ts                  # NEW: Background job processing
+│   │   └── contentProcessingService.ts      # NEW: Content parsing and formatting
+│   ├── hooks/                           # Custom React hooks
+│   │   ├── useTheme.ts
+│   │   ├── useAuth.ts
+│   │   ├── useLocalStorage.ts
+│   │   ├── useDebounce.ts
+│   │   ├── useProgress.ts
+│   │   ├── useBookmarks.ts
+│   │   ├── useSearch.ts
+│   │   ├── useRecommendations.ts
+│   │   ├── useFollowing.ts
+│   │   ├── useGamification.ts
+│   │   ├── useAchievements.ts
+│   │   ├── useCustomization.ts
+│   │   ├── useLeaderboard.ts
+│   │   ├── useDocumentImport.ts             # NEW: DOCX import functionality
+│   │   ├── useMediaLibrary.ts               # NEW: Media management
+│   │   ├── useImageOptimization.ts          # NEW: Image processing
+│   │   ├── useBulkUpload.ts                 # NEW: Bulk operations
+│   │   └── admin/
+│   │       ├── useAdminAuth.ts
+│   │       ├── useAnalytics.ts
+│   │       ├── useNotifications.ts
+│   │       ├── useUserManagement.ts
+│   │       ├── useGamificationAdmin.ts
+│   │       ├── useDocumentAdmin.ts          # NEW: Document import admin
+│   │       └── useMediaAdmin.ts             # NEW: Media management admin
+│   ├── types/                           # TypeScript type definitions
+│   │   ├── index.ts                     # Main types
+│   │   ├── database.ts                  # Database types
+│   │   ├── api.ts                       # API types
+│   │   ├── ui.ts                        # UI component types
+│   │   ├── admin.ts                     # Admin-specific types
+│   │   ├── reader.ts                    # Reader-specific types
+│   │   ├── gamification.ts              # Gamification types
+│   │   ├── social.ts                    # Social features types
+│   │   └── subscription.ts              # Subscription types
+│   ├── styles/                          # Styling utilities
+│   │   ├── themes.ts                    # Theme definitions
+│   │   ├── typography.ts                # Typography styles
+│   │   ├── animations.ts                # Animation definitions
+│   │   └── gamification.ts              # Gamification styles
+│   └── config/                          # Configuration files
+│       ├── database.ts                  # Database config
+│       ├── auth.ts                      # Auth config
+│       ├── gamification.ts              # Gamification config
+│       └── constants.ts                 # Environment constants
+├── prisma/
+│   ├── schema.prisma
+│   ├── migrations/
+│   └── seed.ts
+├── public/
+│   ├── icons/
+│   ├── images/
+│   ├── achievements/                    # Achievement icons
+│   ├── customizations/                  # Customization assets
+│   ├── manifest.json                    # PWA manifest
+│   └── favicon.ico
+├── docs/                                # Documentation
+│   ├── api/                             # API documentation
+│   ├── components/                      # Component documentation
+│   └── deployment/                      # Deployment guides
+├── tests/                               # Test files
+│   ├── components/
+│   ├── services/
+│   ├── hooks/
+│   └── integration/
+├── middleware.ts
+├── next.config.js
+├── tailwind.config.js
+├── tsconfig.json
+├── package.json
+└── README.md
+```
+
+### 5.4 Enhanced Database Schema
+
+```sql
+-- Core User Management
+Users (
+    id UUID PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(50) UNIQUE,
+    displayName VARCHAR(100),
+    avatarUrl VARCHAR(255),
+    role VARCHAR(20) DEFAULT 'reader', -- admin, moderator, premium_reader, reader
+    isActive BOOLEAN DEFAULT TRUE,
+    emailVerified BOOLEAN DEFAULT FALSE,
+    lastLoginAt TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+-- Content Management
+Novels (
+    id UUID PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    slug VARCHAR(200) UNIQUE NOT NULL,
+    description TEXT,
+    coverColor VARCHAR(7) DEFAULT '#3B82F6',
+    authorId UUID REFERENCES Users(id),
+    status VARCHAR(20) DEFAULT 'ongoing', -- ongoing, completed, hiatus, dropped
+    isPublished BOOLEAN DEFAULT FALSE,
+    isPremium BOOLEAN DEFAULT FALSE,
+    totalViews BIGINT DEFAULT 0,
+    averageRating DECIMAL(3,2) DEFAULT 0,
+    ratingCount INT DEFAULT 0,
+    wordCount INT DEFAULT 0,
+    estimatedReadTime INT DEFAULT 0, -- minutes
+    seoTitle VARCHAR(200),
+    seoDescription TEXT,
+    seoKeywords TEXT,
+    publishedAt TIMESTAMP,
+    completedAt TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+Chapters (
+    id UUID PRIMARY KEY,
+    novelId UUID REFERENCES Novels(id) ON DELETE CASCADE,
+    title VARCHAR(200) NOT NULL,
+    slug VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    chapterNumber DECIMAL(10,2) NOT NULL, -- Supports 1, 1.5, 0, 2.1, etc.
+    displayOrder DECIMAL(10,2) NOT NULL, -- For custom sorting
+    wordCount INT DEFAULT 0,
+    estimatedReadTime INT DEFAULT 0, -- minutes
+    status VARCHAR(20) DEFAULT 'draft', -- draft, premium, free
+    isPublished BOOLEAN DEFAULT FALSE,
+    isPremium BOOLEAN DEFAULT FALSE,
+    views BIGINT DEFAULT 0,
+    hasImages BOOLEAN DEFAULT FALSE,
+    imageCount INT DEFAULT 0,
+    publishedAt TIMESTAMP,
+    scheduledAt TIMESTAMP,
+    seoTitle VARCHAR(200),
+    seoDescription TEXT,
+    importedFrom VARCHAR(255), -- original DOCX filename if imported
+    importedAt TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW(),
+    UNIQUE(novelId, chapterNumber),
+    UNIQUE(novelId, slug),
+    INDEX (novelId, displayOrder)
+);
+
+-- Content Organization
+Genres (
+    id UUID PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    slug VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    color VARCHAR(7) DEFAULT '#6B7280',
+    iconUrl VARCHAR(255),
+    isActive BOOLEAN DEFAULT TRUE,
+    sortOrder INT DEFAULT 0,
+    createdAt TIMESTAMP DEFAULT NOW()
+);
+
+NovelGenres (
+    novelId UUID REFERENCES Novels(id) ON DELETE CASCADE,
+    genreId UUID REFERENCES Genres(id) ON DELETE CASCADE,
+    PRIMARY KEY (novelId, genreId)
+);
+
+Tags (
+    id UUID PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    type VARCHAR(20) NOT NULL, -- theme, warning, demographic
+    color VARCHAR(7) DEFAULT '#9CA3AF',
+    isActive BOOLEAN DEFAULT TRUE,
+    usageCount INT DEFAULT 0,
+    createdAt TIMESTAMP DEFAULT NOW()
+);
+
+NovelTags (
+    novelId UUID REFERENCES Novels(id) ON DELETE CASCADE,
+    tagId UUID REFERENCES Tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (novelId, tagId)
+);
+
+-- User Engagement
+ChapterViews (
+    id UUID PRIMARY KEY,
+    chapterId UUID REFERENCES Chapters(id) ON DELETE CASCADE,
+    userId UUID REFERENCES Users(id) ON DELETE SET NULL,
+    sessionId VARCHAR(255), -- for anonymous tracking
+    ipAddress INET,
+    userAgent TEXT,
+    readingTime INT DEFAULT 0, -- seconds
+    completionPercentage INT DEFAULT 0,
+    viewedAt TIMESTAMP DEFAULT NOW(),
+    INDEX (chapterId, userId),
+    INDEX (chapterId, sessionId)
+);
+
+Comments (
+    id UUID PRIMARY KEY,
+    chapterId UUID REFERENCES Chapters(id) ON DELETE CASCADE,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    parentId UUID REFERENCES Comments(id) ON DELETE CASCADE, -- for threading
+    content TEXT NOT NULL,
+    isEdited BOOLEAN DEFAULT FALSE,
+    isModerated BOOLEAN DEFAULT FALSE,
+    moderatedBy UUID REFERENCES Users(id),
+    moderatedAt TIMESTAMP,
+    moderationReason TEXT,
+    likeCount INT DEFAULT 0,
+    replyCount INT DEFAULT 0,
+    isReported BOOLEAN DEFAULT FALSE,
+    reportCount INT DEFAULT 0,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+CommentReactions (
+    id UUID PRIMARY KEY,
+    commentId UUID REFERENCES Comments(id) ON DELETE CASCADE,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    reactionType VARCHAR(20) NOT NULL, -- like, heart, laugh, angry, sad
+    createdAt TIMESTAMP DEFAULT NOW(),
+    UNIQUE(commentId, userId, reactionType)
+);
+
+-- Social Features
+UserFollows (
+    followerId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    followingId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (followerId, followingId)
+);
+
+Ratings (
+    id UUID PRIMARY KEY,
+    novelId UUID REFERENCES Novels(id) ON DELETE CASCADE,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW(),
+    UNIQUE(novelId, userId)
+);
+
+Reviews (
+    id UUID PRIMARY KEY,
+    novelId UUID REFERENCES Novels(id) ON DELETE CASCADE,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    ratingId UUID REFERENCES Ratings(id) ON DELETE CASCADE,
+    title VARCHAR(200),
+    content TEXT NOT NULL,
+    hasSpoilers BOOLEAN DEFAULT FALSE,
+    isRecommended BOOLEAN DEFAULT TRUE,
+    helpfulCount INT DEFAULT 0,
+    unhelpfulCount INT DEFAULT 0,
+    isModerated BOOLEAN DEFAULT FALSE,
+    moderatedBy UUID REFERENCES Users(id),
+    moderatedAt TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW(),
+    UNIQUE(novelId, userId)
+);
+
+ReviewHelpfulness (
+    id UUID PRIMARY KEY,
+    reviewId UUID REFERENCES Reviews(id) ON DELETE CASCADE,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    isHelpful BOOLEAN NOT NULL,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    UNIQUE(reviewId, userId)
+);
+
+-- Reading Progress & Bookmarks
+UserReadingProgress (
+    id UUID PRIMARY KEY,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    novelId UUID REFERENCES Novels(id) ON DELETE CASCADE,
+    chapterId UUID REFERENCES Chapters(id) ON DELETE CASCADE,
+    progressPercentage INT DEFAULT 0 CHECK (progressPercentage >= 0 AND progressPercentage <= 100),
+    scrollPosition INT DEFAULT 0,
+    readingTime INT DEFAULT 0, -- total time in seconds
+    lastReadAt TIMESTAMP DEFAULT NOW(),
+    UNIQUE(userId, novelId)
+);
+
+UserBookmarks (
+    id UUID PRIMARY KEY,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    chapterId UUID REFERENCES Chapters(id) ON DELETE CASCADE,
+    position INT DEFAULT 0, -- character position or paragraph
+    note TEXT,
+    isPrivate BOOLEAN DEFAULT TRUE,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    INDEX (userId, chapterId)
+);
+
+ReadingLists (
+    id UUID PRIMARY KEY,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    isPublic BOOLEAN DEFAULT FALSE,
+    isDefault BOOLEAN DEFAULT FALSE,
+    novelCount INT DEFAULT 0,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+ReadingListItems (
+    id UUID PRIMARY KEY,
+    listId UUID REFERENCES ReadingLists(id) ON DELETE CASCADE,
+    novelId UUID REFERENCES Novels(id) ON DELETE CASCADE,
+    addedAt TIMESTAMP DEFAULT NOW(),
+    UNIQUE(listId, novelId)
+);
+
+-- Gamification System
+UserLevels (
+    userId UUID PRIMARY KEY REFERENCES Users(id) ON DELETE CASCADE,
+    currentLevel INT DEFAULT 1,
+    currentXP BIGINT DEFAULT 0,
+    totalXP BIGINT DEFAULT 0,
+    lastXPGain TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+Achievements (
+    id UUID PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    category VARCHAR(50) NOT NULL, -- reading, social, special, premium
+    tier VARCHAR(20) NOT NULL, -- bronze, silver, gold, platinum, diamond
+    type VARCHAR(50) NOT NULL, -- chapters_read, comments_posted, streak_days, etc.
+    iconUrl VARCHAR(255),
+    badgeUrl VARCHAR(255),
+    requirements JSONB NOT NULL, -- {type: "chapters_read", target: 100, timeframe: null}
+    rewards JSONB NOT NULL, -- {xp: 500, title: "Bookworm", unlocks: ["color_gold"]}
+    isActive BOOLEAN DEFAULT TRUE,
+    isSecret BOOLEAN DEFAULT FALSE,
+    isRepeatable BOOLEAN DEFAULT FALSE,
+    rarityScore INT DEFAULT 0, -- for rarity calculation
+    unlockCount INT DEFAULT 0,
+    sortOrder INT DEFAULT 0,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+UserAchievements (
+    id UUID PRIMARY KEY,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    achievementId UUID REFERENCES Achievements(id) ON DELETE CASCADE,
+    progress INT DEFAULT 0,
+    targetProgress INT NOT NULL,
+    isCompleted BOOLEAN DEFAULT FALSE,
+    completedAt TIMESTAMP,
+    notified BOOLEAN DEFAULT FALSE,
+    UNIQUE(userId, achievementId)
+);
+
+UserTitles (
+    id UUID PRIMARY KEY,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    title VARCHAR(100) NOT NULL,
+    source VARCHAR(50) NOT NULL, -- achievement, author_granted, special_event
+    sourceId UUID, -- reference to achievement, event, etc.
+    unlockedAt TIMESTAMP DEFAULT NOW(),
+    isActive BOOLEAN DEFAULT FALSE,
+    expiresAt TIMESTAMP
+);
+
+UserCustomization (
+    userId UUID PRIMARY KEY REFERENCES Users(id) ON DELETE CASCADE,
+    activeTitle VARCHAR(100),
+    usernameColor VARCHAR(7) DEFAULT '#374151',
+    borderStyle VARCHAR(50) DEFAULT 'none',
+    borderColor VARCHAR(7) DEFAULT '#6B7280',
+    avatarFrame VARCHAR(50) DEFAULT 'none',
+    profileEffects JSONB DEFAULT '[]', -- [{"type": "glow", "color": "#FFD700"}]
+    commentStyle JSONB DEFAULT '{}', -- {"background": "#F3F4F6", "border": "none"}
+    lastUpdated TIMESTAMP DEFAULT NOW()
+);
+
+UnlockedCustomizations (
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    itemType VARCHAR(50) NOT NULL, -- color, border, frame, effect, title
+    itemId VARCHAR(100) NOT NULL,
+    source VARCHAR(50) NOT NULL, -- achievement, level, premium, purchase, event
+    sourceId UUID,
+    unlockedAt TIMESTAMP DEFAULT NOW(),
+    expiresAt TIMESTAMP,
+    PRIMARY KEY (userId, itemType, itemId)
+);
+
+ExperienceLog (
+    id UUID PRIMARY KEY,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    action VARCHAR(50) NOT NULL, -- chapter_read, comment_posted, achievement_unlocked
+    xpGained INT NOT NULL,
+    sourceType VARCHAR(50) NOT NULL, -- chapter, comment, achievement, daily_bonus
+    sourceId UUID,
+    multiplier DECIMAL(3,2) DEFAULT 1.0, -- premium bonus, event bonus
+    description TEXT,
+    createdAt TIMESTAMP DEFAULT NOW()
+);
+
+ReadingStreaks (
+    userId UUID PRIMARY KEY REFERENCES Users(id) ON DELETE CASCADE,
+    currentStreak INT DEFAULT 0,
+    longestStreak INT DEFAULT 0,
+    lastActivityDate DATE,
+    streakStartDate DATE,
+    bonusMultiplier DECIMAL(3,2) DEFAULT 1.0,
+    achievements JSONB DEFAULT '[]' -- streak-based achievements
+);
+
+Leaderboards (
+    id UUID PRIMARY KEY,
+    type VARCHAR(50) NOT NULL, -- monthly_xp, reading_streak, comments, achievements
+    period VARCHAR(20) NOT NULL, -- daily, weekly, monthly, all_time
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    score BIGINT NOT NULL,
+    rank INT NOT NULL,
+    metadata JSONB DEFAULT '{}', -- additional context
+    periodStart DATE,
+    periodEnd DATE,
+    isActive BOOLEAN DEFAULT TRUE,
+    updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+-- Subscription System
+SubscriptionPlans (
+    id UUID PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    monthlyPrice DECIMAL(10,2),
+    yearlyPrice DECIMAL(10,2),
+    trialDays INT DEFAULT 0,
+    features JSONB NOT NULL, -- list of included features
+    isActive BOOLEAN DEFAULT TRUE,
+    isVisible BOOLEAN DEFAULT TRUE,
+    sortOrder INT DEFAULT 0,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+UserSubscriptions (
+    id UUID PRIMARY KEY,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    planId UUID REFERENCES SubscriptionPlans(id),
+    stripeSubscriptionId VARCHAR(255) UNIQUE,
+    stripeCustomerId VARCHAR(255),
+    status VARCHAR(50) NOT NULL, -- active, canceled, past_due, unpaid
+    currentPeriodStart TIMESTAMP,
+    currentPeriodEnd TIMESTAMP,
+    cancelAtPeriodEnd BOOLEAN DEFAULT FALSE,
+    canceledAt TIMESTAMP,
+    trialStart TIMESTAMP,
+    trialEnd TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+PaymentRecords (
+    id UUID PRIMARY KEY,
+    subscriptionId UUID REFERENCES UserSubscriptions(id),
+    stripePaymentIntentId VARCHAR(255),
+    amount DECIMAL(10,2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'USD',
+    status VARCHAR(50) NOT NULL, -- succeeded, failed, pending
+    description TEXT,
+    metadata JSONB DEFAULT '{}',
+    processedAt TIMESTAMP DEFAULT NOW()
+);
+
+PDFDownloads (
+    id UUID PRIMARY KEY,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    novelId UUID REFERENCES Novels(id) ON DELETE CASCADE,
+    fileSize BIGINT,
+    downloadUrl VARCHAR(500),
+    expiresAt TIMESTAMP,
+    downloadCount INT DEFAULT 0,
+    lastDownloadAt TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT NOW()
+);
+
+-- Release Automation
+ReleaseSchedules (
+    novelId UUID PRIMARY KEY REFERENCES Novels(id) ON DELETE CASCADE,
+    premiumReleaseConfig JSONB, -- {chaptersPerDay: 1, releaseTimes: ["09:00"], timezone: "UTC"}
+    freeReleaseConfig JSONB, -- {chaptersPerDay: 1, releaseTimes: ["12:00"], timezone: "UTC"}
+    premiumToFreeDelay INT DEFAULT 7, -- days
+    isActive BOOLEAN DEFAULT FALSE,
+    nextPremiumRelease TIMESTAMP,
+    nextFreeRelease TIMESTAMP,
+    lastProcessed TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW()
+);
+
+-- Document Import & Media Management
+MediaFiles (
+    id UUID PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    originalName VARCHAR(255) NOT NULL,
+    mimeType VARCHAR(100) NOT NULL,
+    fileSize BIGINT NOT NULL,
+    width INT, -- for images
+    height INT, -- for images
+    url VARCHAR(500) NOT NULL,
+    cdnUrl VARCHAR(500),
+    thumbnailUrl VARCHAR(500),
+    altText TEXT,
+    caption TEXT,
+    metadata JSONB DEFAULT '{}', -- EXIF data, compression info, etc.
+    uploadedBy UUID REFERENCES Users(id),
+    usageCount INT DEFAULT 0,
+    lastUsedAt TIMESTAMP,
+    isOptimized BOOLEAN DEFAULT FALSE,
+    optimizedAt TIMESTAMP,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    INDEX (mimeType),
+    INDEX (uploadedBy),
+    INDEX (usageCount)
+);
+
+ChapterMedia (
+    id UUID PRIMARY KEY,
+    chapterId UUID REFERENCES Chapters(id) ON DELETE CASCADE,
+    mediaId UUID REFERENCES MediaFiles(id) ON DELETE CASCADE,
+    position INT NOT NULL, -- order within chapter
+    displayType VARCHAR(50) DEFAULT 'inline', -- inline, gallery, background, etc.
+    styling JSONB DEFAULT '{}', -- size, alignment, border, etc.
+    caption TEXT,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    UNIQUE(chapterId, mediaId, position)
+);
+
+DocumentImports (
+    id UUID PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    originalSize BIGINT NOT NULL,
+    mimeType VARCHAR(100) NOT NULL,
+    novelId UUID REFERENCES Novels(id) ON DELETE CASCADE,
+    uploadedBy UUID REFERENCES Users(id) ON DELETE CASCADE,
+    status VARCHAR(50) DEFAULT 'pending', -- pending, processing, completed, failed
+    progress INT DEFAULT 0, -- percentage
+    chaptersCreated INT DEFAULT 0,
+    imagesExtracted INT DEFAULT 0,
+    errorMessage TEXT,
+    processingStarted TIMESTAMP,
+    processingCompleted TIMESTAMP,
+    extractedContent JSONB, -- structured content from DOCX
+    importSettings JSONB DEFAULT '{}', -- import configuration
+    createdAt TIMESTAMP DEFAULT NOW(),
+    INDEX (status),
+    INDEX (uploadedBy),
+    INDEX (novelId)
+);
+
+ImportQueue (
+    id UUID PRIMARY KEY,
+    importId UUID REFERENCES DocumentImports(id) ON DELETE CASCADE,
+    priority INT DEFAULT 0,
+    retryCount INT DEFAULT 0,
+    maxRetries INT DEFAULT 3,
+    lastError TEXT,
+    queuedAt TIMESTAMP DEFAULT NOW(),
+    startedAt TIMESTAMP,
+    completedAt TIMESTAMP,
+    INDEX (priority, queuedAt)
+);
+
+ChapterContent (
+    id UUID PRIMARY KEY,
+    chapterId UUID REFERENCES Chapters(id) ON DELETE CASCADE,
+    contentType VARCHAR(50) NOT NULL, -- text, image, system_ui, interactive
+    content TEXT NOT NULL,
+    position INT NOT NULL,
+    styling JSONB DEFAULT '{}',
+    metadata JSONB DEFAULT '{}',
+    isVisible BOOLEAN DEFAULT TRUE,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    INDEX (chapterId, position)
+);
+
+ContentTemplates (
+    id UUID PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    category VARCHAR(50) NOT NULL, -- chapter, scene, character_info, world_building
+    templateContent JSONB NOT NULL,
+    thumbnailUrl VARCHAR(500),
+    isActive BOOLEAN DEFAULT TRUE,
+    usageCount INT DEFAULT 0,
+    createdBy UUID REFERENCES Users(id),
+    createdAt TIMESTAMP DEFAULT NOW(),
+    updatedAt TIMESTAMP DEFAULT NOW()
+);
+Notifications (
+    id UUID PRIMARY KEY,
+    userId UUID REFERENCES Users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL, -- milestone, achievement, comment, follow, release
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    data JSONB DEFAULT '{}', -- additional data for the notification
+    isRead BOOLEAN DEFAULT FALSE,
+    isArchived BOOLEAN DEFAULT FALSE,
+    createdAt TIMESTAMP DEFAULT NOW(),
+    readAt TIMESTAMP
+);
+
+SystemSettings (
+    key VARCHAR(100) PRIMARY KEY,
+    value JSONB NOT NULL,
+    category VARCHAR(50) NOT NULL, -- gamification, ui, features, integrations
+    description TEXT,
+    isPublic BOOLEAN DEFAULT FALSE, -- can be accessed by public API
+    updatedAt TIMESTAMP DEFAULT NOW(),
+    updatedBy UUID REFERENCES Users(id)
+);
+
+ContentReports (
+    id UUID PRIMARY KEY,
+    reporterId UUID REFERENCES Users(id) ON DELETE SET NULL,
+    contentType VARCHAR(50) NOT NULL, -- comment, review, novel, chapter
+    contentId UUID NOT NULL,
+    reason VARCHAR(100) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) DEFAULT 'pending', -- pending, reviewed, dismissed, actioned
+    reviewedBy UUID REFERENCES Users(id),
+    reviewedAt TIMESTAMP,
+    resolution TEXT,
+    createdAt TIMESTAMP DEFAULT NOW()
+);
+
+-- Analytics and Events
+AnalyticsEvents (
+    id UUID PRIMARY KEY,
+    userId UUID REFERENCES Users(id) ON DELETE SET NULL,
+    sessionId VARCHAR(255),
+    eventType VARCHAR(50) NOT NULL, -- page_view, chapter_start, chapter_complete, subscription_start
+    eventData JSONB NOT NULL,
+    metadata JSONB DEFAULT '{}',
+    ipAddress INET,
+    userAgent TEXT,
+    createdAt TIMESTAMP DEFAULT NOW()
+);
+
+-- Search Optimization
+SearchIndex (
+    id UUID PRIMARY KEY,
+    entityType VARCHAR(50) NOT NULL, -- novel, chapter, user
+    entityId UUID NOT NULL,
+    searchableText TEXT NOT NULL,
+    searchVector TSVECTOR, -- PostgreSQL full-text search
+    weight DECIMAL(3,2) DEFAULT 1.0, -- boost factor
+    lastIndexed TIMESTAMP DEFAULT NOW(),
+    INDEX (entityType, entityId),
+    INDEX USING GIN (searchVector)
+);
+
+-- Create indexes for performance
+CREATE INDEX idx_novels_status ON Novels(status, isPublished);
+CREATE INDEX idx_novels_genre ON NovelGenres(genreId);
+CREATE INDEX idx_chapters_novel_number ON Chapters(novelId, chapterNumber);
+CREATE INDEX idx_chapters_status ON Chapters(status, isPublished);
+CREATE INDEX idx_views_chapter_user ON ChapterViews(chapterId, userId);
+CREATE INDEX idx_comments_chapter ON Comments(chapterId, createdAt);
+CREATE INDEX idx_user_achievements ON UserAchievements(userId, isCompleted);
+CREATE INDEX idx_leaderboards_type_period ON Leaderboards(type, period, rank);
+CREATE INDEX idx_notifications_user ON Notifications(userId, isRead, createdAt);
+```
+
+---
+
+## 6. User Stories
+
+### 6.1 Reader Experience Stories
+**US-001**: As a reader, I want to discover novels through search and genres so I can find content I enjoy  
+**US-002**: As a reader, I want to read chapters in a clean interface so I can focus on the content  
+**US-003**: As a reader, I want to adjust reading settings so I can customize my experience  
+**US-004**: As a reader, I want to track my reading progress so I know where I am in stories  
+**US-005**: As a reader, I want to bookmark favorite passages so I can return to them later  
+**US-006**: As a reader, I want reading recommendations so I can discover new content  
+**US-007**: As a reader, I want to rate and review novels so I can share my opinions  
+**US-008**: As a reader, I want to create reading lists so I can organize novels by preference  
+**US-009**: As a reader, I want to follow authors so I get notified of new releases  
+**US-010**: As a reader, I want to see my reading statistics so I can track my habits  
+
+### 6.2 Social & Community Stories
+**US-011**: As a reader, I want to comment on chapters so I can engage with content and community  
+**US-012**: As a reader, I want to follow other readers so I can see their activity and recommendations  
+**US-013**: As a reader, I want to participate in community discussions so I can connect with other fans  
+**US-014**: As a reader, I want to share my achievements so I can celebrate milestones with others  
+**US-015**: As a reader, I want to see leaderboards so I can compare my reading activity with others  
+
+### 6.3 Gamification Stories
+**US-016**: As a reader, I want to earn XP and level up so I feel rewarded for my reading activity  
+**US-017**: As a reader, I want to unlock achievements so I have goals to work toward  
+**US-018**: As a reader, I want to customize my profile appearance so I can express my personality  
+**US-019**: As a reader, I want to earn special titles so I can show my dedication to the community  
+**US-020**: As a reader, I want reading streaks to be tracked so I'm motivated to read daily  
+**US-021**: As a reader, I want to unlock new customization options so I have progression rewards  
+**US-022**: As a reader, I want to see my achievements displayed so others can see my accomplishments  
+
+### 6.4 Premium User Stories
+**US-023**: As a reader, I want to see premium chapter previews so I understand the value proposition  
+**US-024**: As a reader, I want to subscribe easily so I can access premium content  
+**US-025**: As a premium user, I want immediate access to all premium chapters so I get value for my subscription  
+**US-026**: As a premium user, I want to download novels as PDFs so I can read offline  
+**US-027**: As a premium user, I want exclusive customizations so I have additional recognition  
+**US-028**: As a premium user, I want bonus XP so my progression is enhanced  
+
+### 6.5 Author/Admin Stories
+**US-029**: As an author, I want to create and organize novels so I can publish my content effectively  
+**US-030**: As an author, I want to add chapters with rich editing so I can format content properly  
+**US-031**: As an author, I want to see detailed analytics so I understand my audience  
+**US-032**: As an author, I want to manage comments and reviews so I can moderate discussions  
+**US-033**: As an author, I want to receive notifications so I stay updated on engagement  
+**US-034**: As an author, I want to control publication timing so I can release content strategically  
+**US-035**: As an author, I want to communicate with followers so I can build community  
+**US-036**: As an author, I want to configure subscription pricing so I can optimize revenue  
+**US-037**: As an author, I want to set up automated releases so I can maintain consistent publishing  
+
+### 6.6 Administrative Stories
+**US-038**: As an admin, I want to configure gamification settings so I can optimize user engagement  
+**US-039**: As an admin, I want to create and manage achievements so I can reward user behavior  
+**US-040**: As an admin, I want to customize the platform appearance so I can maintain brand consistency  
+**US-041**: As an admin, I want to moderate user content so I can maintain community standards  
+**US-042**: As an admin, I want comprehensive analytics so I can make data-driven decisions  
+**US-043**: As an admin, I want to manage user roles and permissions so I can control access  
+**US-044**: As an admin, I want to configure pricing and plans so I can optimize business model  
+
+### 6.7 System Integration Stories
+**US-045**: As an admin, I want all features to be configurable so I can adapt the platform to needs  
+**US-046**: As an admin, I want clear segregation between admin and public features so users have appropriate access  
+**US-047**: As an admin, I want to preview public views so I can see the user experience  
+**US-048**: As a user, I want seamless experience across features so the platform feels cohesive  
+**US-049**: As a user, I want consistent visual design so the interface is intuitive  
+**US-050**: As a user, I want reliable performance so I can use the platform without frustration  
+
+---
+
+## 7. User Interface Requirements
+
+### 7.1 Design Principles
+- **Content-First**: Reading experience is the absolute priority
+- **Gamification Integration**: Achievement and progression elements seamlessly integrated
+- **Social Harmony**: Community features enhance rather than distract from reading
+- **Admin Clarity**: Clear distinction between administrative and public interfaces
+- **Responsive Excellence**: Optimal experience across all device sizes
+- **Accessibility**: Meets WCAG 2.1 AA compliance standards
+- **Performance**: Fast loading and smooth interactions
+
+### 7.2 Color Scheme & Themes
+
+#### 7.2.1 Public Area Themes
+```css
+/* Light Theme */
+Background: #FFFFFF
+Text: #1F2937
+Accent: #2563EB
+Secondary: #6B7280
+Success: #10B981
+Warning: #F59E0B
+Error: #EF4444
+
+/* Dark Theme */
+Background: #111827
+Text: #F9FAFB
+Accent: #3B82F6
+Secondary: #9CA3AF
+Success: #10B981
+Warning: #F59E0B
+Error: #EF4444
+
+/* Reading Theme (Warm) */
+Background: #FEF3C7
+Text: #92400E
+Accent: #D97706
+Secondary: #A16207
+```
+
+#### 7.2.2 Admin Area Theme
+```css
+Background: #0F172A
+Text: #F1F5F9
+Primary: #10B981
+Accent: #3B82F6
+Secondary: #64748B
+Warning: #F59E0B
+Success: #22C55E
+Error: #EF4444
+```
+
+#### 7.2.3 Gamification Colors
+```css
+/* XP and Progression */
+XP_Primary: #8B5CF6
+XP_Secondary: #A78BFA
+Level_Background: #EDE9FE
+
+/* Achievement Tiers */
+Bronze: #CD7F32
+Silver: #C0C0C0
+Gold: #FFD700
+Platinum: #E5E4E2
+Diamond: #B9F2FF
+
+/* Customization Unlocks */
+Unlocked: #10B981
+Locked: #6B7280
+Premium: #F59E0B
+```
+
+### 7.3 Key UI Components
+
+#### 7.3.1 Enhanced Header/Navigation
+- Canon Story branding with customizable admin badge
+- Comprehensive navigation menu with user context
+- User authentication controls with role indicators
+- Theme toggle with admin-configurable options
+- Notification center with real-time updates
+- Search bar with auto-complete functionality
+- Mobile hamburger menu with full feature access
+
+#### 7.3.2 Gamified User Profile Display
+- User avatar with custom frame and effects
+- Level indicator with XP progress bar
+- Active title display with hover tooltips
+- Achievement badge showcase (recent/featured)
+- Reading streak indicator
+- Quick stats (total XP, level, achievements, reading time)
+- Customization preview panel
+
+#### 7.3.3 Enhanced Novel Cards
+- Eye-catching cover design with admin-configurable gradients
+- Novel title with author byline
+- Genre tags with color coding
+- Rating display with star visualization
+- Progress indicator (X/Y chapters) with user-specific progress
+- View count and popularity indicators
+- Premium badge for subscription content
+- Reading status indicators (new, updated, completed)
+- Quick action buttons (bookmark, add to list, subscribe)
+
+#### 7.3.4 Advanced Reading Interface
+- Chapter title with novel breadcrumb navigation
+- Reading controls (theme, font size, speed) with user preferences
+- Progress indicators (chapter and novel completion)
+- Gamification elements (XP notification, achievement unlocks)
+- Enhanced chapter content with optimal typography
+- Previous/Next navigation with keyboard shortcuts
+- Social proof elements (view counts, ratings, comments count)
+- Premium content indicators and subscription prompts
+
+#### 7.3.5 Social Comment Section
+- User profile integration with custom colors and effects
+- Achievement-based comment styling
+- Rich text comment composer with formatting options
+- Comment threading and reply system
+- Reaction system (like, heart, laugh, etc.)
+- Real-time comment updates
+- Moderation tools for admin/moderators
+- Sort and filter options
+
+#### 7.3.6 Comprehensive Admin Dashboard
+- Multi-metric overview with customizable widgets
+- Real-time statistics and performance indicators
+- Gamification management panel
+- Content management shortcuts
+- User activity monitoring
+- Revenue and subscription analytics
+- System health indicators
+- Quick action center for common tasks
+
+#### 7.3.7 Gamification Interface Components
+- Achievement gallery with progress tracking
+- Leaderboard displays with multiple categories
+- Customization panel with live preview
+- XP and level progression visualization
+- Milestone celebration animations
+- Achievement unlock notifications
+- Progress tracking widgets
+- Social achievement sharing tools
+
+### 7.4 UI Segregation Implementation
+
+#### 7.4.1 Visual Distinction Standards
+**UI-001**: Admin areas use distinct visual branding with darker professional theme  
+**UI-002**: Admin navigation clearly separated with role-based visibility  
+**UI-003**: Admin pages display "Admin Panel" indicator in header with user context  
+**UI-004**: Different color schemes maintain brand consistency while distinguishing access levels  
+**UI-005**: Admin features use professional dashboard styling with data-focused layouts  
+
+#### 7.4.2 Access Control Integration
+**UI-006**: Admin routes redirect unauthorized users with clear messaging  
+**UI-007**: Admin navigation dynamically adjusts based on user role and permissions  
+**UI-008**: Admin components handle permission errors gracefully with actionable messages  
+**UI-009**: Clear error messages for unauthorized access with suggested alternatives  
+**UI-010**: Admin logout returns to public homepage with session cleanup  
+
+#### 7.4.3 User Experience Continuity
+**UI-011**: Seamless transition between admin and public views with context preservation  
+**UI-012**: Admin can preview public view of content with "View as Reader" functionality  
+**UI-013**: Breadcrumb navigation in admin areas with clear hierarchy  
+**UI-014**: Quick admin access from public pages for authorized users  
+**UI-015**: Context-sensitive help and documentation in admin interface  
+
+---
+
+## 8. Per-Chat Development Plan
+
+### 8.1 Implementation Overview
+This development plan breaks down the entire project into specific chat sessions, where each chat has clear deliverables and acceptance criteria. This approach allows for:
+- **Precise Progress Tracking**: Each chat has specific goals and outcomes
+- **Easy Rollback**: If issues arise, we can revert to the previous chat's state
+- **Flexible Scheduling**: Development can be paused and resumed without losing context
+- **Quality Assurance**: Each chat includes testing and validation steps
+
+### 8.2 Chat-Based Development Schedule
+
+#### **PHASE 1: FOUNDATION & CORE ARCHITECTURE**
+
+**Chat 1: Project Setup & Database Foundation**
+*Scope: Complete project initialization and core database*
+- ✅ Next.js 14 project setup with TypeScript and Tailwind CSS
+- ✅ Folder structure implementation (complete hierarchy)
+- ✅ PostgreSQL database setup with Prisma
+- ✅ Core database schema implementation (Users, Novels, Chapters with flexible numbering)
+- ✅ Basic environment configuration
+- ✅ Git repository initialization with proper .gitignore
+- **Deliverable**: Working Next.js app with database connection
+- **Testing**: Database connections, basic page routing, TypeScript compilation
+
+**Chat 2: Authentication & Basic UI Components**
+*Scope: User authentication and shared component library*
+- ✅ Clerk authentication integration with role-based access
+- ✅ Shared UI components library (Button, Input, Card, Modal, etc.)
+- ✅ Theme system implementation (Light, Dark, Reading themes)
+- ✅ Basic layout components (Header, Footer, Navigation)
+- ✅ TypeScript type definitions for core entities
+- **Deliverable**: Authentication working with basic UI components
+- **Testing**: User signup/login, theme switching, component rendering
+
+**Chat 3: API Structure & Admin/Public Segregation**
+*Scope: Core API architecture with proper segregation*
+- ✅ API route structure (/api/admin/* and /api/public/*)
+- ✅ Middleware for authentication and role-based access control
+- ✅ Basic CRUD operations for novels and chapters
+- ✅ Admin layout with distinct styling and navigation
+- ✅ Public layout with reader-focused design
+- **Deliverable**: Working API endpoints with proper access control
+- **Testing**: API responses, role-based access, admin/public route segregation
+
+#### **PHASE 2: CONTENT MANAGEMENT & DOCUMENT PROCESSING**
+
+**Chat 4: Novel & Chapter Management (Basic)**
+*Scope: Core content creation and management*
+- ✅ Novel creation and editing interface
+- ✅ Chapter creation with flexible numbering system (0, 1.5, etc.)
+- ✅ Rich text editor integration for chapter content
+- ✅ Chapter listing with proper ordering (displayOrder field)
+- ✅ Basic chapter status management (draft, published)
+- **Deliverable**: Working content management for novels and chapters
+- **Testing**: Novel creation, chapter ordering, text editing, content persistence
+
+**Chat 5: Media Management System**
+*Scope: Image upload, processing, and management*
+- ✅ Image upload system with drag-and-drop interface
+- ✅ Sharp integration for image optimization and resizing
+- ✅ Media library with search and categorization
+- ✅ Database tables for MediaFiles and ChapterMedia
+- ✅ CDN integration setup (Cloudinary or AWS S3)
+- ✅ Image insertion in chapter content
+- **Deliverable**: Complete image management system
+- **Testing**: Image uploads, optimization, insertion into chapters, CDN delivery
+
+**Chat 6: DOCX Import System**
+*Scope: Document processing and bulk upload*
+- ✅ Mammoth.js integration for DOCX parsing
+- ✅ Document import interface with file selection
+- ✅ Content extraction (text, formatting, images)
+- ✅ Queue system setup with Bull Queue and Redis
+- ✅ Import progress tracking and status updates
+- ✅ Error handling for corrupted files
+- **Deliverable**: Working DOCX import with progress tracking
+- **Testing**: DOCX file processing, content extraction, error scenarios
+
+**Chat 7: Bulk Operations & Performance**
+*Scope: Bulk upload and performance optimization*
+- ✅ Bulk DOCX upload (up to 50 files)
+- ✅ Batch processing with queue management
+- ✅ Import history and audit trails
+- ✅ Performance monitoring and optimization
+- ✅ File size limits and validation
+- ✅ Memory management for large files
+- **Deliverable**: Optimized bulk processing system
+- **Testing**: Large file uploads, concurrent processing, memory usage monitoring
+
+#### **PHASE 3: READING EXPERIENCE & DISCOVERY**
+
+**Chat 8: Enhanced Reading Interface**
+*Scope: Core reading experience with media support*
+- ✅ Chapter reader with image display and zoom functionality
+- ✅ Reading controls (font size, themes, auto-scroll)
+- ✅ Chapter navigation with flexible numbering support
+- ✅ Progress tracking and bookmark system
+- ✅ Responsive image layout for mobile devices
+- ✅ Reading time estimation and speed tracking
+- **Deliverable**: Complete reading interface with media support
+- **Testing**: Reading experience across devices, image viewing, progress tracking
+
+**Chat 9: Content Discovery System**
+*Scope: Search, genres, and recommendation engine*
+- ✅ Genre and tag management system
+- ✅ Advanced search with full-text capabilities
+- ✅ Search indexing for novels, chapters, and content
+- ✅ Filtering and sorting options
+- ✅ Basic recommendation algorithm
+- ✅ Trending content calculation
+- **Deliverable**: Working content discovery system
+- **Testing**: Search functionality, filtering, recommendation accuracy
+
+**Chat 10: Reading Progress & History**
+*Scope: User reading tracking and cross-device sync*
+- ✅ Reading progress synchronization across devices
+- ✅ Reading history with timestamps
+- ✅ Bookmark management with notes
+- ✅ Reading lists creation and management
+- ✅ Continue reading functionality
+- ✅ Reading statistics and analytics
+- **Deliverable**: Complete reading tracking system
+- **Testing**: Cross-device sync, bookmark functionality, reading statistics
+
+#### **PHASE 4: SOCIAL FEATURES & COMMUNITY**
+
+**Chat 11: User Profiles & Social Foundation**
+*Scope: User profiles and basic social features*
+- ✅ User profile pages with reading statistics
+- ✅ Follow/unfollow system for users and authors
+- ✅ Basic activity feeds
+- ✅ User preference management
+- ✅ Privacy controls for profiles
+- **Deliverable**: Working user profiles and follow system
+- **Testing**: Profile creation, follow functionality, activity tracking
+
+**Chat 12: Rating & Review System**
+*Scope: Content rating and detailed reviews*
+- ✅ Star rating system for novels
+- ✅ Detailed review creation with spoiler tags
+- ✅ Review helpfulness voting
+- ✅ Review moderation tools
+- ✅ Rating aggregation and display
+- ✅ Author response system for reviews
+- **Deliverable**: Complete rating and review system
+- **Testing**: Rating submission, review creation, moderation workflow
+
+**Chat 13: Comment System & Community Features**
+*Scope: Chapter comments and community interaction*
+- ✅ Comment system with threading and replies
+- ✅ Comment reactions (like, heart, laugh, etc.)
+- ✅ Real-time comment updates
+- ✅ Comment moderation and reporting
+- ✅ Community discussion features
+- ✅ User-generated content support
+- **Deliverable**: Working comment and community system
+- **Testing**: Comment functionality, moderation tools, real-time updates
+
+#### **PHASE 5: GAMIFICATION SYSTEM**
+
+**Chat 14: Core Gamification (XP & Levels)**
+*Scope: Experience points and level progression*
+- ✅ XP system for all user activities
+- ✅ Level progression with configurable curves
+- ✅ XP tracking and notifications
+- ✅ Reading streak system with rewards
+- ✅ Daily/weekly bonus systems
+- ✅ XP multipliers for premium users
+- **Deliverable**: Working XP and level system
+- **Testing**: XP calculation, level progression, streak tracking
+
+**Chat 15: Achievement System**
+*Scope: Achievement creation and tracking*
+- ✅ Achievement database and logic system
+- ✅ Achievement categories (reading, social, special)
+- ✅ Progress tracking for complex achievements
+- ✅ Achievement unlock notifications
+- ✅ Achievement rarity and scoring system
+- ✅ Hidden/secret achievement support
+- **Deliverable**: Complete achievement system
+- **Testing**: Achievement unlocks, progress tracking, notification system
+
+**Chat 16: User Customization System**
+*Scope: Visual customization and personalization*
+- ✅ Username color customization
+- ✅ Profile border and frame system
+- ✅ Avatar decoration and effects
+- ✅ Custom title management
+- ✅ Unlock system tied to achievements/levels
+- ✅ Customization preview interface
+- **Deliverable**: Working customization system
+- **Testing**: Customization unlocks, visual effects, preview functionality
+
+**Chat 17: Leaderboards & Social Recognition**
+*Scope: Competitive features and social recognition*
+- ✅ Multiple leaderboard categories
+- ✅ Daily/weekly/monthly/all-time boards
+- ✅ Leaderboard calculation and updates
+- ✅ Social sharing of achievements
+- ✅ Hall of Fame system
+- ✅ Competitive events and challenges
+- **Deliverable**: Complete leaderboard system
+- **Testing**: Leaderboard calculations, ranking accuracy, social features
+
+#### **PHASE 6: PREMIUM & SUBSCRIPTION SYSTEM**
+
+**Chat 18: Subscription Infrastructure**
+*Scope: Stripe integration and subscription management*
+- ✅ Stripe payment integration with webhooks
+- ✅ Subscription plan configuration
+- ✅ Payment processing and billing
+- ✅ Subscription status tracking
+- ✅ Trial period management
+- ✅ Cancellation and refund handling
+- **Deliverable**: Working subscription system
+- **Testing**: Payment processing, subscription management, webhook handling
+
+**Chat 19: Premium Content & Features**
+*Scope: Premium content access and exclusive features*
+- ✅ Premium chapter marking and access control
+- ✅ Premium customization unlocks
+- ✅ Exclusive achievement tracks
+- ✅ Enhanced XP bonuses for subscribers
+- ✅ Premium-only leaderboards
+- ✅ Early access content system
+- **Deliverable**: Complete premium feature set
+- **Testing**: Premium access control, exclusive features, subscription benefits
+
+**Chat 20: PDF Generation & Automated Releases**
+*Scope: Content export and automation*
+- ✅ PDF generation with Puppeteer
+- ✅ Custom PDF styling and formatting
+- ✅ Download management and history
+- ✅ Automated release scheduling
+- ✅ Content pipeline automation
+- ✅ Release notification system
+- **Deliverable**: Working PDF generation and release automation
+- **Testing**: PDF quality, automated releases, notification delivery
+
+#### **PHASE 7: ADMIN CONFIGURATION SYSTEM**
+
+**Chat 21: Gamification Administration**
+*Scope: Admin controls for gamification features*
+- ✅ Achievement creation and management interface
+- ✅ XP value configuration
+- ✅ Level progression curve settings
+- ✅ Customization catalog management
+- ✅ Leaderboard configuration
+- ✅ Event and promotion management
+- **Deliverable**: Complete gamification admin interface
+- **Testing**: Admin configuration changes, system behavior updates
+
+**Chat 22: Content & User Administration**
+*Scope: Content moderation and user management*
+- ✅ User management with role assignment
+- ✅ Content moderation workflow
+- ✅ Bulk user operations
+- ✅ Content reporting and review system
+- ✅ Automated moderation rules
+- ✅ Ban and suspension system
+- **Deliverable**: Working user and content management
+- **Testing**: Moderation workflow, user management, automated rules
+
+**Chat 23: Analytics & Reporting Dashboard**
+*Scope: Comprehensive analytics and insights*
+- ✅ Real-time analytics dashboard
+- ✅ User behavior tracking
+- ✅ Content performance metrics
+- ✅ Revenue analytics and reporting
+- ✅ A/B testing framework
+- ✅ Export functionality for data
+- **Deliverable**: Complete analytics system
+- **Testing**: Data accuracy, report generation, real-time updates
+
+**Chat 24: System Configuration & Settings**
+*Scope: Platform-wide configuration management*
+- ✅ Global platform settings
+- ✅ Theme customization for entire platform
+- ✅ Email template management
+- ✅ Notification configuration
+- ✅ SEO and meta management
+- ✅ Integration settings (CDN, payment, etc.)
+- **Deliverable**: Complete system configuration interface
+- **Testing**: Setting changes, system behavior, integration functionality
+
+#### **PHASE 8: INTEGRATION & OPTIMIZATION**
+
+**Chat 25: Feature Integration & Cross-Platform Testing**
+*Scope: Ensure all features work together seamlessly*
+- ✅ Cross-feature integration testing
+- ✅ Mobile responsiveness verification
+- ✅ Performance optimization
+- ✅ Database query optimization
+- ✅ Caching strategy implementation
+- ✅ Error handling improvements
+- **Deliverable**: Fully integrated platform
+- **Testing**: End-to-end workflows, mobile testing, performance benchmarks
+
+**Chat 26: PWA & Offline Functionality**
+*Scope: Progressive Web App features*
+- ✅ Service worker implementation
+- ✅ Offline reading capability
+- ✅ Push notification system
+- ✅ App manifest and installation
+- ✅ Background sync for progress
+- ✅ Offline content management
+- **Deliverable**: Working PWA with offline features
+- **Testing**: Offline functionality, push notifications, app installation
+
+**Chat 27: Security & Performance Audit**
+*Scope: Security hardening and final optimization*
+- ✅ Security audit and vulnerability assessment
+- ✅ Input validation and sanitization
+- ✅ Rate limiting implementation
+- ✅ GDPR compliance verification
+- ✅ Performance optimization final pass
+- ✅ Accessibility compliance (WCAG 2.1 AA)
+- **Deliverable**: Security-hardened and optimized platform
+- **Testing**: Security testing, performance benchmarks, accessibility validation
+
+**Chat 28: Deployment & Production Setup**
+*Scope: Production deployment and monitoring*
+- ✅ Production environment configuration
+- ✅ CI/CD pipeline setup
+- ✅ Monitoring and logging implementation
+- ✅ Backup and disaster recovery
+- ✅ Domain and SSL configuration
+- ✅ Performance monitoring setup
+- **Deliverable**: Production-ready deployment
+- **Testing**: Production deployment, monitoring verification, backup testing
+
+### 8.3 Chat Success Criteria
+
+Each chat session must meet these criteria before proceeding:
+
+**Technical Criteria:**
+- ✅ All code compiles without errors
+- ✅ All tests pass (unit and integration)
+- ✅ Features work as specified in requirements
+- ✅ No performance degradation from previous chat
+- ✅ Code follows established patterns and standards
+
+**Quality Criteria:**
+- ✅ User interface is responsive and accessible
+- ✅ Error handling is comprehensive
+- ✅ Documentation is updated
+- ✅ Admin configurability is maintained
+- ✅ Security considerations are addressed
+
+**Integration Criteria:**
+- ✅ New features integrate with existing functionality
+- ✅ Database migrations are successful
+- ✅ API endpoints work correctly
+- ✅ Admin/public segregation is maintained
+- ✅ User experience remains intuitive
+
+### 8.4 Rollback Strategy
+
+If a chat session fails to meet success criteria:
+
+1. **Immediate Rollback**: Revert to the previous chat's committed state
+2. **Issue Analysis**: Identify specific problems and root causes
+3. **Requirement Adjustment**: Modify requirements if needed for feasibility
+4. **Re-attempt**: Retry the chat with adjusted scope or approach
+5. **Escalation**: Consider breaking complex chats into smaller sessions
+
+### 8.5 Progress Tracking
+
+**Chat Completion Tracking:**
+- Each completed chat is marked with ✅
+- Deliverables are verified against requirements
+- Testing results are documented
+- Performance metrics are recorded
+
+**Milestone Reviews:**
+- End of each phase: Comprehensive review
+- Feature integration verification
+- User acceptance testing
+- Performance and security validation
+
+This detailed per-chat plan ensures systematic development with clear targets, easy progress tracking, and the ability to maintain high quality throughout the development process.  
+
+---
+
+## 9. Success Criteria
+
+### 9.1 Technical Success Criteria
+✅ All functional requirements implemented and tested  
+✅ Performance targets met across all devices and network conditions  
+✅ Security requirements satisfied with penetration testing  
+✅ Cross-browser compatibility achieved (Chrome, Firefox, Safari, Edge)  
+✅ Mobile responsiveness verified on iOS and Android devices  
+✅ PWA functionality working with offline reading capability  
+✅ Admin configurability verified for all gamification and content settings  
+
+### 9.2 Business Success Criteria
+✅ Smooth content publishing workflow with minimal learning curve  
+✅ Positive reader engagement metrics exceeding industry standards  
+✅ Reliable analytics providing actionable insights  
+✅ Intuitive user experience with high satisfaction scores  
+✅ Scalable foundation supporting growth to 10,000+ users  
+✅ Sustainable revenue model with conversion rates >5%  
+
+### 9.3 Gamification Success Criteria
+✅ Achievement unlock rate >70% for first-week users  
+✅ User customization adoption rate >60%  
+✅ Leaderboard participation rate >40%  
+✅ Reading streak maintenance >30% for 7+ days  
+✅ XP-driven feature engagement increase >50%  
+✅ Premium conversion uplift >25% with gamification  
+
+### 9.4 Community Success Criteria
+✅ Comment engagement rate >15% of readers  
+✅ Social follow adoption >25% of active users  
+✅ Review participation rate >10% of novel readers  
+✅ User retention improvement >40% with social features  
+✅ Community-driven content discovery >30% of novel finds  
+
+---
+
+## 10. Risk Assessment & Mitigation
+
+### 10.1 Technical Risks
+**Database Performance**: Mitigation through query optimization, indexing, and read replicas  
+**Search Scalability**: Mitigation through proper indexing and potential Elasticsearch integration  
+**Gamification Complexity**: Mitigation through phased rollout and comprehensive testing  
+**Real-time Features**: Mitigation through efficient WebSocket implementation and fallbacks  
+**Mobile Performance**: Mitigation through progressive enhancement and PWA optimization  
+**Security Vulnerabilities**: Mitigation through regular audits and security best practices  
+
+### 10.2 Business Risks
+**User Overwhelm**: Mitigation through progressive disclosure and excellent onboarding  
+**Feature Complexity**: Mitigation through user testing and iterative improvement  
+**Premium Adoption**: Mitigation through clear value proposition and trial periods  
+**Community Moderation**: Mitigation through automated tools and clear guidelines  
+**Content Quality**: Mitigation through author support tools and quality incentives  
+
+### 10.3 Engagement Risks
+**Gamification Fatigue**: Mitigation through variety, meaningful rewards, and optional participation  
+**Social Feature Adoption**: Mitigation through organic integration and privacy controls  
+**Achievement Inflation**: Mitigation through careful balance and regular review  
+**Leaderboard Gaming**: Mitigation through anti-cheat measures and multiple categories  
+
+---
+
+## 11. Future Enhancements
+
+### 11.1 Short-term Enhancements (3-6 months)
+- Advanced recommendation algorithms using machine learning
+- Audio narration and text-to-speech integration
+- Enhanced mobile app with native features
+- Advanced content protection and DRM
+- Multi-language support and internationalization
+- Community challenges and reading events
+- Author collaboration tools and beta reader system
+
+### 11.2 Medium-term Enhancements (6-12 months)
+- AI-powered content suggestions and editing assistance
+- Advanced analytics dashboard for readers
+- Integration with external platforms (Goodreads, social media)
+- Virtual reading events and author Q&A sessions
+- Marketplace for author merchandise and exclusive content
+- Advanced gamification with seasonal events and limited-time rewards
+- Community-generated content and fan fiction support
+
+### 11.3 Long-term Vision (12+ months)
+- White-label platform for other authors and publishers
+- Advanced AI features for content creation assistance
+- Virtual reality reading experiences
+- Blockchain integration for author royalties and NFT collectibles
+- Advanced community features with forums and clubs
+- Professional author tools with advanced analytics and marketing
+- Global expansion with localized content and payment methods
+
+---
+
+## 12. Conclusion
+
+This comprehensive Business Requirements Document establishes Canon Story as a next-generation novel reading platform that combines excellent content consumption with engaging community features, comprehensive gamification, and advanced content management capabilities including document import and rich media support.
+
+**Major Enhancements in Version 2.0:**
+
+### **🔄 Document Import & Content Management**
+- **DOCX Import System**: Upload and convert Word documents to chapters with preserved formatting
+- **Bulk Processing**: Handle up to 50 files per batch with queue management for optimal performance  
+- **Media Integration**: Support for images, captions, and rich content within chapters
+- **Flexible Chapter Numbering**: Support for chapter 0, 1.5, 2.1, etc. for maximum creative freedom
+- **Content Templates**: Reusable chapter templates for consistent formatting
+
+### **🖼️ Advanced Media Management**
+- **Image Optimization**: Automatic compression, resizing, and format conversion
+- **Media Library**: Centralized management with search, categorization, and usage tracking
+- **CDN Integration**: Global content delivery for optimal performance
+- **Interactive Content**: Support for system UI elements, character panels, and immersive reading
+- **Responsive Design**: Optimized image display across all devices
+
+### **⚡ Performance & Scalability**
+- **Queue System**: Background processing for imports and media optimization
+- **Optimized Database**: Flexible schema supporting complex chapter numbering and media relationships
+- **Caching Strategy**: Redis integration for improved response times
+- **Progressive Loading**: Efficient content delivery without performance degradation
+
+### **🎯 Per-Chat Development Plan**
+- **28 Detailed Chats**: Each with specific deliverables and acceptance criteria
+- **Clear Milestones**: Organized into 8 phases from foundation to deployment
+- **Rollback Strategy**: Easy reversion if issues arise during development
+- **Quality Assurance**: Built-in testing and validation at each step
+
+**Key Platform Differentiators:**
+1. **Content Creation Excellence**: DOCX import with media support for professional content creation
+2. **Comprehensive Gamification**: Deep achievement and customization systems building long-term engagement
+3. **Complete Admin Control**: Every aspect configurable through administrative interface
+4. **Social Integration**: Community features enhancing reading experience without distraction
+5. **Premium Experience**: Sophisticated subscription system with clear value proposition
+6. **Technical Excellence**: Modern architecture with performance, security, and scalability
+7. **Flexible Content Structure**: Support for non-sequential chapter numbering and rich media
+
+### **Development Readiness**
+The detailed per-chat implementation plan ensures:
+- **Systematic Progress**: Clear targets and deliverables for each development session
+- **Quality Maintenance**: Testing and validation requirements for each chat
+- **Risk Mitigation**: Rollback capabilities and issue resolution strategies
+- **Flexibility**: Adaptable timeline based on development progress and discoveries
+
+### **Competitive Positioning**
+This platform positions Canon Story as a comprehensive solution that rivals established platforms like Royal Road and Wattpad while providing:
+- **Superior Content Management**: Professional-grade import and media capabilities
+- **Enhanced User Engagement**: Advanced gamification and social features
+- **Author Empowerment**: Complete control over content presentation and community management
+- **Technical Innovation**: Modern architecture supporting future enhancements
+
+The comprehensive feature set, combined with the systematic development approach, creates a platform capable of supporting a thriving literary community while providing authors with professional-grade tools for content creation and audience engagement.
+
+This document serves as the definitive guide for development, ensuring consistent progress toward creating a next-generation reading platform that sets new standards for digital literature consumption and community engagement.
